@@ -18,13 +18,23 @@ import {
 import { cn, moedaCompacta, numero } from '@/lib/format'
 import { Badge, Botao } from '@/components/ui'
 
-const TIPOS: TipoNo[] = ['proposta', 'proponente', 'processo', 'documento', 'programa', 'minuta']
+const TIPOS: TipoNo[] = [
+  'proposta',
+  'proponente',
+  'processo',
+  'documento',
+  'programa',
+  'minuta',
+  'emenda',
+  'parlamentar',
+  'uf',
+]
 const QTD_PULSOS = 70
 const SALTOS_EGO = 2
 /** Quadros entre recálculos do fecho enquanto o layout ainda se move. */
 const INTERVALO_FECHOS = 40
 
-type Historia = 'panorama' | 'jornada' | 'producao' | 'movimenta'
+type Historia = 'panorama' | 'jornada' | 'dinheiro' | 'territorio' | 'producao' | 'movimenta'
 
 const HISTORIAS: { id: Historia; rotulo: string; explica: string }[] = [
   {
@@ -38,6 +48,18 @@ const HISTORIAS: { id: Historia; rotulo: string; explica: string }[] = [
     rotulo: 'A jornada de um convênio',
     explica:
       'Um convênio do começo ao fim: o ente que propôs, a proposta, o processo autuado no SEI e os documentos gerados. É este caminho que a Cleo percorre sozinha.',
+  },
+  {
+    id: 'dinheiro',
+    rotulo: 'De onde vem o dinheiro',
+    explica:
+      'Parlamentar, emenda e proposta no mesmo caminho. Partindo de um gabinete, o grafo mostra em que município a indicação virou obra — e onde ela parou.',
+  },
+  {
+    id: 'territorio',
+    rotulo: 'Onde o dinheiro cai',
+    explica:
+      'O recorte geográfico: cada unidade da federação puxa os proponentes que atende, e cada proponente, as propostas que apresentou.',
   },
   {
     id: 'producao',
@@ -85,6 +107,26 @@ export function Cerebro() {
       const conjunto = new Set<number>()
       grafo.nos.forEach((n, i) => {
         if (n.tipo === 'processo' || n.tipo === 'documento' || n.tipo === 'minuta') conjunto.add(i)
+      })
+      return conjunto
+    }
+    if (historia === 'dinheiro') {
+      const conjunto = new Set<number>()
+      grafo.nos.forEach((n, i) => {
+        if (n.tipo === 'parlamentar' || n.tipo === 'emenda') {
+          conjunto.add(i)
+          for (const v of vizinhos(grafo, i)) conjunto.add(v)
+        }
+      })
+      return conjunto
+    }
+    if (historia === 'territorio') {
+      const conjunto = new Set<number>()
+      grafo.nos.forEach((n, i) => {
+        if (n.tipo === 'uf' || n.tipo === 'proponente') {
+          conjunto.add(i)
+          for (const v of vizinhos(grafo, i)) conjunto.add(v)
+        }
       })
       return conjunto
     }
@@ -205,11 +247,40 @@ export function Cerebro() {
       return
     }
 
+    if (id === 'dinheiro') {
+      // O parlamentar com mais vínculos: é dele que sai a cadeia mais rica.
+      let alvo = -1
+      let melhor = -1
+      grafo.nos.forEach((n, i) => {
+        if (n.tipo === 'parlamentar' && n.grau > melhor) {
+          melhor = n.grau
+          alvo = i
+        }
+      })
+      if (alvo >= 0) {
+        setIsolando(true)
+        centralizarEm(alvo, 2.4)
+        return
+      }
+    }
+
     setIsolando(false)
     setSelecionado(null)
     cameraLivre.current = true
     enquadrar()
   }
+
+  // A busca leva a câmera junto: digitar um município e não sair do lugar faz o
+  // grafo parecer decorativo. Só entra em ação com termo específico o bastante.
+  useEffect(() => {
+    if (termo.trim().length < 3 || !correspondentes || correspondentes.size === 0) return
+    const alvo = [...correspondentes].sort(
+      (a, b) => grafo.nos[b].grau - grafo.nos[a].grau,
+    )[0]
+    const atraso = setTimeout(() => centralizarEm(alvo, correspondentes.size === 1 ? 3 : 2), 320)
+    return () => clearTimeout(atraso)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [termo, correspondentes, grafo])
 
   /* ---------- Laço de desenho ---------- */
 

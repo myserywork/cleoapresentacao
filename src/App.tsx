@@ -1,9 +1,11 @@
 import { Route, Routes } from 'react-router-dom'
 import { Shell } from '@/components/Shell'
 import { ModalAutomacao } from '@/components/simulacao/ModalAutomacao'
+import { ModalLote } from '@/components/simulacao/ModalLote'
 import { PaletaComando } from '@/components/PaletaComando'
 import { RastroCopiloto } from '@/components/RastroCopiloto'
 import { ModoApresentacao } from '@/components/ModoApresentacao'
+import { Tour } from '@/components/Tour'
 import { Painel } from '@/pages/Painel'
 import { Propostas } from '@/pages/Propostas'
 import { PropostaDetalhe } from '@/pages/PropostaDetalhe'
@@ -14,6 +16,20 @@ import { MeusPaineis } from '@/pages/MeusPaineis'
 import { Ganho } from '@/pages/Ganho'
 import { MeuDia } from '@/pages/MeuDia'
 import { Minutas } from '@/pages/Minutas'
+import { Emendas } from '@/pages/Emendas'
+import { ParlamentarFicha } from '@/pages/Parlamentar'
+import { Orcamento } from '@/pages/Orcamento'
+import { Vigencias } from '@/pages/Vigencias'
+import { PrestacaoContas } from '@/pages/PrestacaoContas'
+import { Equipe } from '@/pages/Equipe'
+import { Diligencias } from '@/pages/Diligencias'
+import { Ritos } from '@/pages/Ritos'
+import { Auditoria } from '@/pages/Auditoria'
+import { Padroes } from '@/pages/Padroes'
+import { ProponenteFicha } from '@/pages/Proponente'
+import { SalaSituacao } from '@/pages/SalaSituacao'
+import { Relatorio } from '@/pages/Relatorio'
+import { Comparar } from '@/pages/Comparar'
 
 export function App() {
   return (
@@ -21,23 +37,44 @@ export function App() {
       <Shell>
         <Routes>
           <Route path="/" element={<Painel />} />
+          <Route path="/meu-dia" element={<MeuDia />} />
           <Route path="/propostas" element={<Propostas />} />
           <Route path="/propostas/:id" element={<PropostaDetalhe />} />
+          <Route path="/proponentes/:id" element={<ProponenteFicha />} />
           <Route path="/aprovacoes" element={<Aprovacoes />} />
+
+          <Route path="/emendas" element={<Emendas />} />
+          <Route path="/parlamentares/:id" element={<ParlamentarFicha />} />
+          <Route path="/orcamento" element={<Orcamento />} />
+
+          <Route path="/vigencias" element={<Vigencias />} />
+          <Route path="/contas" element={<PrestacaoContas />} />
+          <Route path="/diligencias" element={<Diligencias />} />
+
+          <Route path="/equipe" element={<Equipe />} />
+          <Route path="/ritos" element={<Ritos />} />
+          <Route path="/minutas" element={<Minutas />} />
+          <Route path="/auditoria" element={<Auditoria />} />
+
           <Route path="/cerebro" element={<Cerebro />} />
           <Route path="/assistente" element={<Assistente />} />
+          <Route path="/padroes" element={<Padroes />} />
+
+          <Route path="/situacao" element={<SalaSituacao />} />
+          <Route path="/relatorio" element={<Relatorio />} />
+          <Route path="/comparar" element={<Comparar />} />
           <Route path="/paineis" element={<MeusPaineis />} />
           <Route path="/ganho" element={<Ganho />} />
-          <Route path="/meu-dia" element={<MeuDia />} />
-          <Route path="/minutas" element={<Minutas />} />
         </Routes>
       </Shell>
 
       {/* Camadas que atravessam a aplicação inteira */}
       <ModalAutomacao />
+      <ModalLote />
       <PaletaComando />
       <RastroCopiloto />
       <ModoApresentacao />
+      <Tour />
     </>
   )
 }

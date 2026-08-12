@@ -1,6 +1,6 @@
 import { getProponente, propostasDoOrgao } from '@/data/repo'
 import type { Proposta, SituacaoProposta } from '@/data/types'
-import { diasParada } from '@/assistente/motor'
+import { diasParada } from './tempo'
 
 /**
  * Riscos, conformidade e prazo.

@@ -9,16 +9,56 @@ não depende de API, banco nem rede.
 
 ## O que ela faz
 
+**Carteira**
+
 | Tela | Conteúdo |
 |------|----------|
-| **Painel** | Fita de trâmite da carteira, valores, empenhos, série mensal e cartograma por UF |
+| **Painel** | Fita de trâmite, sinais do órgão, série mensal, cartograma por UF e feed de atividade viva |
 | **Meu dia** | Fila priorizada por risco, prazo e valor, com a próxima ação de cada proposta |
-| **Propostas** | Busca, ordenação, colunas configuráveis, ação em lote e visão de trâmite |
-| **Proposta** | Dossiê com saúde, alertas de conformidade, empenhos, cronograma, documentos e comentários |
-| **Aprovações** | Cabine de decisão com contexto completo, atalhos de teclado, lote por critério e desfazer |
-| **Cérebro** | Grafo do conhecimento do órgão, com histórias guiadas e a cadeia legível de cada convênio |
-| **Assistente** | Copiloto que consulta os dados e **opera a interface** por linguagem natural |
+| **Propostas** | Busca, ordenação, colunas configuráveis, ação em lote, comparação e visão de trâmite |
+| **Proposta** | Dossiê com ciclo de vida, saúde, conformidade, emenda de origem, prazos legais, previsão de celebração, vigência, metas físicas e prestação de contas |
+| **Aprovações** | Cabine de decisão com **recomendação da Cleo** — fatos e grau de confiança à vista |
+
+**Recurso**
+
+| Tela | Conteúdo |
+|------|----------|
+| **Emendas** | Carteira por parlamentar e por emenda, ordenada por pressão de cobrança |
+| **Parlamentar** | Ficha do gabinete: indicado, empenhado, municípios e estágio de cada proposta |
+| **Orçamento** | Funil dotação → empenho → liquidação → pagamento, relógio de fim de exercício, risco de restos a pagar e simulador de empenho |
+
+**Prazo**
+
+| Tela | Conteúdo |
+|------|----------|
+| **Vigências** | Régua de vencimento em 30/60/90 dias e simulação de termo aditivo |
+| **Prestação de contas** | Radar de vencimento, fila de análise e inadimplência que bloqueia novo repasse |
+| **Diligências** | O que saiu e não voltou, o que voltou e ninguém olhou, e reiteração em lote |
+
+**Casa**
+
+| Tela | Conteúdo |
+|------|----------|
+| **Equipe** | Carga por analista, desequilíbrio e sugestão de redistribuição |
+| **Ritos** | Biblioteca, **editor sem código**, regras "quando X faça Y", fila e agendamento |
 | **Minutas** | Modelos de documento com campos calculados e pré-visualização em proposta real |
+| **Auditoria** | Trilha consultável por pessoa, período, tipo e processo, com exportação |
+
+**Inteligência**
+
+| Tela | Conteúdo |
+|------|----------|
+| **Cérebro** | Grafo do órgão com seis histórias guiadas, incluindo emendas e território |
+| **Assistente** | Copiloto que consulta os dados e **opera a interface** por linguagem natural |
+| **Padrões** | Propostas irmãs, valores repetidos, contrapartida no limite, concentração e fracionamento |
+
+**Apresentar**
+
+| Tela | Conteúdo |
+|------|----------|
+| **Sala de situação** | Painel de parede para projetor, sem navegação, com rodízio automático |
+| **Relatório** | Uma página em linguagem de ofício, gerada na hora e pronta para imprimir |
+| **Comparar** | Órgãos lado a lado e até três propostas campo a campo, com as diferenças destacadas |
 | **Meus painéis** | Construtor de painéis com grade redimensionável e layouts salvos |
 | **O ganho** | Comparativo antes × depois, com a premissa de tempo ajustável pelo órgão |
 
@@ -34,7 +74,8 @@ em `src/data/repo.ts` — trocar pela API real é reimplementar um módulo.
 
 **Sem autenticação.** Não há login, perfil nem isolamento por órgão. É adequado
 para demonstração e **inadequado para produção** — é a primeira frente do plano
-de produto.
+de produto. O que a sessão guarda (decisões, comentários, ritos, regras, tema)
+fica no `localStorage` do navegador e não sai dele.
 
 ## Rodar
 
@@ -49,28 +90,36 @@ npm run preview   # serve o build — use este na apresentação
 
 | Tecla | Ação |
 |-------|------|
-| `Ctrl+K` | Paleta de comando: busca, navega, executa ou pergunta à Cleo |
-| `Ctrl+Shift+P` | Modo apresentação — a plataforma se apresenta em 8 cenas |
+| `Ctrl+K` | Busca global: propostas, proponentes, parlamentares, emendas, ritos e comandos |
+| `Ctrl+Shift+P` | Modo apresentação — roteiro por público: gestor, técnico ou gabinete |
+| `Ctrl+Shift+T` | Tour guiado da plataforma |
 | `J` / `K` | Percorrer a fila de aprovações |
 | `A` / `R` / `U` | Aprovar, recusar, desfazer |
+| `←` / `→` | Trocar de cena no modo apresentação |
 
 ## Estrutura
 
 ```
 src/
-├── data/          gerador determinístico e ponto único de acesso a dado
-├── dominio/       saúde da proposta, riscos, conformidade e prazo
+├── data/          gerador determinístico em duas camadas e acesso único a dado
+├── dominio/       tempo, saúde, riscos, ciclo, orçamento, emendas, equipe,
+│                  proponentes, recomendação e padrões
+├── automacao/     regras de gatilho e paleta do editor de ritos
 ├── simulacao/     roteiros das automações e reconstrução das telas oficiais
 ├── comandos/      motor de intenção → ações na interface
 ├── assistente/    interpretador de linguagem natural sobre os dados
 ├── cerebro/       grafo, simulação de forças e camadas de desenho
-├── components/    design system, gráficos e camadas globais
+├── components/    design system, gráficos, tabela e camadas globais
 └── pages/         as telas
 ```
 
+O plano de produto com as 50 features desta versão está em
+[`docs/PLANO-50-FEATURES.md`](docs/PLANO-50-FEATURES.md).
+
 ## Identidade visual
 
-Tema escuro navy com dourado da marca. A cor carrega significado fixo no sistema
+Tema escuro navy com dourado da marca, e um tema claro para sala com luz — a
+mesma paleta com os papéis preservados. A cor carrega significado fixo no sistema
 inteiro: **verde-azulado** para trâmite em andamento, **dourado** para recurso
 comprometido, **roxo** para o que a Cleo produziu, **cinza** para o que está
 parado e **vermelho** para pendência. As cores dos gráficos foram validadas para

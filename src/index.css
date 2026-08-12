@@ -46,6 +46,38 @@
   --radius-panel: 14px;
 }
 
+/* Tema claro — para sala com luz e projetor fraco.
+   As mesmas variáveis, outros valores: nenhum componente sabe que existe tema.
+   O significado da cor é preservado; só a luminosidade inverte, e os passos de
+   gráfico escurecem para manter contraste sobre superfície clara. */
+:root[data-tema='claro'] {
+  --color-abyss: #eef1f6;
+  --color-surface: #ffffff;
+  --color-raised: #f6f8fb;
+  --color-line: #d3dae5;
+  --color-line-soft: #e4e9f0;
+
+  --color-ink: #14203a;
+  --color-muted: #4d5d78;
+  --color-faint: #74839a;
+
+  --color-teal: #0d7a66;
+  --color-teal-deep: #cfeae3;
+  --color-gold: #96690a;
+  --color-gold-deep: #f6e8c4;
+  --color-cleo: #5b3fc4;
+  --color-cleo-deep: #e3dcfa;
+  --color-inert: #6b7a91;
+  --color-alert: #b8322a;
+  --color-alert-deep: #f8dcd9;
+
+  --color-viz-teal: #0d7a66;
+  --color-viz-gold: #96690a;
+  --color-viz-cleo: #5b3fc4;
+  --color-viz-alert: #b8322a;
+  --color-viz-inert: #6b7a91;
+}
+
 @layer base {
   * {
     border-color: var(--color-line);
@@ -66,6 +98,13 @@
     font-family: var(--font-sans);
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
+  }
+
+  :root[data-tema='claro'] body {
+    background:
+      radial-gradient(1100px 600px at 78% -8%, #dfe6f2 0%, transparent 62%),
+      radial-gradient(800px 500px at 8% 105%, #e6ecf5 0%, transparent 58%),
+      var(--color-abyss);
   }
 
   h1,
@@ -106,6 +145,25 @@
     background: #2c3c58;
     background-clip: content-box;
   }
+
+  :root[data-tema='claro'] ::-webkit-scrollbar-thumb {
+    background: #c3ccdb;
+    background-clip: content-box;
+  }
+  :root[data-tema='claro'] ::-webkit-scrollbar-thumb:hover {
+    background: #a9b5c8;
+    background-clip: content-box;
+  }
+
+  /* O desfoque de fundo assume superfície escura por trás: no tema claro ele
+     amostra o fundo propagado da raiz e escurece a barra inteira. Como o valor
+     do efeito é decorativo, some no claro em vez de brigar com ele. */
+  :root[data-tema='claro'] * {
+    backdrop-filter: none !important;
+  }
+  :root[data-tema='claro'] nav[aria-label='Navegação principal'] {
+    background: color-mix(in srgb, var(--color-surface) 88%, var(--color-abyss));
+  }
 }
 
 @layer components {
@@ -123,6 +181,28 @@
     background: linear-gradient(180deg, rgb(255 255 255 / 3.5%), rgb(255 255 255 / 1%));
     border: 1px solid var(--color-line);
     border-radius: var(--radius-panel);
+  }
+
+  :root[data-tema='claro'] .panel {
+    background: var(--color-surface);
+    box-shadow: 0 1px 2px rgb(20 32 58 / 5%);
+  }
+
+  /* Botão primário: no tema escuro o dourado é claro e pede texto escuro; no
+     tema claro ele escurece para ter contraste com o fundo, e o texto inverte
+     junto. Sem isso o rótulo some dentro do próprio botão. */
+  .btn-primario {
+    background: var(--color-gold);
+    color: #151003;
+  }
+  .btn-primario:hover {
+    background: #eecb74;
+  }
+  :root[data-tema='claro'] .btn-primario {
+    color: #fff;
+  }
+  :root[data-tema='claro'] .btn-primario:hover {
+    background: #7d570a;
   }
 
   .num {
@@ -152,6 +232,47 @@
   body {
     font-size: 15px;
   }
+}
+
+/* Impressão: o relatório executivo e o dossiê saem em papel, não em captura de
+   tela. Fundo branco, texto preto, sem navegação e sem quebrar bloco no meio. */
+@media print {
+  @page {
+    margin: 14mm;
+    size: A4;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 10.5pt;
+  }
+
+  .nao-imprimir,
+  nav[aria-label='Navegação principal'] {
+    display: none !important;
+  }
+
+  main {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+
+  .panel {
+    background: #fff !important;
+    border: 1px solid #b9c2d0 !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .so-impressao {
+    display: block !important;
+  }
+}
+
+.so-impressao {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

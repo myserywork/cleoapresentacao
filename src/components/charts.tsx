@@ -292,6 +292,208 @@ export function BarraComposicao({
   )
 }
 
+/* ---------- Anel ---------- */
+
+export function Anel({
+  segmentos,
+  tamanho = 132,
+  espessura = 14,
+  centro,
+  legenda,
+}: {
+  segmentos: { rotulo: string; valor: number; cor: string }[]
+  tamanho?: number
+  espessura?: number
+  centro?: { valor: string; rotulo: string }
+  legenda?: boolean
+}) {
+  const total = segmentos.reduce((s, x) => s + x.valor, 0) || 1
+  const raio = (tamanho - espessura) / 2
+  const circunferencia = 2 * Math.PI * raio
+  let acumulado = 0
+
+  return (
+    <div className={legenda ? 'flex items-center gap-5' : ''}>
+      <svg width={tamanho} height={tamanho} className="shrink-0 -rotate-90">
+        <circle
+          cx={tamanho / 2}
+          cy={tamanho / 2}
+          r={raio}
+          fill="none"
+          stroke="var(--color-line-soft)"
+          strokeWidth={espessura}
+        />
+        {segmentos.map((s) => {
+          const fracao = s.valor / total
+          const traco = fracao * circunferencia
+          const el = (
+            <circle
+              key={s.rotulo}
+              cx={tamanho / 2}
+              cy={tamanho / 2}
+              r={raio}
+              fill="none"
+              stroke={s.cor}
+              strokeWidth={espessura}
+              strokeDasharray={`${Math.max(traco - 2, 0)} ${circunferencia}`}
+              strokeDashoffset={-acumulado * circunferencia}
+              strokeLinecap="butt"
+            />
+          )
+          acumulado += fracao
+          return el
+        })}
+        {centro && (
+          <g className="rotate-90" style={{ transformOrigin: 'center' }}>
+            <text
+              x={tamanho / 2}
+              y={tamanho / 2 - 2}
+              textAnchor="middle"
+              className="num"
+              fontSize="19"
+              fontWeight="500"
+              fill="var(--color-ink)"
+            >
+              {centro.valor}
+            </text>
+            <text
+              x={tamanho / 2}
+              y={tamanho / 2 + 14}
+              textAnchor="middle"
+              fontSize="9.5"
+              letterSpacing="0.14em"
+              fill="var(--color-muted)"
+            >
+              {centro.rotulo.toUpperCase()}
+            </text>
+          </g>
+        )}
+      </svg>
+
+      {legenda && (
+        <ul className="flex min-w-0 flex-col gap-2">
+          {segmentos.map((s) => (
+            <li key={s.rotulo} className="flex items-center gap-2">
+              <span className="size-2 shrink-0 rounded-full" style={{ background: s.cor }} />
+              <span className="min-w-0 flex-1 truncate text-[12px] text-muted">{s.rotulo}</span>
+              <span className="num shrink-0 text-[11.5px] text-faint">
+                {((s.valor / total) * 100).toFixed(0)}%
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+/* ---------- Linha mínima ---------- */
+
+export function Sparkline({
+  valores,
+  cor = 'var(--color-viz-teal)',
+  largura = 120,
+  altura = 30,
+}: {
+  valores: number[]
+  cor?: string
+  largura?: number
+  altura?: number
+}) {
+  if (valores.length < 2) return null
+  const max = Math.max(...valores)
+  const min = Math.min(...valores)
+  const faixa = max - min || 1
+  const pontos = valores.map((v, i) => {
+    const x = (i / (valores.length - 1)) * largura
+    const y = altura - ((v - min) / faixa) * (altura - 3) - 1.5
+    return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`
+  })
+  return (
+    <svg width={largura} height={altura} className="overflow-visible">
+      <path d={pontos.join(' ')} fill="none" stroke={cor} strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+/* ---------- Funil de execução ---------- */
+
+export interface DegrauFunil {
+  id: string
+  rotulo: string
+  valor: number
+  sobraRotulo: string
+  sobra: number
+  explicacao: string
+}
+
+/**
+ * Funil orçamentário.
+ *
+ * O que importa não é a barra que encolhe: é o nome do que ficou para trás em
+ * cada degrau. Saldo a empenhar, empenhado a liquidar e liquidado a pagar são
+ * três problemas diferentes, com donos diferentes.
+ */
+export function FunilExecucao({
+  degraus,
+  formato = moedaCompacta,
+}: {
+  degraus: DegrauFunil[]
+  formato?: (v: number) => string
+}) {
+  const topo = degraus[0]?.valor || 1
+  const [ativo, setAtivo] = useState<string | null>(null)
+  const cores = [
+    'var(--color-viz-inert)',
+    'var(--color-viz-gold)',
+    'var(--color-viz-cleo)',
+    'var(--color-viz-teal)',
+  ]
+
+  return (
+    <ul className="flex flex-col gap-3">
+      {degraus.map((d, i) => {
+        const fracao = d.valor / topo
+        return (
+          <li
+            key={d.id}
+            onMouseEnter={() => setAtivo(d.id)}
+            onMouseLeave={() => setAtivo(null)}
+          >
+            <div className="mb-1.5 flex items-baseline justify-between gap-4">
+              <span className="text-[12.5px] text-ink">{d.rotulo}</span>
+              <span className="num shrink-0 text-[12.5px] text-ink">{formato(d.valor)}</span>
+            </div>
+            <div className="flex h-7 items-center gap-3">
+              <div className="h-full flex-1 overflow-hidden rounded-md bg-white/[0.035]">
+                <div
+                  className="flex h-full items-center rounded-md px-2.5 transition-[width] duration-700 ease-out"
+                  style={{ width: `${Math.max(fracao * 100, 2)}%`, background: cores[i] }}
+                >
+                  <span className="num text-[11px] font-medium text-[#0b1018]">
+                    {(fracao * 100).toFixed(0)}%
+                  </span>
+                </div>
+              </div>
+            </div>
+            {d.sobra > 0 && (
+              <div className="mt-1.5 flex items-baseline gap-2 pl-0.5">
+                <span className="text-[11px] text-faint">↳ {d.sobraRotulo}</span>
+                <span className="num text-[11px] text-gold">{formato(d.sobra)}</span>
+              </div>
+            )}
+            {ativo === d.id && (
+              <p className="mt-1.5 max-w-[52ch] text-[11px] leading-relaxed text-muted">
+                {d.explicacao}
+              </p>
+            )}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 /* ---------- Distribuição por situação ---------- */
 
 export function DistribuicaoSituacao({

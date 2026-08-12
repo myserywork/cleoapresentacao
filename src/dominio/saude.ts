@@ -1,5 +1,5 @@
 import type { Gatilho, Proposta } from '@/data/types'
-import { diasParada } from '@/assistente/motor'
+import { diasParada } from './tempo'
 
 /**
  * Saúde da proposta e próxima ação.

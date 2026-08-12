@@ -3,29 +3,57 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft,
   BrainCircuit,
+  CalendarRange,
   CheckCircle2,
   CircleDashed,
+  Columns3,
   FileText,
+  Gavel,
   Play,
   MessageSquare,
+  Printer,
   ShieldAlert,
   Sparkles,
   Timer,
+  TrendingUp,
   Zap,
 } from 'lucide-react'
 import { useApp } from '@/store/app'
-import { automacoesDaProposta, getOrgao, getProponente, getProposta } from '@/data/repo'
+import {
+  automacoesDaProposta,
+  diligenciasDaProposta,
+  extensaoDa,
+  getAcao,
+  getEmenda,
+  getOrgao,
+  getParlamentar,
+  getProponente,
+  getProposta,
+  responsavelDaProposta,
+} from '@/data/repo'
 import type { Gatilho } from '@/data/types'
 import { DESCRICAO_GATILHO, ROTULO_GATILHO } from '@/simulacao/roteiros'
 import { avaliar, proximaAcao } from '@/dominio/saude'
 import { alertas as calcularAlertas, prazo as calcularPrazo, TOM_SEVERIDADE } from '@/dominio/riscos'
+import {
+  execucaoFisica,
+  prazosLegais,
+  situacaoVigencia,
+  TOM_PRESTACAO,
+  diasAte,
+} from '@/dominio/ciclo'
+import { preverConclusao } from '@/dominio/recomendacao'
+import { scoreProponente } from '@/dominio/proponentes'
 import { useExecutor } from '@/comandos/executor'
 import { cn, data, dataHora, desde, duracao, moeda, moedaCompacta } from '@/lib/format'
 import { Badge, Botao, Panel, PanelHeader, SituacaoBadge, Vazio } from '@/components/ui'
 import { BarraComposicao } from '@/components/charts'
+import { CicloDeVida } from '@/components/CicloDeVida'
+import { Medidor } from '@/components/dados'
 
 const ABAS = [
   'Visão geral',
+  'Ciclo e prazos',
   'Automações',
   'Empenhos',
   'Cronograma',
@@ -78,7 +106,8 @@ function AnelSaude({ pontos, faixa }: { pontos: number; faixa: keyof typeof TOM_
 export function PropostaDetalhe() {
   const { id } = useParams()
   const [params, setParams] = useSearchParams()
-  const { abrirExecucao, execucoesDaSessao, comentarios, comentar, notificar } = useApp()
+  const { abrirExecucao, execucoesDaSessao, comentarios, comentar, notificar, alternarComparacao, comparacao } =
+    useApp()
   const [rascunho, setRascunho] = useState('')
   const { executar } = useExecutor()
 
@@ -121,6 +150,21 @@ export function PropostaDetalhe() {
   const temProcesso = !!proposta.numProcessoSei || concluidas.has('criar_processo')
   const checklistOk = proposta.checklist.filter((c) => c.concluido).length
 
+  // Segunda camada do dossiê: de onde veio o dinheiro, quem responde, quanto tempo resta.
+  const extensao = extensaoDa(proposta.id)
+  const emenda = extensao?.emendaId ? getEmenda(extensao.emendaId) : undefined
+  const parlamentar = emenda?.parlamentarId ? getParlamentar(emenda.parlamentarId) : undefined
+  const acao = extensao ? getAcao(extensao.acaoId) : undefined
+  const responsavel = responsavelDaProposta(proposta.id)
+  const vigencia = situacaoVigencia(proposta.id)
+  const prestacao = extensao?.prestacao
+  const metas = extensao?.metas ?? []
+  const prazos = prazosLegais(proposta)
+  const previsao = preverConclusao(proposta)
+  const diligencias = diligenciasDaProposta(proposta.id)
+  const score = scoreProponente(proposta.proponenteId)
+  const naBandeja = comparacao.includes(proposta.id)
+
   function dispararProxima() {
     if (!proposta || !proxima) return
     if (proxima.rito) abrirExecucao({ propostaId: proposta.id, fila: proxima.rito, titulo: 'Rito completo de instrução' })
@@ -129,12 +173,26 @@ export function PropostaDetalhe() {
 
   return (
     <div className="mx-auto flex max-w-[1240px] flex-col gap-5">
-      <Link
-        to="/propostas"
-        className="flex w-fit items-center gap-1.5 text-[12.5px] text-muted hover:text-ink"
-      >
-        <ArrowLeft size={14} /> Propostas
-      </Link>
+      <div className="nao-imprimir flex items-center justify-between gap-4">
+        <Link
+          to="/propostas"
+          className="flex w-fit items-center gap-1.5 text-[12.5px] text-muted hover:text-ink"
+        >
+          <ArrowLeft size={14} /> Propostas
+        </Link>
+        <div className="flex items-center gap-2">
+          <Botao
+            tamanho="sm"
+            variante={naBandeja ? 'primario' : 'secundario'}
+            onClick={() => alternarComparacao(proposta.id)}
+          >
+            <Columns3 size={11} /> {naBandeja ? 'Na bandeja' : 'Comparar'}
+          </Botao>
+          <Botao tamanho="sm" onClick={() => window.print()} title="Dossiê de uma página">
+            <Printer size={11} /> Dossiê
+          </Botao>
+        </div>
+      </div>
 
       {/* Capa do convênio */}
       <header className="flex items-start justify-between gap-8">
@@ -158,6 +216,20 @@ export function PropostaDetalhe() {
             <span className="num">{proponente.cnpj}</span>
             {proposta.numProcessoSei && (
               <span className="num text-cleo">SEI {proposta.numProcessoSei}</span>
+            )}
+            <Link
+              to={`/proponentes/${proponente.id}`}
+              className="text-teal hover:underline"
+            >
+              ficha do proponente
+            </Link>
+            {parlamentar && (
+              <Link
+                to={`/parlamentares/${parlamentar.id}`}
+                className="flex items-center gap-1.5 text-gold hover:underline"
+              >
+                <Gavel size={12} /> {parlamentar.nome} ({parlamentar.partido}/{parlamentar.uf})
+              </Link>
             )}
             <button
               onClick={() =>
@@ -192,6 +264,23 @@ export function PropostaDetalhe() {
           </div>
         </div>
       </header>
+
+      {/* Onde a proposta está no processo inteiro, antes de qualquer detalhe */}
+      <Panel className="px-5 py-4">
+        <div className="mb-3 flex items-baseline justify-between gap-4">
+          <span className="eyebrow">Ciclo do convênio</span>
+          {previsao && (
+            <span className="text-[11.5px] text-muted">
+              Celebração provável em{' '}
+              <span className="num text-cleo">{data(previsao.dataProvavel)}</span>
+              <span className="num ml-1.5 text-faint">
+                ({previsao.diasOtimista}–{previsao.diasPessimista} dias)
+              </span>
+            </span>
+          )}
+        </div>
+        <CicloDeVida situacao={proposta.situacao} />
+      </Panel>
 
       {/* Próxima ação: responde "e agora?" antes de qualquer aba */}
       <Panel className="flex items-center gap-5 border-cleo/25 bg-cleo/[0.04] px-5 py-4">
@@ -273,6 +362,244 @@ export function PropostaDetalhe() {
         ))}
       </nav>
 
+      {aba === 'Ciclo e prazos' && (
+        <div className="grid grid-cols-[1.15fr_1fr] gap-4">
+          <div className="flex flex-col gap-4">
+            <Panel>
+              <PanelHeader
+                eyebrow="Relógio"
+                titulo="Prazos que correm sobre esta proposta"
+                acao={<Timer size={15} className="text-faint" />}
+              />
+              {prazos.length === 0 ? (
+                <p className="px-5 py-8 text-center text-[12.5px] text-muted">
+                  Nenhum prazo em curso nesta fase.
+                </p>
+              ) : (
+                <ul className="divide-y divide-line-soft">
+                  {prazos.map((p) => (
+                    <li key={p.id} className="flex items-center gap-4 px-5 py-3.5">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13px] text-ink">{p.rotulo}</div>
+                        <p className="mt-0.5 text-[11.5px] text-muted">{p.detalhe}</p>
+                        <p className="mt-1 text-[10.5px] text-faint">base: {p.base}</p>
+                      </div>
+                      <span
+                        className={cn(
+                          'num shrink-0 text-right text-[13px]',
+                          p.vencido ? 'text-alert' : p.dias < 15 ? 'text-gold' : 'text-teal',
+                        )}
+                      >
+                        {p.dias < 0 ? `${Math.abs(p.dias)}d vencido` : `${p.dias}d`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+
+            {vigencia && (
+              <Panel>
+                <PanelHeader
+                  eyebrow="Vigência"
+                  titulo={vigencia.rotulo}
+                  acao={<CalendarRange size={15} className="text-faint" />}
+                />
+                <div className="px-5 py-5">
+                  <div className="mb-2 flex items-baseline justify-between gap-4">
+                    <span className="num text-[12.5px] text-muted">
+                      {data(vigencia.vigencia.inicio)} → {data(vigencia.vigencia.fim)}
+                    </span>
+                    <span
+                      className={cn(
+                        'num text-[12.5px]',
+                        vigencia.diasRestantes < 0
+                          ? 'text-alert'
+                          : vigencia.diasRestantes < 90
+                            ? 'text-gold'
+                            : 'text-teal',
+                      )}
+                    >
+                      {vigencia.diasRestantes < 0
+                        ? `encerrada há ${Math.abs(vigencia.diasRestantes)} dias`
+                        : `${vigencia.diasRestantes} dias restantes`}
+                    </span>
+                  </div>
+                  <Medidor
+                    valor={vigencia.consumo}
+                    tom={vigencia.consumo > 0.9 ? 'alert' : vigencia.consumo > 0.7 ? 'gold' : 'teal'}
+                    altura={7}
+                  />
+
+                  {vigencia.vigencia.aditivos.length > 0 && (
+                    <ul className="mt-5 flex flex-col gap-3 border-t border-line-soft pt-4">
+                      {vigencia.vigencia.aditivos.map((a) => (
+                        <li key={a.id} className="flex items-start gap-3">
+                          <Badge tom="cleo">{a.tipo}</Badge>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[12.5px] text-ink">{a.numero}</div>
+                            <p className="mt-0.5 text-[11.5px] text-muted">{a.descricao}</p>
+                          </div>
+                          <span className="num shrink-0 text-[11.5px] text-faint">
+                            {data(a.data)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </Panel>
+            )}
+
+            {diligencias.length > 0 && (
+              <Panel>
+                <PanelHeader
+                  eyebrow="Comunicação"
+                  titulo={`${diligencias.length} diligência(s) ao proponente`}
+                />
+                <ul className="divide-y divide-line-soft">
+                  {diligencias.map((d) => {
+                    const dias = diasAte(d.prazo)
+                    return (
+                      <li key={d.id} className="px-5 py-3.5">
+                        <div className="mb-1.5 flex items-center justify-between gap-3">
+                          <span className="text-[12.5px] text-ink">{d.assunto}</span>
+                          {d.respondidaEm ? (
+                            <Badge tom="teal">respondida em {data(d.respondidaEm)}</Badge>
+                          ) : (
+                            <Badge tom={dias < 0 ? 'alert' : 'gold'}>
+                              {dias < 0 ? `${Math.abs(dias)}d vencida` : `${dias}d de prazo`}
+                            </Badge>
+                          )}
+                        </div>
+                        <ul className="flex flex-col gap-1">
+                          {d.itens.map((item) => (
+                            <li key={item} className="flex items-start gap-2 text-[11.5px] text-muted">
+                              <span className="mt-1.5 size-1 shrink-0 rounded-full bg-faint" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </Panel>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-4">
+            {previsao && (
+              <Panel className="border-cleo/25">
+                <PanelHeader
+                  eyebrow="Previsão"
+                  titulo="Quando esta proposta chega à celebração"
+                  acao={<TrendingUp size={15} className="text-cleo" />}
+                />
+                <div className="px-5 py-5">
+                  <div className="num text-[26px] leading-none text-cleo">
+                    {data(previsao.dataProvavel)}
+                  </div>
+                  <div className="num mt-2 text-[12px] text-muted">
+                    {previsao.diasMediana} dias na mediana · faixa de {previsao.diasOtimista} a{' '}
+                    {previsao.diasPessimista}
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {previsao.fasesRestantes.map((f) => (
+                      <span
+                        key={f}
+                        className="rounded-md border border-line bg-raised px-2 py-1 text-[11px] text-muted"
+                      >
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="mt-4 text-[11.5px] leading-relaxed text-faint">{previsao.base}</p>
+                </div>
+              </Panel>
+            )}
+
+            {metas.length > 0 && (
+              <Panel>
+                <PanelHeader
+                  eyebrow="Execução física"
+                  titulo={`${(execucaoFisica(proposta.id) * 100).toFixed(0)}% das metas cumpridas`}
+                />
+                <ul className="flex flex-col gap-4 px-5 py-5">
+                  {metas.map((m) => (
+                    <li key={m.id}>
+                      <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                        <span className="text-[12.5px] text-ink">{m.descricao}</span>
+                        <span className="num shrink-0 text-[12px] text-muted">
+                          {m.realizado} / {m.previsto} {m.unidade}
+                        </span>
+                      </div>
+                      <Medidor
+                        valor={m.previsto > 0 ? m.realizado / m.previsto : 0}
+                        tom={m.realizado >= m.previsto ? 'teal' : 'gold'}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </Panel>
+            )}
+
+            {prestacao && (
+              <Panel>
+                <PanelHeader eyebrow="Encerramento" titulo="Prestação de contas" />
+                <div className="flex flex-col gap-3 px-5 py-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[12.5px] text-muted">Status</span>
+                    <Badge tom={TOM_PRESTACAO[prestacao.status]} ponto>
+                      {prestacao.status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[12.5px] text-muted">Prazo legal</span>
+                    <span className="num text-[12.5px] text-ink">{data(prestacao.prazo)}</span>
+                  </div>
+                  {prestacao.dataEntrega && (
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[12.5px] text-muted">Apresentada em</span>
+                      <span className="num text-[12.5px] text-teal">
+                        {data(prestacao.dataEntrega)}
+                      </span>
+                    </div>
+                  )}
+                  {prestacao.ressalvas.length > 0 && (
+                    <div className="mt-1 border-t border-line-soft pt-3">
+                      <div className="eyebrow mb-1.5">Ressalvas</div>
+                      <ul className="flex flex-col gap-1.5">
+                        {prestacao.ressalvas.map((r) => (
+                          <li key={r} className="text-[11.5px] leading-relaxed text-gold">
+                            {r}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <p className="mt-1 text-[11px] leading-relaxed text-faint">
+                    O prazo de 60 dias corre do fim da vigência. Prestação em atraso impede o
+                    proponente de receber nova transferência.
+                  </p>
+                </div>
+              </Panel>
+            )}
+
+            {!vigencia && !prestacao && metas.length === 0 && (
+              <Panel>
+                <PanelHeader eyebrow="Ainda não" titulo="Sem vigência registrada" />
+                <p className="px-5 py-6 text-[12.5px] leading-relaxed text-muted">
+                  Vigência, metas físicas e prestação de contas passam a existir quando o
+                  instrumento é celebrado. Até lá, o que corre são os prazos de análise e de
+                  resposta a diligência.
+                </p>
+              </Panel>
+            )}
+          </div>
+        </div>
+      )}
+
       {aba === 'Visão geral' && (
         <div className="grid grid-cols-[1.4fr_1fr] gap-4">
           <div className="flex flex-col gap-4">
@@ -288,6 +615,18 @@ export function PropostaDetalhe() {
                   ['Cadastrada em', data(proposta.dataCadastro)],
                   ['Representante', proponente.representante],
                   ['Cargo', proponente.cargoRepresentante],
+                  [
+                    'Origem do recurso',
+                    emenda
+                      ? `Emenda ${emenda.numero}/${emenda.ano} — ${emenda.tipo}`
+                      : 'Dotação própria do programa',
+                  ],
+                  ['Ação orçamentária', acao ? `${acao.codigo} — ${acao.nome}` : '—'],
+                  ['Responsável pela análise', responsavel?.nome ?? 'Não atribuída'],
+                  [
+                    'Capacidade do proponente',
+                    score ? `${score.pontos}/100 — ${score.rotulo}` : '—',
+                  ],
                 ].map(([rotulo, valor]) => (
                   <div key={rotulo}>
                     <dt className="eyebrow mb-1">{rotulo}</dt>

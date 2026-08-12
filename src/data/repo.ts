@@ -1,6 +1,28 @@
 import { ORGAOS } from './catalogs'
 import { APROVACOES, AUTOMACOES, MINUTAS, PROPONENTES, PROPOSTAS, USUARIOS } from './generate'
-import type { Automacao, Proponente, Proposta, SituacaoProposta } from './types'
+import {
+  ACOES,
+  AUDITORIA,
+  DILIGENCIAS,
+  EMENDAS,
+  EQUIPE,
+  EXTENSOES,
+  PARLAMENTARES,
+  REGRAS_FABRICA,
+  RITOS_FABRICA,
+} from './extensoes'
+import type {
+  AcaoOrcamentaria,
+  Analista,
+  Automacao,
+  Diligencia,
+  Emenda,
+  Extensao,
+  Parlamentar,
+  Proponente,
+  Proposta,
+  SituacaoProposta,
+} from './types'
 
 /**
  * Ponto único de acesso a dado. Todas as telas leem daqui — trocar a origem por
@@ -8,9 +30,24 @@ import type { Automacao, Proponente, Proposta, SituacaoProposta } from './types'
  */
 
 export { ORGAOS, MINUTAS, USUARIOS, PROPONENTES, PROPOSTAS, AUTOMACOES, APROVACOES }
+export {
+  ACOES,
+  AUDITORIA,
+  DILIGENCIAS,
+  EMENDAS,
+  EQUIPE,
+  EXTENSOES,
+  PARLAMENTARES,
+  REGRAS_FABRICA,
+  RITOS_FABRICA,
+}
 
 const proponentePorId = new Map(PROPONENTES.map((p) => [p.id, p]))
 const propostaPorId = new Map(PROPOSTAS.map((p) => [p.id, p]))
+const parlamentarPorId = new Map(PARLAMENTARES.map((p) => [p.id, p]))
+const emendaPorId = new Map(EMENDAS.map((e) => [e.id, e]))
+const acaoPorId = new Map(ACOES.map((a) => [a.id, a]))
+const analistaPorId = new Map(EQUIPE.map((a) => [a.id, a]))
 
 export function getProponente(id: string): Proponente | undefined {
   return proponentePorId.get(id)
@@ -165,6 +202,100 @@ export function resumoOrgao(orgaoId: string, mesesAtras?: number): ResumoOrgao {
       .sort((a, b) => a.mes.localeCompare(b.mes))
       .slice(-18),
   }
+}
+
+/* ---------- Segunda camada: emenda, orçamento, equipe, diligência ---------- */
+
+export function extensaoDa(propostaId: string): Extensao | undefined {
+  return EXTENSOES.get(propostaId)
+}
+
+export function getParlamentar(id: string): Parlamentar | undefined {
+  return parlamentarPorId.get(id)
+}
+
+export function getEmenda(id: string): Emenda | undefined {
+  return emendaPorId.get(id)
+}
+
+export function getAcao(id: string): AcaoOrcamentaria | undefined {
+  return acaoPorId.get(id)
+}
+
+export function getAnalista(id: string): Analista | undefined {
+  return analistaPorId.get(id)
+}
+
+export function emendaDaProposta(propostaId: string): Emenda | undefined {
+  const id = EXTENSOES.get(propostaId)?.emendaId
+  return id ? emendaPorId.get(id) : undefined
+}
+
+export function parlamentarDaProposta(propostaId: string): Parlamentar | undefined {
+  const emenda = emendaDaProposta(propostaId)
+  return emenda?.parlamentarId ? parlamentarPorId.get(emenda.parlamentarId) : undefined
+}
+
+export function responsavelDaProposta(propostaId: string): Analista | undefined {
+  const id = EXTENSOES.get(propostaId)?.responsavelId
+  return id ? analistaPorId.get(id) : undefined
+}
+
+export function emendasDoOrgao(orgaoId: string): Emenda[] {
+  return EMENDAS.filter((e) => e.orgaoId === orgaoId)
+}
+
+export function acoesDoOrgao(orgaoId: string): AcaoOrcamentaria[] {
+  return ACOES.filter((a) => a.orgaoId === orgaoId)
+}
+
+export function equipeDoOrgao(orgaoId: string): Analista[] {
+  return EQUIPE.filter((a) => a.orgaoId === orgaoId)
+}
+
+/** Índice proposta → emenda montado uma vez; a listagem por emenda é frequente. */
+const propostasPorEmenda = (() => {
+  const mapa = new Map<string, Proposta[]>()
+  for (const p of PROPOSTAS) {
+    const id = EXTENSOES.get(p.id)?.emendaId
+    if (!id) continue
+    if (!mapa.has(id)) mapa.set(id, [])
+    mapa.get(id)!.push(p)
+  }
+  return mapa
+})()
+
+export function propostasDaEmenda(emendaId: string): Proposta[] {
+  return propostasPorEmenda.get(emendaId) ?? []
+}
+
+export function propostasDoParlamentar(parlamentarId: string, orgaoId?: string): Proposta[] {
+  const emendas = EMENDAS.filter(
+    (e) => e.parlamentarId === parlamentarId && (!orgaoId || e.orgaoId === orgaoId),
+  )
+  return emendas.flatMap((e) => propostasDaEmenda(e.id))
+}
+
+export function propostasDoAnalista(analistaId: string): Proposta[] {
+  return PROPOSTAS.filter((p) => EXTENSOES.get(p.id)?.responsavelId === analistaId)
+}
+
+export function propostasDoProponente(proponenteId: string): Proposta[] {
+  return PROPOSTAS.filter((p) => p.proponenteId === proponenteId)
+}
+
+export function diligenciasDaProposta(propostaId: string): Diligencia[] {
+  return DILIGENCIAS.filter((d) => d.propostaId === propostaId)
+}
+
+export function diligenciasDoOrgao(orgaoId: string): Diligencia[] {
+  const ids = new Set(propostasDoOrgao(orgaoId).map((p) => p.id))
+  return DILIGENCIAS.filter((d) => ids.has(d.propostaId))
+}
+
+export function auditoriaDoOrgao(orgaoId: string) {
+  const ids = new Set(propostasDoOrgao(orgaoId).map((p) => p.id))
+  return AUDITORIA.filter((e) => !e.propostaId || ids.has(e.propostaId))
 }
 
 /* ---------- Busca ---------- */

@@ -116,7 +116,7 @@ export function Botao({
     sm: 'h-7.5 px-2.5 text-xs',
   }
   const variantes = {
-    primario: 'bg-gold text-[#151003] hover:bg-[#eecb74]',
+    primario: 'btn-primario',
     secundario: 'border border-line bg-raised text-ink hover:border-[#2c3c58] hover:bg-[#182339]',
     fantasma: 'text-muted hover:bg-white/5 hover:text-ink',
     perigo: 'border border-alert/40 bg-alert/10 text-alert hover:bg-alert/20',

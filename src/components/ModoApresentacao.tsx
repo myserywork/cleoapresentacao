@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Play, X } from 'lucide-react'
-import { useApp } from '@/store/app'
+import { useApp, type Publico } from '@/store/app'
 import { useExecutor } from '@/comandos/executor'
 import { propostasDoOrgao } from '@/data/repo'
 import type { Acao } from '@/comandos/tipos'
@@ -22,9 +22,21 @@ interface Cena {
  * que alguém faz uma pergunta no meio, e aí a demonstração anda sozinha enquanto
  * a sala olha para outra coisa. Aqui cada cena espera o comando.
  */
+const ROTULO_PUBLICO: Record<Publico, string> = {
+  gestor: 'Gestor',
+  tecnico: 'Técnico',
+  parlamentar: 'Gabinete',
+}
+
+const EXPLICA_PUBLICO: Record<Publico, string> = {
+  gestor: 'Números, risco e decisão',
+  tecnico: 'Automação, integração e auditoria',
+  parlamentar: 'Emenda, execução e território',
+}
+
 export function ModoApresentacao() {
   const [params, setParams] = useSearchParams()
-  const { orgaoId, apresentando, setApresentando } = useApp()
+  const { orgaoId, apresentando, setApresentando, publico, setPublico } = useApp()
   const { executar } = useExecutor()
   const [cena, setCena] = useState(0)
 
@@ -32,6 +44,102 @@ export function ModoApresentacao() {
     const propostas = propostasDoOrgao(orgaoId)
     const paradas = [...propostas].sort((a, b) => diasParada(b) - diasParada(a))
     const alvo = paradas.find((p) => !p.numProcessoSei) ?? paradas[0]
+
+    // Cada público entra por uma porta diferente: o gestor quer saber onde está
+    // o risco, o técnico quer ver a máquina por dentro, e o gabinete quer saber
+    // onde parou a emenda dele.
+    if (publico === 'tecnico') {
+      return [
+        {
+          titulo: 'A carteira sincronizada',
+          narracao:
+            'Tudo que se vê aqui vem do TransfereGov e do SEI. O acesso a dado está isolado num módulo só — trocar a origem não mexe em nenhuma tela.',
+          acoes: [{ tipo: 'navegar', para: '/' }],
+        },
+        {
+          titulo: 'Um rito por dentro',
+          narracao:
+            'Automação é uma sequência de passos montada na tela, sem código. Abrir sistema, autenticar, localizar, preencher, anexar, assinar.',
+          acoes: [{ tipo: 'navegar', para: '/ritos' }],
+        },
+        {
+          titulo: 'A execução, passo a passo',
+          narracao:
+            'A janela reconstrói o SEI e o TransfereGov ao vivo: cursor, digitação, clique e o resultado de cada passo. Falha isola o item e retoma do ponto exato.',
+          acoes: [
+            {
+              tipo: 'executar-rito',
+              propostaId: alvo.id,
+              gatilhos: [
+                'criar_processo',
+                'anexar_extrato_proposta',
+                'anexar_contrapartidas',
+                'criar_documento',
+              ],
+            },
+          ],
+        },
+        {
+          titulo: 'Regra dispara rito',
+          narracao:
+            '"Quando a proposta entrar em análise e não tiver processo, autue." A pré-visualização mostra quantas propostas a regra pegaria hoje, antes de publicar.',
+          acoes: [{ tipo: 'navegar', para: '/ritos' }],
+        },
+        {
+          titulo: 'Tudo auditável',
+          narracao:
+            'Quem fez, quando, em quê e com qual justificativa. Automação que não se explica não passa em controle — esta explica.',
+          acoes: [{ tipo: 'navegar', para: '/auditoria' }],
+        },
+        {
+          titulo: 'O grafo do conhecimento',
+          narracao:
+            'Órgão, programa, proponente, proposta, processo, documento, emenda e parlamentar no mesmo modelo. Os vínculos são os do próprio banco.',
+          acoes: [{ tipo: 'navegar', para: '/cerebro' }],
+        },
+      ]
+    }
+
+    if (publico === 'parlamentar') {
+      return [
+        {
+          titulo: 'A carteira do órgão',
+          narracao:
+            'Onde está cada proposta, quanto vale e o que já foi empenhado — a foto da casa antes de falar de emenda.',
+          acoes: [{ tipo: 'navegar', para: '/' }],
+        },
+        {
+          titulo: 'De quem é o recurso',
+          narracao:
+            'A carteira organizada por quem indicou: valor apontado, valor empenhado e quantas propostas estão sem andamento em cada gabinete.',
+          acoes: [{ tipo: 'navegar', para: '/emendas' }],
+        },
+        {
+          titulo: 'Onde a emenda virou obra',
+          narracao:
+            'Do gabinete ao município: cada proposta apoiada, em que fase está e quanto já saiu do papel.',
+          acoes: [{ tipo: 'navegar', para: '/emendas' }],
+        },
+        {
+          titulo: 'O relógio de dezembro',
+          narracao:
+            'Quanto ainda dá para empenhar, em quantos dias úteis e em que ritmo. É a conta que decide se o recurso vira obra ou volta ao Tesouro.',
+          acoes: [{ tipo: 'navegar', para: '/orcamento' }],
+        },
+        {
+          titulo: 'Onde o dinheiro cai',
+          narracao:
+            'A distribuição territorial da carteira, do estado ao município — e a cadeia inteira que liga a indicação à obra.',
+          acoes: [{ tipo: 'navegar', para: '/cerebro' }],
+        },
+        {
+          titulo: 'Uma página para levar',
+          narracao:
+            'O relatório executivo sai pronto, em linguagem de ofício, com os números que sustentam qualquer conversa.',
+          acoes: [{ tipo: 'navegar', para: '/relatorio' }],
+        },
+      ]
+    }
 
     return [
       {
@@ -99,7 +207,7 @@ export function ModoApresentacao() {
         acoes: [{ tipo: 'navegar', para: '/ganho' }],
       },
     ]
-  }, [orgaoId])
+  }, [orgaoId, publico])
 
   const irPara = useCallback(
     (indice: number) => {
@@ -192,8 +300,30 @@ export function ModoApresentacao() {
           </div>
         </div>
 
+        {/* Escolher o público troca a sequência inteira, sem sair do modo */}
+        <div className="mt-3 flex items-center gap-2 border-t border-line pt-3">
+          <span className="eyebrow">Roteiro para</span>
+          {(['gestor', 'tecnico', 'parlamentar'] as Publico[]).map((p) => (
+            <button
+              key={p}
+              onClick={() => {
+                setPublico(p)
+                setCena(0)
+              }}
+              title={EXPLICA_PUBLICO[p]}
+              className={cn(
+                'rounded-md px-2.5 py-1 text-[11.5px] transition-colors',
+                publico === p ? 'bg-gold/15 text-gold' : 'text-muted hover:text-ink',
+              )}
+            >
+              {ROTULO_PUBLICO[p]}
+            </button>
+          ))}
+          <span className="ml-auto text-[11px] text-faint">{EXPLICA_PUBLICO[publico]}</span>
+        </div>
+
         {/* Trilha das cenas — a plateia vê quanto falta */}
-        <div className="mt-3.5 flex gap-1">
+        <div className="mt-3 flex gap-1">
           {roteiro.map((c, i) => (
             <button
               key={c.titulo}

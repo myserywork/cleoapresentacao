@@ -1,13 +1,21 @@
 import {
   automacoesDoOrgao,
   buscarPropostas,
+  diligenciasDoOrgao,
   getProponente,
   propostasDoOrgao,
   resumoOrgao,
 } from '@/data/repo'
 import type { Gatilho, Proposta, SituacaoProposta } from '@/data/types'
-import { moeda, moedaCompacta, numero } from '@/lib/format'
+import { data, moeda, moedaCompacta, numero } from '@/lib/format'
 import type { Acao, FiltroPropostas } from '@/comandos/tipos'
+import { carteirasPorParlamentar, resumoEmendas } from '@/dominio/emendas'
+import { fimDeExercicio, funilDoOrgao, riscoRestosAPagar } from '@/dominio/orcamento'
+import { carteiraDeVigencias, resumoPrestacoes } from '@/dominio/ciclo'
+import { diasAte, diasParada } from '@/dominio/tempo'
+import { cargaDaEquipe, resumoEquipe } from '@/dominio/equipe'
+import { detectarAnomalias } from '@/dominio/anomalias'
+import { rankingProponentes } from '@/dominio/proponentes'
 
 /**
  * Motor de intenção.
@@ -88,14 +96,7 @@ function normalizar(s: string) {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
 
-/** Dias desde o último movimento registrado na proposta. */
-export function diasParada(p: Proposta): number {
-  const ultimo = p.timeline.reduce(
-    (mais, e) => (e.data > mais ? e.data : mais),
-    p.dataCadastro,
-  )
-  return Math.floor((Date.now() - new Date(ultimo).getTime()) / 86_400_000)
-}
+export { diasParada }
 
 /** Converte o recorte detectado na frase para o formato do filtro da listagem. */
 function recorteDoFiltro(
@@ -241,6 +242,240 @@ export function responder(
           acoes: [{ tipo: 'abrir-proposta', propostaId: alvo.id, motivo: 'Abrindo a proposta' }],
         },
       }
+    }
+  }
+
+  /* ---------- Emendas e parlamentares ---------- */
+
+  if (/(emenda|parlamentar|deputad|senador|gabinete|bancada|rp6|rp7)/.test(q)) {
+    const resumoEm = resumoEmendas(orgaoId)
+    const carteiras = carteirasPorParlamentar(orgaoId)
+    const topo = carteiras[0]
+
+    return {
+      contexto: novoContexto,
+      resposta: {
+        texto: `${numero(resumoEm.totalEmendas)} emendas de ${numero(resumoEm.parlamentares)} parlamentares apontam para este órgão, somando ${moeda(resumoEm.valorIndicado)} indicados. ${(resumoEm.execucao * 100).toFixed(0)}% já viraram empenho.${topo ? ` A carteira com maior pressão é a de ${topo.parlamentar.nome} (${topo.parlamentar.partido}/${topo.parlamentar.uf}), com ${topo.paradas} proposta(s) sem andamento.` : ''}`,
+        destaque: [
+          { rotulo: 'Indicado', valor: moedaCompacta(resumoEm.valorIndicado) },
+          { rotulo: 'Empenhado', valor: moedaCompacta(resumoEm.valorEmpenhado) },
+          { rotulo: 'Execução', valor: `${(resumoEm.execucao * 100).toFixed(0)}%` },
+        ],
+        tabela: {
+          colunas: ['Parlamentar', 'Emendas', 'Propostas', 'Indicado', 'Execução', 'Paradas'],
+          linhas: carteiras.slice(0, 10).map((c) => [
+            `${c.parlamentar.nome} (${c.parlamentar.partido}/${c.parlamentar.uf})`,
+            numero(c.emendas.length),
+            numero(c.propostas.length),
+            moeda(c.valorIndicado),
+            `${(c.execucao * 100).toFixed(0)}%`,
+            numero(c.paradas),
+          ]),
+        },
+        acoes: [{ tipo: 'navegar', para: '/emendas', motivo: 'Abrindo a carteira de emendas' }],
+        oferecidas: topo
+          ? [
+              {
+                rotulo: `Abrir a ficha de ${topo.parlamentar.nome.split(' ')[0]}`,
+                destacada: true,
+                acoes: [{ tipo: 'navegar', para: `/parlamentares/${topo.parlamentar.id}` }],
+              },
+            ]
+          : undefined,
+        seguintes: ['Quanto falta empenhar até dezembro?', 'Quais convênios vencem em 30 dias?'],
+      },
+    }
+  }
+
+  /* ---------- Orçamento e fim de exercício ---------- */
+
+  if (/(orcamento|dotacao|liquidad|pago|restos a pagar|fim de exercicio|empenhar|dezembro|saldo)/.test(q)) {
+    const funil = funilDoOrgao(orgaoId)
+    const fim = fimDeExercicio(orgaoId)
+    const restos = riscoRestosAPagar(orgaoId)
+
+    return {
+      contexto: novoContexto,
+      resposta: {
+        texto: `Da dotação de ${moeda(funil.dotacao)}, ${moeda(funil.empenhado)} foram empenhados e ${moeda(funil.pago)} efetivamente pagos. Restam ${fim.diasUteis} dias úteis e ${moeda(fim.saldoAEmpenhar)} a empenhar — ${moedaCompacta(fim.ritmoNecessario)} por dia útil. ${fim.emRisco ? 'O ritmo praticado no ano não fecha essa conta.' : 'O ritmo praticado no ano dá conta desse saldo.'}`,
+        destaque: [
+          { rotulo: 'Saldo a empenhar', valor: moedaCompacta(fim.saldoAEmpenhar) },
+          { rotulo: 'Dias úteis', valor: numero(fim.diasUteis) },
+          { rotulo: 'A liquidar', valor: moedaCompacta(restos.total) },
+        ],
+        grafico: {
+          titulo: 'Funil de execução orçamentária',
+          formato: 'moeda',
+          itens: funil.degraus.map((d) => ({ rotulo: d.rotulo, valor: d.valor })),
+        },
+        acoes: [{ tipo: 'navegar', para: '/orcamento', motivo: 'Abrindo a execução orçamentária' }],
+        seguintes: ['Simular empenho das maiores', 'Quanto vira restos a pagar?'],
+      },
+    }
+  }
+
+  /* ---------- Vigência ---------- */
+
+  if (/(vigencia|vencend|vence|prorrog|aditiv|expira)/.test(q)) {
+    const carteira = carteiraDeVigencias(orgaoId)
+    const vencidas = carteira.filter((v) => v.situacao.diasRestantes < 0)
+    const em30 = carteira.filter(
+      (v) => v.situacao.diasRestantes >= 0 && v.situacao.diasRestantes <= 30,
+    )
+
+    return {
+      contexto: novoContexto,
+      resposta: {
+        texto: `${numero(em30.length)} convênios vencem nos próximos 30 dias e ${numero(vencidas.length)} já estão com a vigência encerrada. Prorrogar depois da data exige processo próprio — a decisão precisa sair antes.`,
+        destaque: [
+          { rotulo: 'Vencem em 30 dias', valor: numero(em30.length) },
+          { rotulo: 'Já vencidos', valor: numero(vencidas.length) },
+          { rotulo: 'Com vigência', valor: numero(carteira.length) },
+        ],
+        tabela: {
+          colunas: ['Proposta', 'Proponente', 'Fim da vigência', 'Prazo', 'Meta física'],
+          linhas: [...em30, ...vencidas].slice(0, 12).map((v) => [
+            v.proposta.numero,
+            getProponente(v.proposta.proponenteId)?.nome ?? '—',
+            data(v.situacao.vigencia.fim),
+            v.situacao.diasRestantes < 0
+              ? `${Math.abs(v.situacao.diasRestantes)} dias vencida`
+              : `${v.situacao.diasRestantes} dias`,
+            `${(v.execucaoFisica * 100).toFixed(0)}%`,
+          ]),
+        },
+        acoes: [{ tipo: 'navegar', para: '/vigencias', motivo: 'Abrindo a régua de vencimento' }],
+        seguintes: ['Quais estão com prestação de contas atrasada?'],
+      },
+    }
+  }
+
+  /* ---------- Prestação de contas ---------- */
+
+  if (/(prestacao|prestacoes|contas|inadimpl|bloquead|comprovac)/.test(q)) {
+    const contas = resumoPrestacoes(orgaoId)
+    return {
+      contexto: novoContexto,
+      resposta: {
+        texto: `${numero(contas.atrasadas)} prestações de contas estão com o prazo legal vencido e ${numero(contas.emAnalise)} aguardam análise da casa. A inadimplência impede ${numero(contas.proponentesBloqueados)} proponentes de receber nova transferência, o que trava ${moeda(contas.valorBloqueado)}.`,
+        destaque: [
+          { rotulo: 'Em atraso', valor: numero(contas.atrasadas) },
+          { rotulo: 'Proponentes travados', valor: numero(contas.proponentesBloqueados) },
+          { rotulo: 'Valor bloqueado', valor: moedaCompacta(contas.valorBloqueado) },
+        ],
+        acoes: [{ tipo: 'navegar', para: '/contas', motivo: 'Abrindo a prestação de contas' }],
+        seguintes: ['Quais convênios vencem em 30 dias?', 'Quem são os proponentes com pior histórico?'],
+      },
+    }
+  }
+
+  /* ---------- Equipe ---------- */
+
+  if (/(equipe|analista|carga|carteira de quem|sobrecarr|distribu|quem cuida)/.test(q)) {
+    const carga = cargaDaEquipe(orgaoId)
+    const resumoEq = resumoEquipe(orgaoId)
+    const cheio = carga[0]
+
+    return {
+      contexto: novoContexto,
+      resposta: {
+        texto: `A equipe tem ${resumoEq.pessoas} analistas com ocupação média de ${(resumoEq.ocupacaoMedia * 100).toFixed(0)}%.${cheio ? ` ${cheio.analista.nome} está com ${cheio.qtd} propostas — ${(cheio.ocupacao * 100).toFixed(0)}% da capacidade declarada.` : ''} A distância entre a ponta mais cheia e a mais folgada é de ${(resumoEq.desequilibrio * 100).toFixed(0)} pontos.`,
+        destaque: [
+          { rotulo: 'Ocupação média', valor: `${(resumoEq.ocupacaoMedia * 100).toFixed(0)}%` },
+          { rotulo: 'Desequilíbrio', valor: `${(resumoEq.desequilibrio * 100).toFixed(0)} p.p.` },
+          { rotulo: 'Propostas atribuídas', valor: numero(resumoEq.atribuidas) },
+        ],
+        grafico: {
+          titulo: 'Propostas por analista',
+          formato: 'numero',
+          itens: carga.map((c) => ({ rotulo: c.analista.nome, valor: c.qtd })),
+        },
+        acoes: [{ tipo: 'navegar', para: '/equipe', motivo: 'Abrindo a carga da equipe' }],
+        seguintes: ['Como redistribuir a carteira?'],
+      },
+    }
+  }
+
+  /* ---------- Diligências ---------- */
+
+  if (/(diligencia|oficio|complementac|cobrar|reiterar|respondeu)/.test(q)) {
+    const todas = diligenciasDoOrgao(orgaoId)
+    const abertas = todas.filter((d) => !d.respondidaEm)
+    const vencidas = abertas.filter((d) => diasAte(d.prazo) < 0)
+
+    return {
+      contexto: novoContexto,
+      resposta: {
+        texto: `${numero(abertas.length)} diligências aguardam resposta do proponente, e ${numero(vencidas.length)} já passaram do prazo de 15 dias. Posso redigir o ofício de reiteração de todas as vencidas de uma vez.`,
+        destaque: [
+          { rotulo: 'Aguardando resposta', valor: numero(abertas.length) },
+          { rotulo: 'Prazo vencido', valor: numero(vencidas.length) },
+          { rotulo: 'Respondidas', valor: numero(todas.length - abertas.length) },
+        ],
+        acoes: [{ tipo: 'navegar', para: '/diligencias', motivo: 'Abrindo a caixa de diligências' }],
+        seguintes: ['Reiterar as diligências vencidas'],
+      },
+    }
+  }
+
+  /* ---------- Padrões e anomalias ---------- */
+
+  if (/(padrao|padroes|anomalia|irregular|suspeit|repetid|fracionament|concentrac)/.test(q)) {
+    const achados = detectarAnomalias(orgaoId)
+    return {
+      contexto: novoContexto,
+      resposta: {
+        texto:
+          achados.length > 0
+            ? `Encontrei ${achados.length} padrões na carteira que pedem conferência. O mais relevante: ${achados[0].titulo.toLowerCase()} — ${achados[0].descricao}`
+            : 'Não encontrei padrão relevante na carteira deste órgão com as regras atuais.',
+        tabela:
+          achados.length > 0
+            ? {
+                colunas: ['Padrão', 'Propostas', 'Valor', 'Severidade'],
+                linhas: achados
+                  .slice(0, 8)
+                  .map((a) => [
+                    a.titulo,
+                    numero(a.propostas.length),
+                    moeda(a.valor),
+                    a.severidade,
+                  ]),
+              }
+            : undefined,
+        acoes: [{ tipo: 'navegar', para: '/padroes', motivo: 'Abrindo os padrões da carteira' }],
+      },
+    }
+  }
+
+  /* ---------- Proponentes ---------- */
+
+  if (/(proponente|municipio consegue|capacidade|historico do|confiavel|inadimplente)/.test(q)) {
+    const ranking = rankingProponentes(orgaoId, 10)
+    return {
+      contexto: novoContexto,
+      resposta: {
+        texto: `Os dez proponentes com maior valor pactuado neste órgão. A nota de capacidade combina execução física, pontualidade em prestação de contas, inadimplência, resposta a diligência e experiência — com os pesos à vista na ficha.`,
+        tabela: {
+          colunas: ['Proponente', 'Município', 'Propostas', 'Valor', 'Capacidade'],
+          linhas: ranking.map((r) => [
+            r.proponente.nome,
+            `${r.proponente.municipio}/${r.proponente.uf}`,
+            numero(r.qtd),
+            moeda(r.valor),
+            `${r.score}/100${r.inadimplente ? ' · inadimplente' : ''}`,
+          ]),
+        },
+        oferecidas: ranking[0]
+          ? [
+              {
+                rotulo: 'Abrir a ficha do primeiro',
+                destacada: true,
+                acoes: [{ tipo: 'navegar', para: `/proponentes/${ranking[0].proponente.id}` }],
+              },
+            ]
+          : undefined,
+      },
     }
   }
 

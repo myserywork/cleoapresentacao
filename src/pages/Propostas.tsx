@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowDown,
   ArrowUp,
   Columns3,
   Download,
+  Layers,
   LayoutGrid,
   Play,
   Rows3,
@@ -54,8 +55,18 @@ const COLUNAS: { id: Coluna; rotulo: string; ordenavel: boolean; opcional?: bool
 const PAGINA = 40
 
 export function Propostas() {
-  const { orgaoId, filtroPropostas, setFiltroPropostas, abrirExecucao, solicitarAprovacao, notificar } =
-    useApp()
+  const {
+    orgaoId,
+    filtroPropostas,
+    setFiltroPropostas,
+    abrirExecucao,
+    abrirLote,
+    solicitarAprovacao,
+    notificar,
+    alternarComparacao,
+    limparComparacao,
+  } = useApp()
+  const navegar = useNavigate()
   const [termo, setTermo] = useState('')
   const [limite, setLimite] = useState(PAGINA)
   const [selecao, setSelecao] = useState<Set<string>>(new Set())
@@ -472,7 +483,7 @@ export function Propostas() {
 
       {/* Ação em lote */}
       {selecao.size > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-40 ml-[212px] border-t border-line bg-surface/95 px-8 py-4 backdrop-blur-xl">
+        <div className="fixed inset-x-0 bottom-0 z-40 ml-[218px] border-t border-line bg-surface/95 px-8 py-4 backdrop-blur-xl">
           <div className="mx-auto flex max-w-[1240px] items-center gap-5">
             <div>
               <div className="text-[13px] text-ink">
@@ -495,6 +506,30 @@ export function Propostas() {
             <div className="ml-auto flex gap-2.5">
               <Botao onClick={exportarSelecao}>
                 <Download size={13} /> Exportar
+              </Botao>
+              <Botao
+                disabled={selecao.size < 2 || selecao.size > 3}
+                title="Duas ou três propostas lado a lado"
+                onClick={() => {
+                  limparComparacao()
+                  for (const id of selecao) alternarComparacao(id)
+                  setSelecao(new Set())
+                  navegar('/comparar')
+                }}
+              >
+                <Columns3 size={13} /> Comparar
+              </Botao>
+              <Botao
+                onClick={() => {
+                  abrirLote({
+                    ritoId: 'rt-instrucao',
+                    titulo: `Instrução completa — ${selecao.size} propostas`,
+                    propostaIds: [...selecao],
+                  })
+                  setSelecao(new Set())
+                }}
+              >
+                <Layers size={13} /> Rodar em lote
               </Botao>
               <Botao
                 onClick={() => {

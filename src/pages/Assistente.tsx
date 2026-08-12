@@ -17,11 +17,15 @@ interface Turno {
 
 const SUGESTOES = [
   'Quais propostas estão paradas há 30 dias?',
-  'Qual o valor total por UF?',
+  'Quanto falta empenhar até dezembro?',
+  'Como está a execução das emendas?',
+  'Quais convênios vencem nos próximos 30 dias?',
+  'Quem está inadimplente na prestação de contas?',
+  'Como está a carga da equipe?',
+  'Quais diligências passaram do prazo?',
+  'Que padrões existem na carteira?',
   'Mostre as dez maiores propostas',
-  'Gere o ofício da proposta mais parada',
   'Execute o rito completo',
-  'O que você já automatizou?',
 ]
 
 /** Atraso curto antes da resposta: réplica instantânea parece pré-gravada. */

@@ -14,6 +14,54 @@ import {
 } from '@/components/charts'
 import { Panel, PanelHeader, TOM_SITUACAO } from '@/components/ui'
 import { MapaTerritorial } from '@/components/MapaTerritorial'
+import { FeedAtividade } from '@/components/FeedAtividade'
+import { fimDeExercicio } from '@/dominio/orcamento'
+import { carteiraDeVigencias, resumoPrestacoes } from '@/dominio/ciclo'
+import { resumoEmendas } from '@/dominio/emendas'
+import { cn } from '@/lib/format'
+
+/** Cartão de sinal: um número, o que ele significa e para onde ir resolver. */
+function Sinal({
+  para,
+  eyebrow,
+  valor,
+  rotulo,
+  detalhe,
+  tom,
+}: {
+  para: string
+  eyebrow: string
+  valor: string
+  rotulo: string
+  detalhe: string
+  tom: 'gold' | 'alert' | 'teal' | 'cleo'
+}) {
+  const cores = {
+    gold: 'text-gold',
+    alert: 'text-alert',
+    teal: 'text-teal',
+    cleo: 'text-cleo',
+  }
+  return (
+    <Link
+      to={para}
+      className={cn(
+        'panel group px-5 py-4 transition-colors hover:border-[#2c3c58]',
+        tom === 'alert' && 'border-alert/25',
+      )}
+    >
+      <div className="eyebrow mb-2 flex items-center justify-between">
+        {eyebrow}
+        <ArrowUpRight size={12} className="opacity-0 transition-opacity group-hover:opacity-100" />
+      </div>
+      <div className="flex items-baseline gap-2">
+        <span className={cn('num text-[22px] leading-none font-medium', cores[tom])}>{valor}</span>
+        <span className="text-[12px] text-muted">{rotulo}</span>
+      </div>
+      <div className="mt-2 text-[11.5px] text-faint">{detalhe}</div>
+    </Link>
+  )
+}
 
 const COR_VIZ: Record<string, string> = {
   teal: 'var(--color-viz-teal)',
@@ -113,6 +161,15 @@ export function Painel() {
     .filter((s) => ['Em análise', 'Em complementação', 'Cadastrada'].includes(s.situacao))
     .reduce((s, x) => s + x.qtd, 0)
 
+  const fim = useMemo(() => fimDeExercicio(orgaoId), [orgaoId])
+  const contas = useMemo(() => resumoPrestacoes(orgaoId), [orgaoId])
+  const emendas = useMemo(() => resumoEmendas(orgaoId), [orgaoId])
+  const vigencias = useMemo(() => carteiraDeVigencias(orgaoId), [orgaoId])
+  const vencendo30 = vigencias.filter(
+    (v) => v.situacao.diasRestantes >= 0 && v.situacao.diasRestantes <= 30,
+  ).length
+  const vencidas = vigencias.filter((v) => v.situacao.diasRestantes < 0).length
+
   return (
     <div className="mx-auto flex max-w-[1240px] flex-col gap-5">
       <header className="flex items-end justify-between gap-6">
@@ -173,6 +230,42 @@ export function Painel() {
           tom="cleo"
           icone={<Timer size={15} />}
           detalhe={`${numero(resumo.automacoesExecutadas)} automações concluídas`}
+        />
+      </div>
+
+      {/* Sinais que mudam a semana da coordenação, com o caminho para agir */}
+      <div className="grid grid-cols-[1fr_1fr_1fr_1.15fr] gap-4">
+        <Sinal
+          para="/orcamento"
+          eyebrow="Fim de exercício"
+          valor={moedaCompacta(fim.saldoAEmpenhar)}
+          rotulo="a empenhar"
+          detalhe={`${fim.diasUteis} dias úteis · ${moedaCompacta(fim.ritmoNecessario)}/dia`}
+          tom={fim.emRisco ? 'alert' : 'gold'}
+        />
+        <Sinal
+          para="/vigencias"
+          eyebrow="Vigências"
+          valor={numero(vencendo30)}
+          rotulo="vencem em 30 dias"
+          detalhe={`${vencidas} já com vigência encerrada`}
+          tom={vencendo30 > 0 ? 'alert' : 'teal'}
+        />
+        <Sinal
+          para="/contas"
+          eyebrow="Prestação de contas"
+          valor={numero(contas.atrasadas)}
+          rotulo="em atraso"
+          detalhe={`${contas.proponentesBloqueados} proponentes travados`}
+          tom={contas.atrasadas > 0 ? 'alert' : 'teal'}
+        />
+        <Sinal
+          para="/emendas"
+          eyebrow="Emendas"
+          valor={`${(emendas.execucao * 100).toFixed(0)}%`}
+          rotulo="do indicado empenhado"
+          detalhe={`${numero(emendas.totalEmendas)} emendas · ${moedaCompacta(emendas.valorIndicado)}`}
+          tom="cleo"
         />
       </div>
 
@@ -252,6 +345,8 @@ export function Painel() {
           </div>
         </Panel>
       </div>
+
+      <FeedAtividade altura={300} />
     </div>
   )
 }

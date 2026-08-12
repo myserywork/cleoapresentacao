@@ -7,6 +7,7 @@ import {
   CircleDashed,
   Keyboard,
   ShieldCheck,
+  Sparkles,
   Undo2,
   X,
   Zap,
@@ -15,8 +16,10 @@ import { useApp } from '@/store/app'
 import { aprovacoesDoOrgao, automacoesDaProposta, getProponente, getProposta } from '@/data/repo'
 import type { Aprovacao, TipoAprovacao } from '@/data/types'
 import { avaliar } from '@/dominio/saude'
+import { recomendar, type Decisao } from '@/dominio/recomendacao'
 import { cn, data, desde, moeda, moedaCompacta, numero } from '@/lib/format'
-import { Badge, Botao, Panel, SituacaoBadge, Vazio } from '@/components/ui'
+import { Badge, Botao, Panel, SituacaoBadge, Vazio, type Tom } from '@/components/ui'
+import { Medidor } from '@/components/dados'
 
 const ROTULO_TIPO: Record<TipoAprovacao, string> = {
   aprovar_proposta: 'Aprovar proposta',
@@ -335,6 +338,20 @@ export function Aprovacoes() {
  * O gestor não decide sobre um item de lista: decide sobre uma proposta. Aqui
  * está tudo que ele precisaria abrir em outra tela para decidir com segurança.
  */
+const TOM_DECISAO: Record<Decisao, { texto: string; fundo: string; borda: string }> = {
+  aprovar: { texto: 'text-teal', fundo: 'bg-teal/[0.05]', borda: 'border-teal/25' },
+  verificar: { texto: 'text-gold', fundo: 'bg-gold/[0.05]', borda: 'border-gold/25' },
+  recusar: { texto: 'text-alert', fundo: 'bg-alert/[0.05]', borda: 'border-alert/25' },
+}
+
+const TOM_FATO: Record<Tom, string> = {
+  teal: 'text-teal',
+  gold: 'text-gold',
+  cleo: 'text-cleo',
+  inert: 'text-muted',
+  alert: 'text-alert',
+}
+
 function ContextoDecisao({
   aprovacao,
   posicao,
@@ -357,6 +374,7 @@ function ContextoDecisao({
   )
   const saude = avaliar(proposta, feitos)
   const altoImpacto = proposta.valorGlobal > LIMITE_BAIXO_IMPACTO
+  const recomendacao = recomendar(aprovacao)
 
   return (
     <Panel className="flex min-h-0 flex-col overflow-hidden">
@@ -441,6 +459,51 @@ function ContextoDecisao({
             {desde(aprovacao.solicitadoEm)}
           </div>
         </div>
+
+        {/* A recomendação nunca aparece sozinha: vem com os fatos que a
+            produziram e o grau de convergência entre eles. */}
+        {recomendacao && (
+          <div
+            className={cn(
+              'mt-5 rounded-xl border p-4',
+              TOM_DECISAO[recomendacao.decisao].borda,
+              TOM_DECISAO[recomendacao.decisao].fundo,
+            )}
+          >
+            <div className="mb-2.5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Sparkles size={13} className={TOM_DECISAO[recomendacao.decisao].texto} />
+                <span className={cn('text-[13px]', TOM_DECISAO[recomendacao.decisao].texto)}>
+                  {recomendacao.rotulo}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="eyebrow">confiança</span>
+                <div className="w-16">
+                  <Medidor
+                    valor={recomendacao.confianca}
+                    tom={recomendacao.confianca > 0.85 ? 'teal' : 'gold'}
+                    altura={4}
+                  />
+                </div>
+                <span className="num text-[11.5px] text-muted">
+                  {(recomendacao.confianca * 100).toFixed(0)}%
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[12.5px] leading-relaxed text-muted">{recomendacao.frase}</p>
+
+            <ul className="mt-3.5 flex flex-wrap gap-x-6 gap-y-2 border-t border-line pt-3">
+              {recomendacao.fatos.map((f) => (
+                <li key={f.rotulo} className="min-w-0">
+                  <div className="eyebrow mb-0.5">{f.rotulo}</div>
+                  <div className={cn('text-[12px]', TOM_FATO[f.tom])}>{f.valor}</div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {/* Contexto que sustenta a decisão */}
         <div className="mt-5 grid grid-cols-2 gap-4">

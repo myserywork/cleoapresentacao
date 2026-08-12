@@ -1,19 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
+  Building2,
   CornerDownLeft,
   FileText,
+  Landmark,
   MessagesSquare,
   Play,
   Search,
   Sparkles,
+  Workflow,
 } from 'lucide-react'
 import { useApp } from '@/store/app'
 import { useExecutor } from '@/comandos/executor'
 import { CATALOGO } from '@/comandos/catalogo'
 import type { Acao } from '@/comandos/tipos'
-import { buscarPropostas, getProponente } from '@/data/repo'
-import { cn, moedaCompacta } from '@/lib/format'
+import {
+  buscarPropostas,
+  emendasDoOrgao,
+  getParlamentar,
+  getProponente,
+  propostasDoOrgao,
+} from '@/data/repo'
+import { cn, moeda, moedaCompacta } from '@/lib/format'
 
 interface Item {
   id: string
@@ -38,7 +47,7 @@ export function PaletaComando() {
   const [aberta, setAberta] = useState(false)
   const [termo, setTermo] = useState('')
   const [indice, setIndice] = useState(0)
-  const { orgaoId } = useApp()
+  const { orgaoId, ritos } = useApp()
   const { executar } = useExecutor()
   const entradaRef = useRef<HTMLInputElement>(null)
 
@@ -94,6 +103,80 @@ export function PaletaComando() {
           })
       : []
 
+    // Busca global: o que a plataforma conhece cabe no mesmo campo.
+    const proponentes: Item[] = t
+      ? [
+          ...new Map(
+            propostasDoOrgao(orgaoId)
+              .map((p) => getProponente(p.proponenteId))
+              .filter((p) => p && normalizar(`${p.nome} ${p.municipio} ${p.uf}`).includes(t))
+              .map((p) => [p!.id, p!]),
+          ).values(),
+        ]
+          .slice(0, 4)
+          .map((p) => ({
+            id: `pn-${p.id}`,
+            rotulo: p.nome,
+            detalhe: `${p.municipio}/${p.uf} · ${p.esfera} · CNPJ ${p.cnpj}`,
+            categoria: 'Proponentes',
+            icone: <Building2 size={14} />,
+            acoes: [{ tipo: 'navegar', para: `/proponentes/${p.id}` }] as Acao[],
+          }))
+      : []
+
+    const parlamentares: Item[] = t
+      ? [
+          ...new Map(
+            emendasDoOrgao(orgaoId)
+              .map((e) => (e.parlamentarId ? getParlamentar(e.parlamentarId) : undefined))
+              .filter((p) => p && normalizar(`${p.nome} ${p.partido} ${p.uf}`).includes(t))
+              .map((p) => [p!.id, p!]),
+          ).values(),
+        ]
+          .slice(0, 4)
+          .map((p) => ({
+            id: `pl-${p.id}`,
+            rotulo: p.nome,
+            detalhe: `${p.partido}/${p.uf} · ${p.casa}`,
+            categoria: 'Parlamentares',
+            icone: <Landmark size={14} />,
+            acoes: [{ tipo: 'navegar', para: `/parlamentares/${p.id}` }] as Acao[],
+          }))
+      : []
+
+    const emendas: Item[] = t
+      ? emendasDoOrgao(orgaoId)
+          .filter((e) => normalizar(`${e.numero} ${e.tipo} ${e.ano}`).includes(t))
+          .slice(0, 3)
+          .map((e) => ({
+            id: `em-${e.id}`,
+            rotulo: `Emenda ${e.numero}`,
+            detalhe: `${e.tipo} · ${e.ano} · ${moeda(e.valorIndicado)}`,
+            categoria: 'Emendas',
+            icone: <Landmark size={14} />,
+            acoes: [
+              {
+                tipo: 'navegar',
+                para: e.parlamentarId ? `/parlamentares/${e.parlamentarId}` : '/emendas',
+              },
+            ] as Acao[],
+          }))
+      : []
+
+    const ritosEncontrados: Item[] = t
+      ? ritos
+          .filter((r) => normalizar(`${r.nome} ${r.descricao}`).includes(t))
+          .slice(0, 3)
+          .map((r) => ({
+            id: `rt-${r.id}`,
+            rotulo: r.nome,
+            detalhe: `${r.passos.length} passos · ${r.sistema}`,
+            categoria: 'Ritos',
+            icone: <Workflow size={14} className="text-cleo" />,
+            acoes: [{ tipo: 'navegar', para: '/ritos' }] as Acao[],
+          }))
+      : []
+
     const perguntar: Item[] =
       t.length > 3
         ? [
@@ -123,8 +206,17 @@ export function PaletaComando() {
       : []
 
     // Sem busca, a apresentação vem primeiro: é o que se procura antes de subir ao palco.
-    return [...perguntar, ...propostas, ...apresentar, ...comandos]
-  }, [termo, orgaoId])
+    return [
+      ...perguntar,
+      ...propostas,
+      ...proponentes,
+      ...parlamentares,
+      ...emendas,
+      ...ritosEncontrados,
+      ...apresentar,
+      ...comandos,
+    ]
+  }, [termo, orgaoId, ritos])
 
   useEffect(() => {
     setIndice(0)

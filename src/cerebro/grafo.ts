@@ -1,4 +1,11 @@
-import { MINUTAS, getProponente, propostasDoOrgao } from '@/data/repo'
+import {
+  MINUTAS,
+  emendaDaProposta,
+  getParlamentar,
+  getProponente,
+  propostasDoOrgao,
+} from '@/data/repo'
+import { moedaCompacta } from '@/lib/format'
 
 /**
  * Grafo de conhecimento do órgão.
@@ -8,7 +15,16 @@ import { MINUTAS, getProponente, propostasDoOrgao } from '@/data/repo'
  * para o desenho ficar bonito: o desenho é o que os dados já são.
  */
 
-export type TipoNo = 'programa' | 'proponente' | 'proposta' | 'processo' | 'documento' | 'minuta'
+export type TipoNo =
+  | 'programa'
+  | 'proponente'
+  | 'proposta'
+  | 'processo'
+  | 'documento'
+  | 'minuta'
+  | 'emenda'
+  | 'parlamentar'
+  | 'uf'
 
 export interface No {
   id: string
@@ -47,6 +63,9 @@ export const CORES_TIPO: Record<TipoNo, string> = {
   processo: '#8b6cf0',
   documento: '#b49bf7',
   minuta: '#7d8ca6',
+  emenda: '#d9a441',
+  parlamentar: '#e0c274',
+  uf: '#4fb8a4',
 }
 
 export const ROTULO_TIPO: Record<TipoNo, string> = {
@@ -56,6 +75,9 @@ export const ROTULO_TIPO: Record<TipoNo, string> = {
   processo: 'Processo SEI',
   documento: 'Documento',
   minuta: 'Minuta',
+  emenda: 'Emenda',
+  parlamentar: 'Parlamentar',
+  uf: 'Unidade da federação',
 }
 
 const RAIO: Record<TipoNo, number> = {
@@ -65,6 +87,9 @@ const RAIO: Record<TipoNo, number> = {
   processo: 3.4,
   documento: 2.4,
   minuta: 7,
+  emenda: 3.8,
+  parlamentar: 6.5,
+  uf: 7,
 }
 
 const MAX_DOCS_POR_PROCESSO = 3
@@ -150,6 +175,41 @@ export function montarGrafo(orgaoId: string): Grafo {
     ligar(iProposta, iPrograma)
     if (iProponente !== undefined) ligar(iProposta, iProponente)
 
+    // Território: o proponente pendura na UF, e a UF vira o agrupador natural
+    // da história geográfica.
+    if (prop && iProponente !== undefined) {
+      const iUf = addNo(`uf:${prop.uf}`, 'uf', prop.uf, 'Unidade da federação', p.dataCadastro)
+      ligar(iProponente, iUf)
+    }
+
+    // Origem do recurso: proposta → emenda → parlamentar. É o caminho que liga
+    // o gabinete à obra do município.
+    const emenda = emendaDaProposta(p.id)
+    if (emenda) {
+      const iEmenda = addNo(
+        `em:${emenda.id}`,
+        'emenda',
+        emenda.numero,
+        `${emenda.tipo} · ${emenda.ano} · ${moedaCompacta(emenda.valorIndicado)}`,
+        p.dataCadastro,
+        '/emendas',
+      )
+      ligar(iProposta, iEmenda)
+
+      const parlamentar = emenda.parlamentarId ? getParlamentar(emenda.parlamentarId) : undefined
+      if (parlamentar) {
+        const iParlamentar = addNo(
+          `pl:${parlamentar.id}`,
+          'parlamentar',
+          parlamentar.nome,
+          `${parlamentar.partido}/${parlamentar.uf} · ${parlamentar.casa}`,
+          p.dataCadastro,
+          `/parlamentares/${parlamentar.id}`,
+        )
+        ligar(iEmenda, iParlamentar)
+      }
+    }
+
     if (p.numProcessoSei) {
       const iProcesso = addNo(
         `sei:${p.numProcessoSei}`,
@@ -201,6 +261,9 @@ export function montarGrafo(orgaoId: string): Grafo {
       processo: 0,
       documento: 0,
       minuta: 0,
+      emenda: 0,
+      parlamentar: 0,
+      uf: 0,
     } as Record<TipoNo, number>,
   )
 
