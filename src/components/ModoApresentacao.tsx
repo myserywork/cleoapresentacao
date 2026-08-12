@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Play, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Pause, Play, X } from 'lucide-react'
 import { useApp, type Publico } from '@/store/app'
 import { useExecutor } from '@/comandos/executor'
 import { propostasDoOrgao } from '@/data/repo'
@@ -13,7 +13,11 @@ interface Cena {
   titulo: string
   narracao: string
   acoes: Acao[]
+  /** Tempo de tela no piloto automático; cenas com automação rodando pedem mais. */
+  duracaoMs?: number
 }
+
+const DURACAO_PADRAO = 12_000
 
 /**
  * Modo apresentação.
@@ -39,6 +43,7 @@ export function ModoApresentacao() {
   const { orgaoId, apresentando, setApresentando, publico, setPublico } = useApp()
   const { executar } = useExecutor()
   const [cena, setCena] = useState(0)
+  const [auto, setAuto] = useState(false)
 
   const roteiro = useMemo<Cena[]>(() => {
     const propostas = propostasDoOrgao(orgaoId)
@@ -66,6 +71,7 @@ export function ModoApresentacao() {
           titulo: 'A execução, passo a passo',
           narracao:
             'A janela reconstrói o SEI e o TransfereGov ao vivo: cursor, digitação, clique e o resultado de cada passo. Falha isola o item e retoma do ponto exato.',
+          duracaoMs: 40_000,
           acoes: [
             {
               tipo: 'executar-rito',
@@ -169,6 +175,7 @@ export function ModoApresentacao() {
         titulo: 'A Cleo trabalhando',
         narracao:
           'Um clique instrui o processo inteiro: autua no SEI, anexa os documentos do TransfereGov e redige o termo de análise. Acompanhe pela janela.',
+        duracaoMs: 40_000,
         acoes: [
           {
             tipo: 'executar-rito',
@@ -221,11 +228,27 @@ export function ModoApresentacao() {
   const sair = useCallback(() => {
     setApresentando(false)
     setCena(0)
+    setAuto(false)
     if (params.has('apresentar')) {
       params.delete('apresentar')
       setParams(params, { replace: true })
     }
   }, [setApresentando, params, setParams])
+
+  // Piloto automático: avança no ritmo da cena e desliga ao chegar ao fim.
+  // Qualquer navegação manual reinicia o cronômetro — o efeito depende da cena.
+  useEffect(() => {
+    if (!auto || !apresentando) return
+    if (cena >= roteiro.length - 1) {
+      const fim = window.setTimeout(() => setAuto(false), roteiro[cena]?.duracaoMs ?? DURACAO_PADRAO)
+      return () => window.clearTimeout(fim)
+    }
+    const t = window.setTimeout(
+      () => irPara(cena + 1),
+      roteiro[cena]?.duracaoMs ?? DURACAO_PADRAO,
+    )
+    return () => window.clearTimeout(t)
+  }, [auto, apresentando, cena, roteiro, irPara])
 
   // Entrada pelo endereço (?apresentar=1), pelo botão ou por Ctrl+Shift+P.
   // A trava impede que a primeira cena seja reexecutada a cada renderização.
@@ -267,7 +290,8 @@ export function ModoApresentacao() {
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] flex justify-center p-6">
       <div className="pointer-events-auto w-[min(920px,94vw)] rounded-2xl border border-gold/25 bg-surface/96 px-6 py-4 shadow-2xl backdrop-blur-xl">
         <div className="flex items-center gap-5">
-          <div className="min-w-0 flex-1">
+          {/* A chave pela cena reanima o texto: a narração entra, não troca */}
+          <div key={cena} className="pagina-entra min-w-0 flex-1">
             <div className="mb-1.5 flex items-center gap-3">
               <span className="eyebrow text-gold">
                 {String(cena + 1).padStart(2, '0')} / {String(roteiro.length).padStart(2, '0')}
@@ -278,6 +302,16 @@ export function ModoApresentacao() {
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
+            <Botao
+              tamanho="sm"
+              onClick={() => setAuto((v) => !v)}
+              className={cn(auto && 'border-gold/50 text-gold')}
+              title={auto ? 'Pausar o piloto automático' : 'A apresentação avança sozinha'}
+              aria-label="Piloto automático"
+            >
+              {auto ? <Pause size={13} /> : <Play size={13} fill="currentColor" />}
+              {auto ? 'Pausar' : 'Auto'}
+            </Botao>
             <Botao
               tamanho="sm"
               onClick={() => irPara(cena - 1)}
@@ -322,7 +356,8 @@ export function ModoApresentacao() {
           <span className="ml-auto text-[11px] text-faint">{EXPLICA_PUBLICO[publico]}</span>
         </div>
 
-        {/* Trilha das cenas — a plateia vê quanto falta */}
+        {/* Trilha das cenas — a plateia vê quanto falta; no piloto automático,
+            a cena atual se preenche no tempo real dela */}
         <div className="mt-3 flex gap-1">
           {roteiro.map((c, i) => (
             <button
@@ -330,10 +365,18 @@ export function ModoApresentacao() {
               onClick={() => irPara(i)}
               aria-label={c.titulo}
               className={cn(
-                'h-1 flex-1 rounded-full transition-colors',
-                i < cena ? 'bg-gold/50' : i === cena ? 'bg-gold' : 'bg-line',
+                'h-1 flex-1 overflow-hidden rounded-full transition-colors',
+                i < cena ? 'bg-gold/50' : i === cena && !auto ? 'bg-gold' : 'bg-line',
               )}
-            />
+            >
+              {i === cena && auto && (
+                <span
+                  key={`${cena}-auto`}
+                  className="block h-full rounded-full bg-gold"
+                  style={{ animation: `cresce-x ${c.duracaoMs ?? DURACAO_PADRAO}ms linear forwards` }}
+                />
+              )}
+            </button>
           ))}
         </div>
       </div>

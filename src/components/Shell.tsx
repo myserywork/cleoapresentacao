@@ -268,7 +268,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
       </nav>
 
       <main id="conteudo" className={cn('ml-[218px] flex-1', telaCheia ? '' : 'px-8 py-7')}>
-        {children}
+        {/* A chave pela rota reinicia a animação de entrada a cada navegação */}
+        <div key={pathname} className={telaCheia ? '' : 'pagina-entra'}>
+          {children}
+        </div>
       </main>
     </div>
   )

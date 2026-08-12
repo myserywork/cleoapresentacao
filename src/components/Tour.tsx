@@ -69,7 +69,7 @@ const PARADAS: Parada[] = [
 ]
 
 export function Tour() {
-  const { tourVisto, marcarTourVisto } = useApp()
+  const { tourVisto, marcarTourVisto, apresentando } = useApp()
   const navegar = useNavigate()
   const { pathname } = useLocation()
   const [aberto, setAberto] = useState(false)
@@ -106,7 +106,9 @@ export function Tour() {
     if (aberto) navegar(PARADAS[passo].rota)
   }, [aberto, passo, navegar])
 
-  if (!aberto) return null
+  // Dois guias falando ao mesmo tempo é um a mais: enquanto o modo
+  // apresentação dirige a plataforma, o tour se recolhe.
+  if (!aberto || apresentando) return null
   const parada = PARADAS[passo]
   const ultimo = passo === PARADAS.length - 1
 

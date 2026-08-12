@@ -34,6 +34,13 @@ export function useContagem(alvo: number, duracaoMs = 1100): number {
 
 /* ---------- Bloco de indicador ---------- */
 
+const COR_TOM = {
+  ink: 'var(--color-viz-inert)',
+  gold: 'var(--color-viz-gold)',
+  teal: 'var(--color-viz-teal)',
+  cleo: 'var(--color-viz-cleo)',
+}
+
 export function Indicador({
   rotulo,
   valor,
@@ -41,6 +48,7 @@ export function Indicador({
   formato = 'numero',
   tom = 'ink',
   icone,
+  serie,
 }: {
   rotulo: string
   valor: number
@@ -48,6 +56,8 @@ export function Indicador({
   formato?: 'numero' | 'moeda'
   tom?: 'ink' | 'gold' | 'teal' | 'cleo'
   icone?: React.ReactNode
+  /** Histórico curto atrás do número — a tendência sem abrir gráfico. */
+  serie?: number[]
 }) {
   const animado = useContagem(valor)
   const cores = {
@@ -57,7 +67,12 @@ export function Indicador({
     cleo: 'text-cleo',
   }
   return (
-    <div className="panel px-5 py-4">
+    <div className="panel relative overflow-hidden px-5 py-4">
+      {serie && serie.length > 1 && (
+        <div className="pointer-events-none absolute right-2 bottom-1 opacity-35">
+          <Sparkline valores={serie} cor={COR_TOM[tom]} largura={110} altura={26} />
+        </div>
+      )}
       <div className="mb-2 flex items-center justify-between">
         <span className="eyebrow">{rotulo}</span>
         {icone && <span className="text-faint">{icone}</span>}

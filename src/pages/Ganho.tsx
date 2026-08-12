@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowRight, Check, Clock, MousePointerClick, Users } from 'lucide-react'
+import { ArrowRight, Check, Clock, Flag, MousePointerClick, RotateCcw, Users } from 'lucide-react'
 import { useApp } from '@/store/app'
 import { getOrgao, resumoOrgao } from '@/data/repo'
 import { numero } from '@/lib/format'
@@ -37,6 +37,9 @@ const PASSOS_CLEO = [
 /** Duração real do rito encadeado na plataforma, em segundos. */
 const SEGUNDOS_CLEO = 96
 
+/** Quanto tempo de tela a pista inteira da corrida representa. */
+const DURACAO_CORRIDA_MS = 14_000
+
 export function Ganho() {
   const { orgaoId } = useApp()
   const orgao = getOrgao(orgaoId)!
@@ -44,6 +47,7 @@ export function Ganho() {
 
   const [minutosManuais, setMinutosManuais] = useState(47)
   const [pessoas, setPessoas] = useState(6)
+  const [corrida, setCorrida] = useState(0)
 
   const processos = resumo.processosSei
   const horasManuais = (processos * minutosManuais) / 60
@@ -65,6 +69,67 @@ export function Ganho() {
           anexar os documentos e redigir o termo. Muda quem faz.
         </p>
       </header>
+
+      {/* A corrida: os dois fluxos no mesmo relógio, em escala proporcional real.
+          A barra da Cleo termina quando a manual mal saiu do lugar — nenhum
+          número diz isso tão rápido quanto ver. */}
+      <Panel className="p-5">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div>
+            <div className="eyebrow mb-1">A corrida</div>
+            <h2 className="text-[15px]">Os dois fluxos largando juntos, em escala real</h2>
+          </div>
+          <button
+            onClick={() => setCorrida((c) => c + 1)}
+            className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-[12px] text-muted transition-colors hover:text-ink"
+          >
+            <RotateCcw size={12} /> Largar de novo
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div>
+            <div className="mb-1.5 flex items-baseline justify-between">
+              <span className="text-[12.5px] text-muted">Fluxo manual</span>
+              <span className="num text-[12px] text-inert">{minutosManuais} min</span>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-white/5">
+              <div
+                key={`m-${corrida}-${minutosManuais}`}
+                className="h-full rounded-full bg-inert/70"
+                style={{ animation: `cresce-x ${DURACAO_CORRIDA_MS}ms linear forwards` }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-1.5 flex items-baseline justify-between">
+              <span className="flex items-center gap-1.5 text-[12.5px] text-cleo">
+                Cleo <Flag size={11} />
+              </span>
+              <span className="num text-[12px] text-cleo">{SEGUNDOS_CLEO}s</span>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-white/5">
+              <div
+                key={`c-${corrida}-${minutosManuais}`}
+                className="h-full rounded-full bg-cleo"
+                style={{
+                  animation: `cresce-x ${Math.max(
+                    (DURACAO_CORRIDA_MS * SEGUNDOS_CLEO) / (minutosManuais * 60),
+                    350,
+                  )}ms linear forwards`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <p className="mt-4 text-[11.5px] text-faint">
+          A pista inteira representa os {minutosManuais} minutos do fluxo manual. A Cleo cruza a
+          linha em {((SEGUNDOS_CLEO / (minutosManuais * 60)) * 100).toFixed(1)}% do percurso —{' '}
+          {Math.round((minutosManuais * 60) / SEGUNDOS_CLEO)} vezes mais rápido.
+        </p>
+      </Panel>
 
       <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-4">
         <Panel className="flex flex-col p-5">

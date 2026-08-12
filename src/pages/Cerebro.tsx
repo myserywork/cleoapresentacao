@@ -1,6 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Focus, Maximize2, Route, Search, Sparkles, Waves } from 'lucide-react'
+import {
+  ArrowRight,
+  Clapperboard,
+  Focus,
+  History,
+  Maximize2,
+  Pause,
+  Play,
+  Route,
+  Search,
+  Sparkles,
+  Waves,
+  X,
+} from 'lucide-react'
 import { useApp } from '@/store/app'
 import { getOrgao, getProponente, getProposta } from '@/data/repo'
 import { CORES_TIPO, ROTULO_TIPO, montarGrafo, vizinhos, type TipoNo } from '@/cerebro/grafo'
@@ -12,6 +25,7 @@ import {
   desenharFechos,
   desenharPulsos,
   desenharRotulos,
+  desenharVinheta,
   detectarClusters,
   projetar,
 } from '@/cerebro/render'
@@ -34,7 +48,14 @@ const SALTOS_EGO = 2
 /** Quadros entre recálculos do fecho enquanto o layout ainda se move. */
 const INTERVALO_FECHOS = 40
 
-type Historia = 'panorama' | 'jornada' | 'dinheiro' | 'territorio' | 'producao' | 'movimenta'
+type Historia =
+  | 'panorama'
+  | 'jornada'
+  | 'dinheiro'
+  | 'territorio'
+  | 'producao'
+  | 'travado'
+  | 'movimenta'
 
 const HISTORIAS: { id: Historia; rotulo: string; explica: string }[] = [
   {
@@ -68,12 +89,36 @@ const HISTORIAS: { id: Historia; rotulo: string; explica: string }[] = [
       'Só os processos e documentos criados pela automação, e as minutas que os originaram. O que está aceso aqui não foi digitado por ninguém.',
   },
   {
+    id: 'travado',
+    rotulo: 'Onde o fluxo para',
+    explica:
+      'As propostas que ainda não têm processo no SEI — o ponto exato em que o trabalho manual não deu conta. É por aqui que a automação começa.',
+  },
+  {
     id: 'movimenta',
     rotulo: 'Quem mais movimenta',
     explica:
       'Os entes com mais propostas e processos no órgão. O tamanho do ponto acompanha o número de vínculos.',
   },
 ]
+
+/**
+ * Roteiro do modo cinema: as histórias em sequência, cada uma com tempo de
+ * tela. O Cérebro se apresenta sozinho enquanto o apresentador fala — ou
+ * enquanto ninguém fala, num telão de recepção.
+ */
+const CINEMA: { id: Historia; duracaoMs: number }[] = [
+  { id: 'panorama', duracaoMs: 9000 },
+  { id: 'jornada', duracaoMs: 11000 },
+  { id: 'dinheiro', duracaoMs: 11000 },
+  { id: 'territorio', duracaoMs: 9000 },
+  { id: 'producao', duracaoMs: 9000 },
+  { id: 'travado', duracaoMs: 9000 },
+  { id: 'movimenta', duracaoMs: 9000 },
+]
+
+/** Duração da varredura completa da linha do tempo, em milissegundos. */
+const DURACAO_LINHA_TEMPO = 20_000
 
 export function Cerebro() {
   const { orgaoId, focoCerebro, setFocoCerebro } = useApp()
@@ -91,7 +136,19 @@ export function Cerebro() {
   const [isolando, setIsolando] = useState(false)
   const [historia, setHistoria] = useState<Historia>('panorama')
 
+  // Modo cinema: o Cérebro percorre as histórias sozinho
+  const [cinema, setCinema] = useState(false)
+  const [cenaCinema, setCenaCinema] = useState(0)
+
+  // Linha do tempo: o conhecimento crescendo na ordem em que foi aprendido
+  const [modoTempo, setModoTempo] = useState(false)
+  const [reproduzindoTempo, setReproduzindoTempo] = useState(false)
+  const [tempoUi, setTempoUi] = useState(1)
+  const tempoRef = useRef(1)
+
   const camera = useRef({ x: 0, y: 0, zoom: 1 })
+  /** Destino da câmera — o laço de desenho anima até ele em vez de teleportar. */
+  const alvoCam = useRef<{ x: number; y: number; zoom: number } | null>(null)
   const arraste = useRef<{ x: number; y: number; moveu: boolean } | null>(null)
   const cameraLivre = useRef(true)
   const pulsos = useRef(criarPulsos(grafo, QTD_PULSOS))
@@ -99,6 +156,18 @@ export function Cerebro() {
   useEffect(() => {
     pulsos.current = criarPulsos(grafo, QTD_PULSOS)
   }, [grafo])
+
+  /** Instante de cada nó em milissegundos — parsear ISO a cada quadro custaria caro. */
+  const temposMs = useMemo(() => grafo.nos.map((n) => new Date(n.tempo).getTime()), [grafo])
+  const faixaTempo = useMemo(() => {
+    let min = Infinity
+    let max = -Infinity
+    for (const t of temposMs) {
+      if (t < min) min = t
+      if (t > max) max = t
+    }
+    return { min, max: Math.max(max, min + 1) }
+  }, [temposMs])
 
   /* ---------- Recortes das histórias ---------- */
 
@@ -124,6 +193,25 @@ export function Cerebro() {
       const conjunto = new Set<number>()
       grafo.nos.forEach((n, i) => {
         if (n.tipo === 'uf' || n.tipo === 'proponente') {
+          conjunto.add(i)
+          for (const v of vizinhos(grafo, i)) conjunto.add(v)
+        }
+      })
+      return conjunto
+    }
+    if (historia === 'travado') {
+      // Proposta sem vizinho do tipo processo: o trabalho parou antes do SEI.
+      const conjunto = new Set<number>()
+      grafo.nos.forEach((n, i) => {
+        if (n.tipo !== 'proposta') return
+        let temProcesso = false
+        for (const v of vizinhos(grafo, i)) {
+          if (grafo.nos[v].tipo === 'processo') {
+            temProcesso = true
+            break
+          }
+        }
+        if (!temProcesso) {
           conjunto.add(i)
           for (const v of vizinhos(grafo, i)) conjunto.add(v)
         }
@@ -188,9 +276,9 @@ export function Cerebro() {
     }
   }, [selecionado, grafo])
 
-  const enquadrar = useCallback(() => {
+  const medirEnquadramento = useCallback(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    if (!canvas) return null
     let minX = Infinity
     let maxX = -Infinity
     let minY = Infinity
@@ -201,21 +289,36 @@ export function Cerebro() {
       minY = Math.min(minY, n.y)
       maxY = Math.max(maxY, n.y)
     }
-    camera.current.zoom = Math.min(
-      canvas.clientWidth / (Math.max(maxX - minX, 1) * 1.12),
-      canvas.clientHeight / (Math.max(maxY - minY, 1) * 1.12),
-    )
-    camera.current.x = (minX + maxX) / 2
-    camera.current.y = (minY + maxY) / 2
+    return {
+      x: (minX + maxX) / 2,
+      y: (minY + maxY) / 2,
+      zoom: Math.min(
+        canvas.clientWidth / (Math.max(maxX - minX, 1) * 1.12),
+        canvas.clientHeight / (Math.max(maxY - minY, 1) * 1.12),
+      ),
+    }
   }, [grafo])
+
+  /** Enquadramento seco — usado só enquanto o layout inicial assenta. */
+  const enquadrar = useCallback(() => {
+    const alvo = medirEnquadramento()
+    if (!alvo) return
+    camera.current.x = alvo.x
+    camera.current.y = alvo.y
+    camera.current.zoom = alvo.zoom
+  }, [medirEnquadramento])
+
+  /** Enquadramento animado — a câmera viaja até o quadro geral. */
+  const enquadrarSuave = useCallback(() => {
+    const alvo = medirEnquadramento()
+    if (alvo) alvoCam.current = alvo
+  }, [medirEnquadramento])
 
   const centralizarEm = useCallback(
     (indice: number, zoom = 2.6) => {
       cameraLivre.current = false
       const n = grafo.nos[indice]
-      camera.current.x = n.x
-      camera.current.y = n.y
-      camera.current.zoom = Math.max(camera.current.zoom, zoom)
+      alvoCam.current = { x: n.x, y: n.y, zoom: Math.max(camera.current.zoom, zoom) }
       setSelecionado(indice)
     },
     [grafo],
@@ -223,23 +326,31 @@ export function Cerebro() {
 
   /* ---------- Histórias que movem a câmera ---------- */
 
+  /** O nó de maior grau de um tipo — a âncora natural de cada história. */
+  const maiorDoTipo = useCallback(
+    (tipo: TipoNo): number => {
+      let alvo = -1
+      let melhor = -1
+      grafo.nos.forEach((n, i) => {
+        if (n.tipo === tipo && n.grau > melhor) {
+          melhor = n.grau
+          alvo = i
+        }
+      })
+      return alvo
+    },
+    [grafo],
+  )
+
   function contarHistoria(id: Historia) {
     setHistoria(id)
     setTermo('')
-
-    if (id === 'panorama') {
-      setIsolando(false)
-      setSelecionado(null)
-      cameraLivre.current = true
-      enquadrar()
-      return
-    }
+    setModoTempo(false)
+    tempoRef.current = 1
 
     if (id === 'jornada') {
       // Escolhe um convênio com a cadeia inteira: proponente, processo e documentos
-      const alvo = grafo.nos.findIndex(
-        (n) => n.tipo === 'proposta' && n.grau >= 3 && n.href,
-      )
+      const alvo = grafo.nos.findIndex((n) => n.tipo === 'proposta' && n.grau >= 3 && n.href)
       if (alvo >= 0) {
         setIsolando(true)
         centralizarEm(alvo, 3.2)
@@ -249,14 +360,7 @@ export function Cerebro() {
 
     if (id === 'dinheiro') {
       // O parlamentar com mais vínculos: é dele que sai a cadeia mais rica.
-      let alvo = -1
-      let melhor = -1
-      grafo.nos.forEach((n, i) => {
-        if (n.tipo === 'parlamentar' && n.grau > melhor) {
-          melhor = n.grau
-          alvo = i
-        }
-      })
+      const alvo = maiorDoTipo('parlamentar')
       if (alvo >= 0) {
         setIsolando(true)
         centralizarEm(alvo, 2.4)
@@ -264,10 +368,93 @@ export function Cerebro() {
       }
     }
 
+    if (id === 'territorio') {
+      // A UF que mais recebe: dá um centro à história geográfica.
+      const alvo = maiorDoTipo('uf')
+      if (alvo >= 0) {
+        setIsolando(false)
+        centralizarEm(alvo, 1.6)
+        return
+      }
+    }
+
+    if (id === 'movimenta') {
+      const alvo = maiorDoTipo('proponente')
+      if (alvo >= 0) {
+        setIsolando(false)
+        centralizarEm(alvo, 1.9)
+        return
+      }
+    }
+
     setIsolando(false)
     setSelecionado(null)
     cameraLivre.current = true
-    enquadrar()
+    enquadrarSuave()
+  }
+
+  /* ---------- Modo cinema ---------- */
+
+  useEffect(() => {
+    if (!cinema) return
+    const cena = CINEMA[cenaCinema % CINEMA.length]
+    contarHistoria(cena.id)
+    const t = window.setTimeout(
+      () => setCenaCinema((c) => (c + 1) % CINEMA.length),
+      cena.duracaoMs,
+    )
+    return () => window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cinema, cenaCinema])
+
+  useEffect(() => {
+    if (!cinema) return
+    const sair = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setCinema(false)
+    }
+    window.addEventListener('keydown', sair)
+    return () => window.removeEventListener('keydown', sair)
+  }, [cinema])
+
+  /* ---------- Linha do tempo ---------- */
+
+  useEffect(() => {
+    if (!reproduzindoTempo) return
+    let quadro = 0
+    let anterior = performance.now()
+    const passo = (agora: number) => {
+      const dt = agora - anterior
+      anterior = agora
+      const proximo = Math.min(tempoRef.current + dt / DURACAO_LINHA_TEMPO, 1)
+      tempoRef.current = proximo
+      setTempoUi(proximo)
+      if (proximo >= 1) {
+        setReproduzindoTempo(false)
+        return
+      }
+      quadro = requestAnimationFrame(passo)
+    }
+    quadro = requestAnimationFrame(passo)
+    return () => cancelAnimationFrame(quadro)
+  }, [reproduzindoTempo])
+
+  function abrirLinhaDoTempo() {
+    setModoTempo(true)
+    setIsolando(false)
+    setSelecionado(null)
+    setHistoria('panorama')
+    cameraLivre.current = true
+    enquadrarSuave()
+    tempoRef.current = 0
+    setTempoUi(0)
+    setReproduzindoTempo(true)
+  }
+
+  function fecharLinhaDoTempo() {
+    setModoTempo(false)
+    setReproduzindoTempo(false)
+    tempoRef.current = 1
+    setTempoUi(1)
   }
 
   // A busca leva a câmera junto: digitar um município e não sair do lugar faz o
@@ -291,8 +478,21 @@ export function Cerebro() {
     ego,
     fluxo,
     destaqueHistoria,
+    modoTempo,
+    temposMs,
+    faixaTempo,
   })
-  refs.current = { realce, correspondentes, ocultos, ego, fluxo, destaqueHistoria }
+  refs.current = {
+    realce,
+    correspondentes,
+    ocultos,
+    ego,
+    fluxo,
+    destaqueHistoria,
+    modoTempo,
+    temposMs,
+    faixaTempo,
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -316,6 +516,7 @@ export function Cerebro() {
 
     const desenhar = () => {
       contador++
+      const agora = performance.now()
       const assentado = sim.alpha < 0.05
 
       for (let i = 0; i < (sim.alpha > 0.35 ? 3 : 1); i++) sim.passo()
@@ -333,21 +534,44 @@ export function Cerebro() {
         }
       }
 
+      // A câmera viaja: interpola até o destino em vez de teleportar. O zoom
+      // anda em escala logarítmica — é o que faz o voo parecer constante.
+      const alvo = alvoCam.current
+      if (alvo) {
+        const c = camera.current
+        c.x += (alvo.x - c.x) * 0.085
+        c.y += (alvo.y - c.y) * 0.085
+        c.zoom *= Math.pow(alvo.zoom / c.zoom, 0.085)
+        const chegouPerto =
+          Math.abs(alvo.x - c.x) * c.zoom < 0.5 &&
+          Math.abs(alvo.y - c.y) * c.zoom < 0.5 &&
+          Math.abs(Math.log(alvo.zoom / c.zoom)) < 0.004
+        if (chegouPerto) alvoCam.current = null
+      }
+
       const vp = { largura: canvas.clientWidth, altura: canvas.clientHeight }
       const { px, py } = projetar(camera.current, vp)
       const est = refs.current
+
+      // Corte temporal: nós ainda "não aprendidos" ficam apagados
+      const corteMs = est.modoTempo
+        ? est.faixaTempo.min + tempoRef.current * (est.faixaTempo.max - est.faixaTempo.min)
+        : Infinity
+      const noTempo = (i: number) => est.temposMs[i] <= corteMs
 
       const visivel = (i: number) => !est.ocultos.has(grafo.nos[i].tipo)
 
       ctx.clearRect(0, 0, vp.largura, vp.altura)
 
-      if (!est.ego && est.destaqueHistoria === null) {
+      if (!est.ego && est.destaqueHistoria === null && !est.modoTempo) {
         desenharFechos(ctx, fechos, camera.current, vp, camera.current.zoom < 2 ? 1 : 0.35)
       }
 
-      // Arestas
+      // Arestas — com uma curvatura leve: o feixe reto parece fio esticado,
+      // o curvo parece tecido. A direção da curva alterna pelo índice.
       ctx.lineWidth = Math.max(camera.current.zoom * 0.6, 0.4)
-      for (const a of grafo.arestas) {
+      for (let ai = 0; ai < grafo.arestas.length; ai++) {
+        const a = grafo.arestas[ai]
         if (!visivel(a.origem) || !visivel(a.destino)) continue
         const na = grafo.nos[a.origem]
         const nb = grafo.nos[a.destino]
@@ -356,23 +580,38 @@ export function Cerebro() {
         const naHistoria =
           !est.destaqueHistoria ||
           (est.destaqueHistoria.has(a.origem) && est.destaqueHistoria.has(a.destino))
+        const noCorte = noTempo(a.origem) && noTempo(a.destino)
         const destacada =
           est.realce && (est.realce.conjunto.has(a.origem) || est.realce.conjunto.has(a.destino))
 
         ctx.strokeStyle = destacada
           ? 'rgba(223,181,82,0.6)'
-          : !dentroDoEgo || !naHistoria
-            ? 'rgba(120,138,168,0.035)'
+          : !dentroDoEgo || !naHistoria || !noCorte
+            ? 'rgba(120,138,168,0.03)'
             : est.realce
               ? 'rgba(120,138,168,0.07)'
               : 'rgba(120,138,168,0.2)'
+
+        const x1 = px(na.x)
+        const y1 = py(na.y)
+        const x2 = px(nb.x)
+        const y2 = py(nb.y)
+        const dx = x2 - x1
+        const dy = y2 - y1
+        const dist = Math.hypot(dx, dy)
+        const bojo = Math.min(dist * 0.09, 16) * (ai % 2 === 0 ? 1 : -1)
         ctx.beginPath()
-        ctx.moveTo(px(na.x), py(na.y))
-        ctx.lineTo(px(nb.x), py(nb.y))
+        ctx.moveTo(x1, y1)
+        ctx.quadraticCurveTo(
+          (x1 + x2) / 2 + (-dy / (dist || 1)) * bojo,
+          (y1 + y2) / 2 + (dx / (dist || 1)) * bojo,
+          x2,
+          y2,
+        )
         ctx.stroke()
       }
 
-      if (est.fluxo && !est.ego) {
+      if (est.fluxo && !est.ego && !est.modoTempo) {
         desenharPulsos(ctx, grafo, pulsos.current, camera.current, vp, est.ocultos)
       }
 
@@ -389,21 +628,33 @@ export function Cerebro() {
         const foraDaHistoria = est.destaqueHistoria && !est.destaqueHistoria.has(i)
         const noRealce = !est.realce || est.realce.conjunto.has(i)
         const correspondeBusca = !est.correspondentes || est.correspondentes.has(i)
-        const apagado = foraDoEgo || foraDaHistoria || !noRealce || !correspondeBusca
+        const antesDoCorte = noTempo(i)
+        const apagado =
+          foraDoEgo || foraDaHistoria || !noRealce || !correspondeBusca || !antesDoCorte
 
-        const r = Math.max((n.raio + Math.min(n.grau, 14) * 0.22) * camera.current.zoom, 1.1)
+        // Hubs respiram: uma oscilação de raio quase subliminar que mantém o
+        // organismo vivo mesmo com o layout assentado.
+        const respiro = n.grau > 8 ? 1 + Math.sin(agora / 640 + i * 1.7) * 0.05 : 1
+        const r =
+          Math.max((n.raio + Math.min(n.grau, 14) * 0.22) * camera.current.zoom, 1.1) * respiro
 
-        if (!apagado && n.grau > 10) {
-          const halo = ctx.createRadialGradient(x, y, r, x, y, r * 3.2)
-          halo.addColorStop(0, `${CORES_TIPO[n.tipo]}44`)
+        // Nó recém-acendido na linha do tempo ganha um flash curto
+        const idade = est.modoTempo ? corteMs - est.temposMs[i] : Infinity
+        const janelaFlash = (est.faixaTempo.max - est.faixaTempo.min) * 0.03
+        const flash = est.modoTempo && idade >= 0 && idade < janelaFlash
+
+        if (!apagado && (n.grau > 10 || flash)) {
+          const alcance = flash ? r * 5 : r * 3.2
+          const halo = ctx.createRadialGradient(x, y, r, x, y, alcance)
+          halo.addColorStop(0, flash ? `${CORES_TIPO[n.tipo]}88` : `${CORES_TIPO[n.tipo]}44`)
           halo.addColorStop(1, 'transparent')
           ctx.fillStyle = halo
           ctx.beginPath()
-          ctx.arc(x, y, r * 3.2, 0, Math.PI * 2)
+          ctx.arc(x, y, alcance, 0, Math.PI * 2)
           ctx.fill()
         }
 
-        ctx.globalAlpha = apagado ? 0.08 : 1
+        ctx.globalAlpha = apagado ? (antesDoCorte ? 0.08 : 0.04) : 1
         ctx.fillStyle = CORES_TIPO[n.tipo]
         ctx.beginPath()
         ctx.arc(x, y, r, 0, Math.PI * 2)
@@ -422,12 +673,18 @@ export function Cerebro() {
           ctx.globalAlpha = 1
           ctx.strokeStyle = '#dfb552'
           ctx.lineWidth = 2
+          // Anel que gira devagar: sinaliza "este é o escolhido" sem piscar
+          ctx.setLineDash([7, 6])
+          ctx.lineDashOffset = -agora / 40
           ctx.beginPath()
           ctx.arc(x, y, r + 5, 0, Math.PI * 2)
           ctx.stroke()
+          ctx.setLineDash([])
         }
       }
       ctx.globalAlpha = 1
+
+      desenharVinheta(ctx, vp)
 
       desenharRotulos(ctx, grafo, camera.current, vp, est.ocultos)
 
@@ -580,8 +837,35 @@ export function Cerebro() {
               onClick={() => setFluxo((v) => !v)}
               className={cn('bg-surface/85 backdrop-blur-xl', fluxo && 'border-cleo/45 text-cleo')}
               aria-label="Fluxo"
+              title="Pulsos de trabalho"
             >
               <Waves size={14} />
+            </Botao>
+            <Botao
+              onClick={() => (modoTempo ? fecharLinhaDoTempo() : abrirLinhaDoTempo())}
+              className={cn(
+                'bg-surface/85 backdrop-blur-xl',
+                modoTempo && 'border-teal/50 text-teal',
+              )}
+              aria-label="Linha do tempo"
+              title="Ver o conhecimento crescer no tempo"
+            >
+              <History size={14} />
+            </Botao>
+            <Botao
+              onClick={() => {
+                setCenaCinema(0)
+                setCinema((v) => !v)
+                if (cinema) contarHistoria('panorama')
+              }}
+              className={cn(
+                'bg-surface/85 backdrop-blur-xl',
+                cinema && 'border-gold/55 text-gold',
+              )}
+              aria-label="Modo cinema"
+              title="O Cérebro se apresenta sozinho"
+            >
+              <Clapperboard size={14} />
             </Botao>
             <Botao
               onClick={() => contarHistoria('panorama')}
@@ -618,6 +902,118 @@ export function Cerebro() {
           )}
         </div>
       </div>
+
+      {/* Linha do tempo: o conhecimento crescendo na ordem em que foi aprendido */}
+      {modoTempo && !cinema && (
+        <div className="absolute bottom-7 left-1/2 w-[560px] -translate-x-1/2 rounded-xl border border-teal/30 bg-surface/92 px-5 py-4 backdrop-blur-xl">
+          <div className="mb-2.5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <History size={13} className="text-teal" />
+              <span className="eyebrow">O conhecimento crescendo</span>
+            </div>
+            <span className="num text-[13px] text-teal">
+              {new Date(
+                faixaTempo.min + tempoUi * (faixaTempo.max - faixaTempo.min),
+              ).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                if (tempoUi >= 1) {
+                  tempoRef.current = 0
+                  setTempoUi(0)
+                }
+                setReproduzindoTempo((v) => !v)
+              }}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full border border-teal/40 bg-teal/10 text-teal transition-colors hover:bg-teal/20"
+              aria-label={reproduzindoTempo ? 'Pausar' : 'Reproduzir'}
+            >
+              {reproduzindoTempo ? (
+                <Pause size={13} />
+              ) : (
+                <Play size={13} fill="currentColor" />
+              )}
+            </button>
+            <input
+              type="range"
+              min={0}
+              max={1000}
+              value={Math.round(tempoUi * 1000)}
+              onChange={(e) => {
+                const v = Number(e.target.value) / 1000
+                tempoRef.current = v
+                setTempoUi(v)
+                setReproduzindoTempo(false)
+              }}
+              className="w-full accent-[var(--color-teal)]"
+              aria-label="Posição na linha do tempo"
+            />
+            <button
+              onClick={fecharLinhaDoTempo}
+              className="shrink-0 text-faint hover:text-ink"
+              aria-label="Fechar linha do tempo"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          <p className="mt-2 text-[11px] leading-relaxed text-muted">
+            Cada registro acende na data em que a Cleo o conheceu. O que o órgão sabe hoje não
+            foi carregado de uma vez — foi aprendido, processo a processo.
+          </p>
+        </div>
+      )}
+
+      {/* Letreiro do modo cinema */}
+      {cinema && (
+        <div className="absolute bottom-7 left-1/2 w-[620px] -translate-x-1/2 rounded-xl border border-gold/30 bg-surface/94 px-6 py-4 backdrop-blur-xl">
+          <div className="mb-1.5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Clapperboard size={13} className="text-gold" />
+              <span className="eyebrow text-gold">
+                {HISTORIAS.find((h) => h.id === CINEMA[cenaCinema % CINEMA.length].id)?.rotulo}
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                setCinema(false)
+                contarHistoria('panorama')
+              }}
+              className="text-[11.5px] text-faint hover:text-ink"
+            >
+              parar · Esc
+            </button>
+          </div>
+          <p key={cenaCinema} className="pagina-entra text-[13px] leading-relaxed text-muted">
+            {HISTORIAS.find((h) => h.id === CINEMA[cenaCinema % CINEMA.length].id)?.explica}
+          </p>
+          <div className="mt-3 flex gap-1">
+            {CINEMA.map((c, i) => (
+              <button
+                key={c.id}
+                onClick={() => setCenaCinema(i)}
+                aria-label={`Cena ${i + 1}`}
+                className={cn(
+                  'h-1 flex-1 overflow-hidden rounded-full',
+                  i < cenaCinema % CINEMA.length ? 'bg-gold/45' : 'bg-line',
+                )}
+              >
+                {i === cenaCinema % CINEMA.length && (
+                  <span
+                    key={cenaCinema}
+                    className="block h-full rounded-full bg-gold"
+                    style={{
+                      animation: `cresce-x ${c.duracaoMs}ms linear forwards`,
+                    }}
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Legenda */}
       <div className="absolute bottom-7 left-7 flex flex-col gap-1 rounded-xl border border-line bg-surface/85 p-3 backdrop-blur-xl">

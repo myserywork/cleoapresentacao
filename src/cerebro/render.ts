@@ -27,6 +27,27 @@ export function projetar(camera: Camera, vp: Viewport) {
   }
 }
 
+/* ---------- Vinheta ---------- */
+
+/**
+ * Escurece as bordas da tela. O olho vai para onde há luz — e a luz fica no
+ * centro, onde o grafo mora. É o truque mais barato de sala de cinema que existe.
+ */
+export function desenharVinheta(ctx: CanvasRenderingContext2D, vp: Viewport) {
+  const g = ctx.createRadialGradient(
+    vp.largura / 2,
+    vp.altura / 2,
+    Math.min(vp.largura, vp.altura) * 0.34,
+    vp.largura / 2,
+    vp.altura / 2,
+    Math.max(vp.largura, vp.altura) * 0.72,
+  )
+  g.addColorStop(0, 'rgba(7,10,18,0)')
+  g.addColorStop(1, 'rgba(7,10,18,0.55)')
+  ctx.fillStyle = g
+  ctx.fillRect(0, 0, vp.largura, vp.altura)
+}
+
 /* ---------- Envoltória convexa por cluster ---------- */
 
 /** Fecho convexo (varredura de Andrew) — a silhueta que agrupa um conjunto. */
@@ -240,9 +261,19 @@ export function desenharPulsos(
     ctx.lineTo(x, y)
     ctx.stroke()
 
+    // Cabeça do cometa: um brilho suave por baixo do ponto sólido
+    const raioCabeca = Math.max(1.6 * camera.zoom, 1.2)
+    const brilho = ctx.createRadialGradient(x, y, 0, x, y, raioCabeca * 3.4)
+    brilho.addColorStop(0, 'rgba(200,182,255,0.5)')
+    brilho.addColorStop(1, 'rgba(200,182,255,0)')
+    ctx.fillStyle = brilho
+    ctx.beginPath()
+    ctx.arc(x, y, raioCabeca * 3.4, 0, Math.PI * 2)
+    ctx.fill()
+
     ctx.fillStyle = 'rgba(200,182,255,0.95)'
     ctx.beginPath()
-    ctx.arc(x, y, Math.max(1.6 * camera.zoom, 1.2), 0, Math.PI * 2)
+    ctx.arc(x, y, raioCabeca, 0, Math.PI * 2)
     ctx.fill()
   }
 }

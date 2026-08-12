@@ -209,6 +209,7 @@ export function Painel() {
           tom="gold"
           icone={<Banknote size={15} />}
           detalhe={`Repasse ${moedaCompacta(resumo.valorRepasse)}`}
+          serie={resumo.serieMensal.map((m) => m.valor)}
         />
         <Indicador
           rotulo="Empenhado"
@@ -223,6 +224,7 @@ export function Painel() {
           valor={resumo.processosSei}
           icone={<FileCheck2 size={15} />}
           detalhe={`${numero(resumo.documentosGerados)} documentos gerados pela Cleo`}
+          serie={resumo.serieMensal.map((m) => m.qtd)}
         />
         <Indicador
           rotulo="Horas devolvidas à equipe"
