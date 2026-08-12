@@ -34,7 +34,15 @@ export function Relatorio() {
   const fila = useMemo(() => filaDoDia(orgaoId, 5), [orgaoId])
   const vigencias = useMemo(() => carteiraDeVigencias(orgaoId), [orgaoId])
   const padroes = useMemo(() => detectarAnomalias(orgaoId), [orgaoId])
-  const gabinetes = useMemo(() => carteirasPorParlamentar(orgaoId).slice(0, 3), [orgaoId])
+  // Só entram no relatório os gabinetes com proposta de fato parada: citar
+  // carteira em dia como "demanda de resposta" desmoraliza a lista inteira.
+  const gabinetes = useMemo(
+    () =>
+      carteirasPorParlamentar(orgaoId)
+        .filter((c) => c.paradas > 0)
+        .slice(0, 3),
+    [orgaoId],
+  )
 
   const foraDoPrazo = sla.reduce((s, x) => s + x.fora, 0)
   const comSla = sla.reduce((s, x) => s + x.total, 0)
@@ -127,7 +135,7 @@ export function Relatorio() {
               {gabinetes.map((g, i) => (
                 <span key={g.parlamentar.id}>
                   <Forte>{g.parlamentar.nome}</Forte> ({g.parlamentar.partido}/{g.parlamentar.uf},{' '}
-                  {g.paradas} proposta(s) sem andamento)
+                  {g.paradas} {g.paradas === 1 ? 'proposta' : 'propostas'} sem andamento)
                   {i < gabinetes.length - 1 ? '; ' : '.'}
                 </span>
               ))}

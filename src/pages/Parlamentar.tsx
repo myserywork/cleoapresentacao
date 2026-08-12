@@ -228,7 +228,7 @@ export function ParlamentarFicha() {
                     <Badge tom={TOM_TIPO_EMENDA[e.emenda.tipo]}>{e.emenda.tipo}</Badge>
                     <span className="num text-[11px] text-faint">{e.emenda.ano}</span>
                     <span className="num ml-auto text-[11px] text-muted">
-                      {e.propostas.length} proposta(s)
+                      {e.propostas.length} {e.propostas.length === 1 ? 'proposta' : 'propostas'}
                     </span>
                   </div>
                 </li>

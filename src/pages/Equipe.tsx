@@ -192,7 +192,8 @@ export function Equipe() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[12.5px] text-ink">
-                    Mover {s.propostas.length} proposta(s) de{' '}
+                    Mover {s.propostas.length}{' '}
+                    {s.propostas.length === 1 ? 'proposta' : 'propostas'} de{' '}
                     <span className="text-alert">{s.de.nome}</span> para{' '}
                     <span className="text-teal">{s.para.nome}</span>
                   </div>

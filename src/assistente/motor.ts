@@ -272,16 +272,20 @@ export function responder(
             numero(c.paradas),
           ]),
         },
-        acoes: [{ tipo: 'navegar', para: '/emendas', motivo: 'Abrindo a carteira de emendas' }],
-        oferecidas: topo
-          ? [
-              {
-                rotulo: `Abrir a ficha de ${topo.parlamentar.nome.split(' ')[0]}`,
-                destacada: true,
-                acoes: [{ tipo: 'navegar', para: `/parlamentares/${topo.parlamentar.id}` }],
-              },
-            ]
-          : undefined,
+        oferecidas: [
+          { rotulo: 'Abrir a carteira de emendas', acoes: [{ tipo: 'navegar', para: '/emendas' }] },
+          ...(topo
+            ? [
+                {
+                  rotulo: `Abrir a ficha de ${topo.parlamentar.nome.split(' ')[0]}`,
+                  destacada: true,
+                  acoes: [
+                    { tipo: 'navegar' as const, para: `/parlamentares/${topo.parlamentar.id}` },
+                  ],
+                },
+              ]
+            : []),
+        ],
         seguintes: ['Quanto falta empenhar até dezembro?', 'Quais convênios vencem em 30 dias?'],
       },
     }
@@ -308,7 +312,13 @@ export function responder(
           formato: 'moeda',
           itens: funil.degraus.map((d) => ({ rotulo: d.rotulo, valor: d.valor })),
         },
-        acoes: [{ tipo: 'navegar', para: '/orcamento', motivo: 'Abrindo a execução orçamentária' }],
+        oferecidas: [
+          {
+            rotulo: 'Abrir a execução orçamentária',
+            destacada: true,
+            acoes: [{ tipo: 'navegar', para: '/orcamento' }],
+          },
+        ],
         seguintes: ['Simular empenho das maiores', 'Quanto vira restos a pagar?'],
       },
     }
@@ -344,7 +354,13 @@ export function responder(
             `${(v.execucaoFisica * 100).toFixed(0)}%`,
           ]),
         },
-        acoes: [{ tipo: 'navegar', para: '/vigencias', motivo: 'Abrindo a régua de vencimento' }],
+        oferecidas: [
+          {
+            rotulo: 'Abrir a régua de vencimento',
+            destacada: true,
+            acoes: [{ tipo: 'navegar', para: '/vigencias' }],
+          },
+        ],
         seguintes: ['Quais estão com prestação de contas atrasada?'],
       },
     }
@@ -363,7 +379,13 @@ export function responder(
           { rotulo: 'Proponentes travados', valor: numero(contas.proponentesBloqueados) },
           { rotulo: 'Valor bloqueado', valor: moedaCompacta(contas.valorBloqueado) },
         ],
-        acoes: [{ tipo: 'navegar', para: '/contas', motivo: 'Abrindo a prestação de contas' }],
+        oferecidas: [
+          {
+            rotulo: 'Abrir a prestação de contas',
+            destacada: true,
+            acoes: [{ tipo: 'navegar', para: '/contas' }],
+          },
+        ],
         seguintes: ['Quais convênios vencem em 30 dias?', 'Quem são os proponentes com pior histórico?'],
       },
     }
@@ -390,7 +412,13 @@ export function responder(
           formato: 'numero',
           itens: carga.map((c) => ({ rotulo: c.analista.nome, valor: c.qtd })),
         },
-        acoes: [{ tipo: 'navegar', para: '/equipe', motivo: 'Abrindo a carga da equipe' }],
+        oferecidas: [
+          {
+            rotulo: 'Abrir a carga da equipe',
+            destacada: true,
+            acoes: [{ tipo: 'navegar', para: '/equipe' }],
+          },
+        ],
         seguintes: ['Como redistribuir a carteira?'],
       },
     }
@@ -412,7 +440,13 @@ export function responder(
           { rotulo: 'Prazo vencido', valor: numero(vencidas.length) },
           { rotulo: 'Respondidas', valor: numero(todas.length - abertas.length) },
         ],
-        acoes: [{ tipo: 'navegar', para: '/diligencias', motivo: 'Abrindo a caixa de diligências' }],
+        oferecidas: [
+          {
+            rotulo: 'Abrir a caixa de diligências',
+            destacada: true,
+            acoes: [{ tipo: 'navegar', para: '/diligencias' }],
+          },
+        ],
         seguintes: ['Reiterar as diligências vencidas'],
       },
     }
@@ -443,7 +477,13 @@ export function responder(
                   ]),
               }
             : undefined,
-        acoes: [{ tipo: 'navegar', para: '/padroes', motivo: 'Abrindo os padrões da carteira' }],
+        oferecidas: [
+          {
+            rotulo: 'Examinar os padrões',
+            destacada: true,
+            acoes: [{ tipo: 'navegar', para: '/padroes' }],
+          },
+        ],
       },
     }
   }
