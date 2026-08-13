@@ -28,6 +28,8 @@ import { Auditoria } from '@/pages/Auditoria'
 import { Padroes } from '@/pages/Padroes'
 import { ProponenteFicha } from '@/pages/Proponente'
 import { SalaSituacao } from '@/pages/SalaSituacao'
+import { Documentos } from '@/pages/Documentos'
+import { Cleo } from '@/pages/Cleo'
 import { Relatorio } from '@/pages/Relatorio'
 import { Comparar } from '@/pages/Comparar'
 
@@ -54,8 +56,10 @@ export function App() {
           <Route path="/equipe" element={<Equipe />} />
           <Route path="/ritos" element={<Ritos />} />
           <Route path="/minutas" element={<Minutas />} />
+          <Route path="/documentos" element={<Documentos />} />
           <Route path="/auditoria" element={<Auditoria />} />
 
+          <Route path="/cleo" element={<Cleo />} />
           <Route path="/cerebro" element={<Cerebro />} />
           <Route path="/assistente" element={<Assistente />} />
           <Route path="/padroes" element={<Padroes />} />

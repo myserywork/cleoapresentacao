@@ -121,8 +121,22 @@ export const CATALOGO: Comando[] = [
     id: 'ir-minutas',
     rotulo: 'Ir para Minutas',
     categoria: 'Ir para',
-    sinonimos: ['modelo', 'documento', 'template'],
+    sinonimos: ['modelo', 'template', 'variaveis'],
     acoes: [{ tipo: 'navegar', para: '/minutas' }],
+  },
+  {
+    id: 'ir-documentos',
+    rotulo: 'Ir para Documentos',
+    categoria: 'Ir para',
+    sinonimos: ['documento', 'bloco de assinatura', 'assinatura', 'papel', 'oficio'],
+    acoes: [{ tipo: 'navegar', para: '/documentos' }],
+  },
+  {
+    id: 'ir-cleo',
+    rotulo: 'Falar com a Cleo (presença)',
+    categoria: 'Ir para',
+    sinonimos: ['cleo', 'jarvis', 'presenca', 'voz', 'briefing'],
+    acoes: [{ tipo: 'navegar', para: '/cleo' }],
   },
   {
     id: 'ir-situacao',

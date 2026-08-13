@@ -15,6 +15,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useApp } from '@/store/app'
+import { Estudio } from '@/automacao/Estudio'
 import { getOrgao, getProponente, propostasDoOrgao } from '@/data/repo'
 import {
   avaliarRegra,
@@ -40,7 +41,9 @@ import type { CondicaoRegra, PassoRito, RegraGatilho, Rito, TipoPasso } from '@/
  * para isso — e para mostrar a máquina em volta: regras, fila e agendamento.
  */
 export function Ritos() {
-  const [aba, setAba] = useState<'biblioteca' | 'editor' | 'regras' | 'fila'>('biblioteca')
+  const [aba, setAba] = useState<'biblioteca' | 'estudio' | 'editor' | 'regras' | 'fila'>(
+    'biblioteca',
+  )
   const { ritos, regras } = useApp()
   const [editando, setEditando] = useState<Rito | null>(null)
 
@@ -71,12 +74,14 @@ export function Ritos() {
         aoTrocar={setAba}
         abas={[
           { id: 'biblioteca', rotulo: 'Biblioteca', contagem: ritos.length },
-          { id: 'editor', rotulo: 'Editor' },
+          { id: 'estudio', rotulo: 'Estúdio visual' },
+          { id: 'editor', rotulo: 'Editor em lista' },
           { id: 'regras', rotulo: 'Regras', contagem: regras.length },
           { id: 'fila', rotulo: 'Fila e agendamento' },
         ]}
       />
 
+      {aba === 'estudio' && <Estudio />}
       {aba === 'biblioteca' && (
         <Biblioteca
           aoEditar={(r) => {

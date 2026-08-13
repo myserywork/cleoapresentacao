@@ -1,12 +1,14 @@
-import { useState } from 'react'
-import { cn, moedaCompacta, numero } from '@/lib/format'
+import { useMemo, useState } from 'react'
+import { moedaCompacta, numero } from '@/lib/format'
 
 /**
  * Cartograma por UF.
  *
- * Cada UF é uma bolha posicionada no seu centroide real e dimensionada pelo
- * valor. Sem contorno do país: a própria distribuição das unidades desenha o
- * Brasil, e o que interessa — onde está o dinheiro — fica em primeiro plano.
+ * Cada UF é uma bolha ancorada no seu centroide real e dimensionada pelo valor.
+ * Como o Nordeste tem seis capitais num palmo de mapa, as bolhas passam por uma
+ * relaxação de colisão: cada uma cede o mínimo necessário para não sobrepor a
+ * vizinha, presa ao seu ponto geográfico por um fio desenhado quando o desvio
+ * fica perceptível. Toda bolha tem rótulo — bolha anônima é ruído.
  */
 
 /** Centroides aproximados (longitude, latitude) de cada unidade da federação. */
@@ -40,16 +42,81 @@ const CENTROIDE: Record<string, [number, number]> = {
   TO: [-48.3, -10.2],
 }
 
-/** Extremos com folga: as bolhas das pontas precisam caber inteiras. */
-const LON_MIN = -76
-const LON_MAX = -32
-const LAT_MIN = -35
-const LAT_MAX = 7
+const LON_MIN = -74
+const LON_MAX = -34
+const LAT_MIN = -33.5
+const LAT_MAX = 4.5
+
+/** Espaço virtual do desenho — o SVG escala junto com o painel. */
+const LARGURA = 420
+const ALTURA_VB = 400
 
 export interface ItemUf {
   uf: string
   valor: number
   qtd: number
+}
+
+interface Bolha extends ItemUf {
+  /** Âncora geográfica. */
+  ax: number
+  ay: number
+  /** Posição depois da relaxação. */
+  x: number
+  y: number
+  r: number
+}
+
+function montarLayout(itens: ItemUf[]): Bolha[] {
+  const max = Math.max(...itens.map((i) => i.valor), 1)
+  const bolhas: Bolha[] = []
+
+  for (const item of itens) {
+    const c = CENTROIDE[item.uf]
+    if (!c) continue
+    const x = ((c[0] - LON_MIN) / (LON_MAX - LON_MIN)) * LARGURA
+    const y = ((LAT_MAX - c[1]) / (LAT_MAX - LAT_MIN)) * ALTURA_VB
+    // Raio pela área, não pelo diâmetro: dobrar o valor dobra a área percebida
+    const r = 9 + Math.sqrt(item.valor / max) * 27
+    bolhas.push({ ...item, ax: x, ay: y, x, y, r })
+  }
+
+  // Relaxação: separa pares sobrepostos e puxa cada bolha de volta à âncora.
+  // Poucas dezenas de bolhas — dá para ser direto e determinístico.
+  for (let volta = 0; volta < 120; volta++) {
+    for (let i = 0; i < bolhas.length; i++) {
+      for (let j = i + 1; j < bolhas.length; j++) {
+        const a = bolhas[i]
+        const b = bolhas[j]
+        let dx = b.x - a.x
+        let dy = b.y - a.y
+        let d = Math.hypot(dx, dy)
+        if (d === 0) {
+          dx = 0.5
+          dy = i - j
+          d = Math.hypot(dx, dy)
+        }
+        const minimo = a.r + b.r + 2
+        if (d >= minimo) continue
+        const ajuste = (minimo - d) / 2
+        const ux = dx / d
+        const uy = dy / d
+        a.x -= ux * ajuste
+        a.y -= uy * ajuste
+        b.x += ux * ajuste
+        b.y += uy * ajuste
+      }
+    }
+    for (const b of bolhas) {
+      b.x += (b.ax - b.x) * 0.06
+      b.y += (b.ay - b.y) * 0.06
+      // Nada escapa da moldura
+      b.x = Math.min(Math.max(b.x, b.r + 2), LARGURA - b.r - 2)
+      b.y = Math.min(Math.max(b.y, b.r + 2), ALTURA_VB - b.r - 2)
+    }
+  }
+
+  return bolhas.sort((a, b) => b.r - a.r)
 }
 
 export function MapaTerritorial({
@@ -60,63 +127,107 @@ export function MapaTerritorial({
   altura?: number
 }) {
   const [ativo, setAtivo] = useState<string | null>(null)
-  const max = Math.max(...itens.map((i) => i.valor), 1)
+  const bolhas = useMemo(() => montarLayout(itens), [itens])
   const emFoco = itens.find((i) => i.uf === ativo)
-
-  const posicao = (uf: string) => {
-    const c = CENTROIDE[uf]
-    if (!c) return null
-    return {
-      x: ((c[0] - LON_MIN) / (LON_MAX - LON_MIN)) * 100,
-      y: ((LAT_MAX - c[1]) / (LAT_MAX - LAT_MIN)) * 100,
-    }
-  }
-
-  // Raio pela área, não pelo diâmetro: dobrar o valor dobra a área percebida.
-  const raio = (valor: number) => 5 + Math.sqrt(valor / max) * 19
 
   return (
     <div onMouseLeave={() => setAtivo(null)}>
-      <div className="relative" style={{ height: altura }}>
-        {itens.map((item) => {
-          const p = posicao(item.uf)
-          if (!p) return null
-          const r = raio(item.valor)
-          const destacado = ativo === item.uf
-          const apagado = ativo !== null && !destacado
+      <svg
+        viewBox={`0 0 ${LARGURA} ${ALTURA_VB}`}
+        style={{ width: '100%', height: altura }}
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label="Distribuição do valor sob gestão por unidade da federação"
+      >
+        {/* Fios até a âncora geográfica: a bolha cedeu espaço, não mudou de lugar */}
+        {bolhas.map((b) => {
+          const desvio = Math.hypot(b.x - b.ax, b.y - b.ay)
+          if (desvio < 7) return null
           return (
-            <button
-              key={item.uf}
-              onMouseEnter={() => setAtivo(item.uf)}
-              aria-label={`${item.uf}: ${item.qtd} propostas, ${moedaCompacta(item.valor)}`}
-              className="absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-opacity"
-              style={{
-                left: `${p.x}%`,
-                top: `${p.y}%`,
-                width: r * 2,
-                height: r * 2,
-                opacity: apagado ? 0.28 : 1,
-              }}
-            >
-              <span
-                className={cn(
-                  'absolute inset-0 rounded-full border transition-colors',
-                  destacado ? 'border-gold' : 'border-transparent',
-                )}
-                style={{ background: 'var(--color-viz-gold)', opacity: destacado ? 0.55 : 0.32 }}
+            <g key={`fio-${b.uf}`} opacity={ativo && ativo !== b.uf ? 0.15 : 0.4}>
+              <line
+                x1={b.ax}
+                y1={b.ay}
+                x2={b.x}
+                y2={b.y}
+                stroke="var(--color-viz-gold)"
+                strokeWidth="0.7"
+                strokeDasharray="2 3"
               />
-              <span
-                className={cn(
-                  'num relative text-[10px] font-medium',
-                  destacado ? 'text-ink' : 'text-ink/75',
-                )}
-              >
-                {r > 13 ? item.uf : ''}
-              </span>
-            </button>
+              <circle cx={b.ax} cy={b.ay} r="1.6" fill="var(--color-viz-gold)" />
+            </g>
           )
         })}
-      </div>
+
+        {bolhas.map((b) => {
+          const destacada = ativo === b.uf
+          const apagada = ativo !== null && !destacada
+          const fonte = Math.max(Math.min(b.r * 0.62, 13), 8.5)
+          const rotuloDentro = b.r >= 12
+          return (
+            <g
+              key={b.uf}
+              opacity={apagada ? 0.3 : 1}
+              onMouseEnter={() => setAtivo(b.uf)}
+              style={{ cursor: 'default', transition: 'opacity 160ms ease-out' }}
+            >
+              <circle
+                cx={b.x}
+                cy={b.y}
+                r={b.r}
+                fill="var(--color-viz-gold)"
+                fillOpacity={destacada ? 0.55 : 0.3}
+                stroke={destacada ? 'var(--color-gold)' : 'var(--color-viz-gold)'}
+                strokeOpacity={destacada ? 1 : 0.45}
+                strokeWidth={destacada ? 1.4 : 0.8}
+              />
+              {rotuloDentro ? (
+                <>
+                  <text
+                    x={b.x}
+                    y={b.r >= 22 ? b.y - 2 : b.y}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={fonte}
+                    fontWeight="600"
+                    fill="var(--color-ink)"
+                    style={{ fontFamily: 'var(--font-mono)' }}
+                  >
+                    {b.uf}
+                  </text>
+                  {b.r >= 22 && (
+                    <text
+                      x={b.x}
+                      y={b.y + fonte * 0.85}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize={Math.max(b.r * 0.3, 7.5)}
+                      fill="var(--color-ink)"
+                      opacity="0.75"
+                      style={{ fontFamily: 'var(--font-mono)' }}
+                    >
+                      {moedaCompacta(b.valor).replace('R$ ', '')}
+                    </text>
+                  )}
+                </>
+              ) : (
+                // Bolha pequena demais para conter texto: o rótulo senta ao lado
+                <text
+                  x={b.x + b.r + 2.5}
+                  y={b.y}
+                  textAnchor="start"
+                  dominantBaseline="middle"
+                  fontSize="8"
+                  fill="var(--color-muted)"
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                >
+                  {b.uf}
+                </text>
+              )}
+            </g>
+          )
+        })}
+      </svg>
 
       {/* Legenda fora da área do mapa, para não disputar espaço com as bolhas */}
       <div className="flex min-h-[30px] items-center gap-4 border-t border-line pt-3 text-[12px]">
@@ -131,7 +242,8 @@ export function MapaTerritorial({
           </>
         ) : (
           <span className="text-faint">
-            Cada bolha é uma UF, no seu ponto geográfico, dimensionada pelo valor sob gestão.
+            Cada bolha é uma UF, presa ao seu ponto geográfico pelo fio, dimensionada pelo valor
+            sob gestão.
           </span>
         )}
       </div>

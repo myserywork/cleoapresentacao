@@ -80,12 +80,14 @@ const GRUPOS: { titulo: string; itens: ItemNav[] }[] = [
       { to: '/equipe', rotulo: 'Equipe', icone: Users },
       { to: '/ritos', rotulo: 'Ritos', icone: GitBranch },
       { to: '/minutas', rotulo: 'Minutas', icone: ScrollText },
+      { to: '/documentos', rotulo: 'Documentos', icone: FileStack },
       { to: '/auditoria', rotulo: 'Auditoria', icone: Building2 },
     ],
   },
   {
     titulo: 'Inteligência',
     itens: [
+      { to: '/cleo', rotulo: 'Cleo', icone: Sparkles },
       { to: '/cerebro', rotulo: 'Cérebro', icone: BrainCircuit },
       { to: '/assistente', rotulo: 'Assistente', icone: MessagesSquare },
       { to: '/padroes', rotulo: 'Padrões', icone: Fingerprint },
@@ -125,9 +127,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
     diligencias: diligenciasVencidas,
   }
 
-  // O Cérebro ocupa toda a área de conteúdo; a sala de situação dispensa até a
-  // navegação — é painel de parede, não tela de trabalho.
-  const telaCheia = pathname === '/cerebro' || pathname === '/situacao'
+  // Cérebro e Cleo ocupam toda a área de conteúdo; a sala de situação dispensa
+  // até a navegação — é painel de parede, não tela de trabalho.
+  const telaCheia = pathname === '/cerebro' || pathname === '/situacao' || pathname === '/cleo'
   const semNavegacao = pathname === '/situacao'
 
   if (semNavegacao) {
