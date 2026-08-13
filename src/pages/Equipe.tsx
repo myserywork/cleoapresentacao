@@ -140,7 +140,7 @@ export function Equipe() {
         <BotaoExportar nome={`equipe-${orgao.sigla}`} itens={carga} colunas={colunas} />
       </header>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Panel className="px-5 py-4">
           <Numero
             rotulo="Ocupação média"

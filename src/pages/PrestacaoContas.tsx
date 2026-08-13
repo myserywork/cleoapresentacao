@@ -145,7 +145,7 @@ export function PrestacaoContas() {
         <BotaoExportar nome={`prestacao-contas-${orgao.sigla}`} itens={lista} colunas={colunas} />
       </header>
 
-      <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr_1fr_1fr] gap-4">
         <Panel className="flex items-center gap-5 px-5 py-4">
           <Anel
             tamanho={112}
@@ -238,7 +238,7 @@ export function PrestacaoContas() {
         />
       </Panel>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Panel>
           <PanelHeader
             eyebrow="Julgamento"

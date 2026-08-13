@@ -217,7 +217,7 @@ export function Emendas() {
         </div>
       </header>
 
-      <div className="grid grid-cols-[1fr_1fr_1fr_1.25fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1.25fr] gap-4">
         <Panel className="px-5 py-4">
           <Numero
             rotulo="Valor indicado"
@@ -317,7 +317,7 @@ export function Emendas() {
           titulo="A regra que ordena a fila de gabinetes"
           acao={<Landmark size={15} className="text-faint" />}
         />
-        <div className="grid grid-cols-3 gap-6 px-5 py-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-5 py-5">
           <div className="flex items-start gap-2.5">
             <TrendingUp size={13} className="mt-0.5 shrink-0 text-gold" />
             <p className="text-[12.5px] text-muted">

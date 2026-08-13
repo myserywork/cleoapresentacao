@@ -414,7 +414,7 @@ export function MeusPaineis() {
           />
         </Panel>
       ) : (
-        <div ref={gradeRef} className="grid grid-cols-3 gap-4">
+        <div ref={gradeRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {blocos.map((bloco, i) => {
             const def = CATALOGO.find((c) => c.id === bloco.id)!
             return (
@@ -496,7 +496,7 @@ export function MeusPaineis() {
             {disponiveis.length === 0 ? (
               <Vazio titulo="Todos os blocos já estão no painel." />
             ) : (
-              <ul className="grid max-h-[400px] grid-cols-2 gap-2 overflow-y-auto">
+              <ul className="grid max-h-[400px] grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto">
                 {disponiveis.map((d) => (
                   <li key={d.id}>
                     <button

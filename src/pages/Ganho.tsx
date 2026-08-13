@@ -131,7 +131,7 @@ export function Ganho() {
         </p>
       </Panel>
 
-      <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-stretch gap-4">
         <Panel className="flex flex-col p-5">
           <div className="mb-4 flex items-center justify-between">
             <div>
@@ -212,7 +212,7 @@ export function Ganho() {
           <h2 className="text-[15px]">Ajuste a premissa e veja o resultado do {orgao.sigla}</h2>
         </div>
 
-        <div className="grid grid-cols-[1fr_1fr_2fr] items-center gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_2fr] items-center gap-8">
           <div>
             <label className="mb-2 flex items-center gap-2 text-[12.5px] text-muted">
               <Clock size={13} className="text-faint" />
@@ -253,7 +253,7 @@ export function Ganho() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 border-l border-line pl-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 border-l border-line pl-8">
             <div>
               <div className="eyebrow mb-1.5">Horas devolvidas</div>
               <div className="num text-[26px] leading-none text-gold">
@@ -289,7 +289,7 @@ export function Ganho() {
         </p>
       </Panel>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           {
             titulo: 'O erro sai da conta',

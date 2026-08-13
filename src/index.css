@@ -87,6 +87,14 @@
     background: var(--color-abyss);
   }
 
+  /* Nada vaza para os lados no celular: rolagem horizontal em app de gestão
+     é sensação de coisa quebrada, não de recurso. */
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
   body {
     margin: 0;
     background:
@@ -258,6 +266,26 @@
 @media (min-width: 1800px) {
   body {
     font-size: 15px;
+  }
+}
+
+/* Celular: os títulos das telas encolhem, e tudo que é largo rola dentro
+   da própria caixa em vez de empurrar a página. */
+@media (max-width: 767px) {
+  h1 {
+    font-size: 21px !important;
+    line-height: 1.2;
+  }
+  h2 {
+    font-size: 16px !important;
+  }
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .panel {
+    max-width: 100%;
   }
 }
 

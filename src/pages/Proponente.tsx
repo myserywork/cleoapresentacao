@@ -169,7 +169,7 @@ export function ProponenteFicha() {
         </div>
       </header>
 
-      <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_1fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr_1fr_1fr_1fr] gap-4">
         <Panel
           className={cn(
             'px-5 py-4',
@@ -217,7 +217,7 @@ export function ProponenteFicha() {
         </Panel>
       </div>
 
-      <div className="grid grid-cols-[1fr_1.6fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.6fr] gap-4">
         <Panel>
           <PanelHeader
             eyebrow="Como a nota foi formada"
@@ -257,7 +257,7 @@ export function ProponenteFicha() {
         </Panel>
 
         <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Panel className="px-5 py-4">
               <Numero
                 rotulo="Prestações em atraso"
@@ -328,7 +328,7 @@ export function ProponenteFicha() {
 
           <Panel>
             <PanelHeader eyebrow="Identificação" titulo="Dados cadastrais" />
-            <div className="grid grid-cols-3 gap-5 px-5 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 px-5 py-4">
               <Dado rotulo="CNPJ" mono>
                 {proponente.cnpj}
               </Dado>

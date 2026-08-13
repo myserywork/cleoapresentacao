@@ -189,7 +189,7 @@ Assunto: Proposta nº {{numeroProposta}}
         </Botao>
       </header>
 
-      <div className="grid grid-cols-[268px_1fr_296px] items-start gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[268px_1fr_296px] items-start gap-4">
         {/* Biblioteca */}
         <Panel className="overflow-hidden">
           <PanelHeader eyebrow="Biblioteca" titulo={`${minutas.length} modelos`} />

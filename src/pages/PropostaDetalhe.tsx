@@ -363,7 +363,7 @@ export function PropostaDetalhe() {
       </nav>
 
       {aba === 'Ciclo e prazos' && (
-        <div className="grid grid-cols-[1.15fr_1fr] gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-4">
           <div className="flex flex-col gap-4">
             <Panel>
               <PanelHeader
@@ -601,11 +601,11 @@ export function PropostaDetalhe() {
       )}
 
       {aba === 'Visão geral' && (
-        <div className="grid grid-cols-[1.4fr_1fr] gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-4">
           <div className="flex flex-col gap-4">
             <Panel>
               <PanelHeader eyebrow="Cadastro" titulo="Dados da proposta" />
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-4 px-5 py-5">
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 px-5 py-5">
                 {[
                   ['Programa', proposta.programa],
                   ['Modalidade', proposta.modalidade],
@@ -802,7 +802,7 @@ export function PropostaDetalhe() {
             </Botao>
           </Panel>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {GATILHOS.map((g) => {
               const feita = concluidas.has(g)
               const bloqueado = g !== 'criar_processo' && !temProcesso

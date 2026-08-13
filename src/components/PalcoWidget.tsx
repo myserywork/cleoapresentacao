@@ -90,8 +90,8 @@ export function PalcoWidget() {
 
   return (
     <div
-      className="nao-imprimir pagina-entra fixed z-[58] w-[min(560px,92vw)] overflow-hidden rounded-2xl border border-cleo/30 bg-surface/97 shadow-2xl backdrop-blur-xl"
-      style={estilo as React.CSSProperties}
+      className="nao-imprimir pagina-entra fixed inset-x-2 bottom-2 z-[58] overflow-hidden rounded-2xl border border-cleo/30 bg-surface/97 shadow-2xl backdrop-blur-xl md:inset-x-auto md:bottom-auto md:w-[min(560px,92vw)]"
+      style={window.innerWidth >= 768 ? (estilo as React.CSSProperties) : undefined}
     >
       <div
         onPointerDown={(e) => {
@@ -183,7 +183,7 @@ function WOrcamento({ orgaoId }: { orgaoId: string }) {
   const restos = useMemo(() => riscoRestosAPagar(orgaoId), [orgaoId])
   return (
     <div className="flex flex-col gap-4 px-5 py-4">
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Numero rotulo="Saldo a empenhar" valor={moedaCompacta(fim.saldoAEmpenhar)} tom="gold" />
         <Numero rotulo="Dias úteis" valor={numero(fim.diasUteis)} tom={fim.emRisco ? 'alert' : 'teal'} />
         <Numero rotulo="A liquidar" valor={moedaCompacta(restos.total)} tom="cleo" />
@@ -238,7 +238,7 @@ function WContas({ orgaoId, aoNavegar }: { orgaoId: string; aoNavegar: (r: strin
   )
   return (
     <div>
-      <div className="grid grid-cols-3 gap-4 border-b border-line px-5 py-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 border-b border-line px-5 py-4">
         <Numero rotulo="Em atraso" valor={numero(resumo.atrasadas)} tom="alert" />
         <Numero rotulo="Proponentes travados" valor={numero(resumo.proponentesBloqueados)} tom="gold" />
         <Numero rotulo="Valor travado" valor={moedaCompacta(resumo.valorBloqueado)} tom="alert" />
@@ -267,7 +267,7 @@ function WEmendas({ orgaoId, aoNavegar }: { orgaoId: string; aoNavegar: (r: stri
   const top = useMemo(() => carteirasPorParlamentar(orgaoId).slice(0, 6), [orgaoId])
   return (
     <div>
-      <div className="grid grid-cols-3 gap-4 border-b border-line px-5 py-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 border-b border-line px-5 py-4">
         <Numero rotulo="Indicado" valor={moedaCompacta(resumo.valorIndicado)} tom="gold" />
         <Numero rotulo="Empenhado" valor={moedaCompacta(resumo.valorEmpenhado)} tom="teal" />
         <Numero rotulo="Execução" valor={`${(resumo.execucao * 100).toFixed(0)}%`} tom="cleo" />
@@ -301,7 +301,7 @@ function WEquipe({ orgaoId }: { orgaoId: string }) {
   const resumo = useMemo(() => resumoEquipe(orgaoId), [orgaoId])
   return (
     <div>
-      <div className="grid grid-cols-3 gap-4 border-b border-line px-5 py-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 border-b border-line px-5 py-4">
         <Numero rotulo="Ocupação média" valor={`${(resumo.ocupacaoMedia * 100).toFixed(0)}%`} tom="gold" />
         <Numero rotulo="Desequilíbrio" valor={`${(resumo.desequilibrio * 100).toFixed(0)} p.p.`} tom="alert" />
         <Numero rotulo="Propostas" valor={numero(resumo.atribuidas)} />

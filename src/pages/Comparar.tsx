@@ -172,7 +172,7 @@ function CompararOrgaos() {
         acao={<Columns3 size={15} className="text-faint" />}
       />
 
-      <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr] border-b border-line">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr_1fr_1fr] border-b border-line">
         <div className="px-5 py-3" />
         {ORGAOS.map((o) => (
           <button
@@ -202,7 +202,7 @@ function CompararOrgaos() {
           return (
             <li
               key={linha.rotulo}
-              className="grid grid-cols-[1.5fr_1fr_1fr_1fr] border-b border-line-soft last:border-0"
+              className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr_1fr_1fr] border-b border-line-soft last:border-0"
             >
               <div className="px-5 py-3.5">
                 <div className="text-[12.5px] text-ink">{linha.rotulo}</div>

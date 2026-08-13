@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   Boxes,
@@ -13,6 +14,7 @@ import {
   KeyRound,
   Landmark,
   Mails,
+  Menu,
   Puzzle,
   Moon,
   MonitorPlay,
@@ -136,6 +138,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const { orgaoId, setOrgaoId, aprovacoes, tema, alternarTema, comparacao, modulo, setModulo } =
     useApp()
   const { pathname } = useLocation()
+  // No celular a navegação é gaveta: ela fecha sozinha ao trocar de tela
+  const [gaveta, setGaveta] = useState(false)
+  useEffect(() => setGaveta(false), [pathname])
 
   const pendentes = aprovacoesDoOrgao(orgaoId).filter(
     (a) => aprovacoes.find((x) => x.id === a.id)?.decidida === 'pendente',
@@ -179,7 +184,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       <nav
         aria-label="Navegação principal"
-        className="fixed inset-y-0 left-0 z-30 flex w-[218px] flex-col border-r border-line bg-abyss/80 backdrop-blur-xl"
+        className={cn(
+          'fixed inset-y-0 left-0 z-40 flex w-[218px] flex-col border-r border-line bg-abyss/95 backdrop-blur-xl transition-transform md:z-30 md:bg-abyss/80 md:translate-x-0',
+          gaveta ? 'translate-x-0' : '-translate-x-full',
+        )}
       >
         <div className="flex items-center gap-2.5 px-5 py-4">
           <img src="/marca/mark.png" alt="" className="size-8 rounded-md" />
@@ -325,7 +333,49 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
       </nav>
 
-      <main id="conteudo" className={cn('ml-[218px] flex-1', telaCheia ? '' : 'px-8 py-7')}>
+      {/* Véu que fecha a gaveta ao tocar fora */}
+      {gaveta && (
+        <button
+          onClick={() => setGaveta(false)}
+          aria-label="Fechar navegação"
+          className="fixed inset-0 z-[35] bg-abyss/70 backdrop-blur-sm md:hidden"
+        />
+      )}
+
+      {/* Barra superior só no celular: marca, menu e o essencial */}
+      <div className="fixed inset-x-0 top-0 z-30 flex items-center gap-3 border-b border-line bg-abyss/95 px-4 py-2.5 backdrop-blur-xl md:hidden">
+        <button
+          onClick={() => setGaveta(true)}
+          aria-label="Abrir navegação"
+          className="flex size-9 items-center justify-center rounded-lg border border-line text-muted"
+        >
+          <Menu size={17} />
+        </button>
+        <img src="/marca/mark.png" alt="" className="size-7 rounded-md" />
+        <span className="font-display text-[13px] font-semibold tracking-[0.14em] text-ink">
+          CLEOPATRA
+        </span>
+        <select
+          value={orgaoId}
+          onChange={(e) => setOrgaoId(e.target.value)}
+          className="ml-auto h-8 rounded-lg border border-line bg-raised px-2 text-[12px] text-ink focus:outline-none"
+          aria-label="Órgão"
+        >
+          {ORGAOS.map((o) => (
+            <option key={o.id} value={o.id} className="bg-surface">
+              {o.sigla}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <main
+        id="conteudo"
+        className={cn(
+          'flex-1 md:ml-[218px]',
+          telaCheia ? 'pt-14 md:pt-0' : 'px-4 pt-16 pb-8 md:px-8 md:py-7',
+        )}
+      >
         {/* A chave pela rota reinicia a animação de entrada a cada navegação */}
         <div key={pathname} className={telaCheia ? '' : 'pagina-entra'}>
           {children}

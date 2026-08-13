@@ -401,7 +401,7 @@ export function Estudio() {
   const portaEntrada = (n: NoFluxo) => ({ x: n.x, y: n.y + ALTURA_NO / 2 })
 
   return (
-    <div className="grid grid-cols-[240px_1fr_290px] items-start gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr_290px] items-start gap-4">
       {/* Paleta */}
       <Panel className="overflow-hidden">
         <div className="border-b border-line px-4 py-3">

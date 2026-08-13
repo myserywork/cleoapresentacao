@@ -148,7 +148,7 @@ export function Cofre() {
         </div>
       </header>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Panel className="px-5 py-4">
           <Numero rotulo="Sessões ativas" valor={String(ativas.length)} tom="teal" detalhe="Operáveis agora pela Cleo" />
         </Panel>
@@ -185,14 +185,14 @@ export function Cofre() {
           </div>
         </Panel>
       ) : (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {lista.map((s) => (
             <CartaoSessao key={s.sistema} sessao={s} onRenovar={() => window.open(`/sistemas/${s.sistema}`, '_blank')} onDescartar={() => descartar(s.sistema)} />
           ))}
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           [ShieldCheck, 'A sessão é do usuário', 'A extensão captura a sessão que ele já abriu — inclusive os cookies httpOnly que a página não enxerga. Nenhuma senha passa pela Cleo.'],
           [Workflow, 'A Cleo opera sozinha', 'Com a sessão viva no cofre, a fila de ritos roda no servidor sem o usuário presente — a madrugada trabalha por ele.'],

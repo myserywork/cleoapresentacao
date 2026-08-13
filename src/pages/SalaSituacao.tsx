@@ -83,7 +83,7 @@ export function SalaSituacao() {
         </div>
       </header>
 
-      <div className="grid grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <Grande rotulo="Propostas" valor={numero(resumo.totalPropostas)} tom="ink" />
         <Grande rotulo="Valor da carteira" valor={moedaCompacta(resumo.valorGlobal)} tom="gold" />
         <Grande rotulo="Empenhado" valor={moedaCompacta(funil.empenhado)} tom="teal" />
@@ -96,7 +96,7 @@ export function SalaSituacao() {
         <Grande rotulo="Horas devolvidas" valor={numero(resumo.horasEconomizadas)} tom="cleo" />
       </div>
 
-      <div className="mt-4 grid grid-cols-[1.5fr_1fr] gap-4">
+      <div className="mt-4 grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-4">
         <Panel className="overflow-hidden">
           <div className="flex items-center justify-between gap-4 border-b border-line px-6 py-3.5">
             <div className="eyebrow">
@@ -152,7 +152,7 @@ export function SalaSituacao() {
             </div>
           </Panel>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Panel className="px-5 py-4">
               <div className="eyebrow mb-1.5">Vencem em 30 dias</div>
               <div className="num text-[24px] leading-none text-alert">{vencendo30}</div>
@@ -192,7 +192,7 @@ export function SalaSituacao() {
           <Activity size={13} className="text-cleo" />
           <span className="eyebrow">Fila de prioridade agora</span>
         </div>
-        <ul className="grid grid-cols-7 divide-x divide-line-soft">
+        <ul className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 divide-x divide-line-soft">
           {fila.map((item, i) => (
             <li key={item.proposta.id} className="px-4 py-3.5">
               <div className="mb-1.5 flex items-center gap-2">

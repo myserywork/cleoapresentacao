@@ -117,7 +117,7 @@ function Biblioteca({ aoEditar }: { aoEditar: (r: Rito) => void }) {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {ritos.map((rito) => {
         const alvo = propostas.find((p) => p.numProcessoSei) ?? propostas[0]
         return (
@@ -150,7 +150,7 @@ function Biblioteca({ aoEditar }: { aoEditar: (r: Rito) => void }) {
               ))}
             </ol>
 
-            <div className="grid grid-cols-3 gap-4 border-t border-line-soft px-5 py-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 border-t border-line-soft px-5 py-3.5">
               <Numero rotulo="Execuções" valor={numero(rito.execucoes)} />
               <Numero
                 rotulo="Sucesso"
@@ -285,7 +285,7 @@ function Editor({ base, aoSalvar }: { base: Rito | null; aoSalvar: () => void })
   const valido = rito.nome.trim().length > 2 && rito.passos.length > 0
 
   return (
-    <div className="grid grid-cols-[280px_1fr_320px] gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_320px] gap-4">
       <Panel className="overflow-hidden">
         <PanelHeader eyebrow="Paleta" titulo="Passos disponíveis" />
         <ul className="max-h-[560px] divide-y divide-line-soft overflow-y-auto">
@@ -488,7 +488,7 @@ function Regras() {
   )
 
   return (
-    <div className="grid grid-cols-[1.35fr_1fr] gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4">
       <Panel className="overflow-hidden">
         <PanelHeader
           eyebrow="Publicadas"
@@ -828,7 +828,7 @@ function Fila() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Panel className="px-5 py-4">
           <Numero rotulo="Regras ativas" valor={numero(agendadas.length)} tom="teal" />
         </Panel>

@@ -122,7 +122,7 @@ export function Orcamento() {
           casa a partir de setembro. */}
       <Panel
         className={cn(
-          'grid grid-cols-[1.1fr_1fr_1fr_1.4fr] gap-6 px-6 py-5',
+          'grid grid-cols-1 lg:grid-cols-[1.1fr_1fr_1fr_1.4fr] gap-6 px-6 py-5',
           fim.emRisco ? 'border-alert/30 bg-alert/[0.04]' : 'border-teal/25 bg-teal/[0.03]',
         )}
       >
@@ -170,7 +170,7 @@ export function Orcamento() {
         </div>
       </Panel>
 
-      <div className="grid grid-cols-[1.15fr_1fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-4">
         <Panel>
           <PanelHeader
             eyebrow="Funil"
@@ -253,7 +253,7 @@ export function Orcamento() {
             </Badge>
           }
         />
-        <div className="grid grid-cols-[1fr_1.35fr] gap-6 px-5 py-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.35fr] gap-6 px-5 py-5">
           <div>
             <div className="mb-3 flex items-baseline justify-between gap-3">
               <span className="text-[12.5px] text-muted">
@@ -274,7 +274,7 @@ export function Orcamento() {
               aria-label="Quantidade de propostas a empenhar na simulação"
             />
 
-            <div className="mt-5 grid grid-cols-3 gap-4">
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <Numero
                 rotulo="Valor selecionado"
                 valor={moedaCompacta(simulacao.valorTotal)}

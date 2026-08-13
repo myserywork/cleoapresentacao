@@ -80,7 +80,7 @@ export function Usuarios() {
         />
       </header>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Panel className="px-5 py-4">
           <Numero rotulo="Pessoas no órgão" valor={numero(doOrgao.length)} detalhe={`${doOrgao.filter((u) => u.ativo).length} ativas`} />
         </Panel>
@@ -121,7 +121,7 @@ export function Usuarios() {
       />
 
       {aba === 'pessoas' && (
-        <div className="grid grid-cols-[1.35fr_1fr] items-start gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] items-start gap-4">
           <Panel className="overflow-hidden">
             <PanelHeader eyebrow="Equipe" titulo={`${doOrgao.length} pessoas no ${orgao.sigla}`} acao={<UsersIcon size={15} className="text-faint" />} />
             <ul className="divide-y divide-line-soft">
@@ -271,7 +271,7 @@ function FichaUsuario({
       </div>
 
       <div className="px-5 py-4">
-        <div className="mb-4 grid grid-cols-2 gap-4">
+        <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Numero
             rotulo="Alçada"
             valor={perfil.alcada === Infinity ? 'sem teto' : moeda(perfil.alcada)}
@@ -472,7 +472,7 @@ function AlcadaNaCarteira({ orgaoId }: { orgaoId: string }) {
   const dist = useMemo(() => distribuicaoPorAlcada(orgaoId), [orgaoId])
 
   return (
-    <div className="grid grid-cols-[1.2fr_1fr] gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-4">
       <Panel>
         <PanelHeader eyebrow="Cruzamento" titulo="Quanto da carteira cada perfil decide sozinho" acao={<ShieldCheck size={15} className="text-teal" />} />
         <ul className="flex flex-col gap-4 px-5 py-5">

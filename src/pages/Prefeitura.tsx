@@ -86,7 +86,7 @@ export function Prefeitura() {
       </header>
 
       {/* Diagnóstico */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Panel className="px-5 py-4">
           <Numero
             rotulo="Pleiteado agora"
@@ -191,7 +191,7 @@ function Oportunidades({
         </p>
       </Panel>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {lista.map((o) => {
           const dias = diasAte(o.prazoFinal)
           return (
@@ -219,7 +219,7 @@ function Oportunidades({
               </div>
 
               <div className="px-5 py-4">
-                <div className="mb-3 grid grid-cols-3 gap-3 text-[11.5px]">
+                <div className="mb-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-[11.5px]">
                   <div>
                     <div className="eyebrow mb-0.5">Faixa</div>
                     <div className="num text-ink">
@@ -284,7 +284,7 @@ function Pedidos({
   aoAbrir: (id: string) => void
 }) {
   return (
-    <div className="grid grid-cols-[1.15fr_1fr] items-start gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] items-start gap-4">
       <Panel className="overflow-hidden">
         <PanelHeader eyebrow="Acompanhamento" titulo="Onde cada pedido está" />
         <ul className="divide-y divide-line-soft">
@@ -401,7 +401,7 @@ function Oficio({ pedido, perfil }: { pedido: Pedido; perfil: typeof MUNICIPIO_D
   const texto = useMemo(() => redigirOficio(pedido, perfil), [pedido, perfil])
 
   return (
-    <div className="grid grid-cols-[1.4fr_1fr] items-start gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] items-start gap-4">
       <Panel className="overflow-hidden">
         <PanelHeader
           eyebrow="Redigido pela Cleo"

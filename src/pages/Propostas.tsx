@@ -484,8 +484,8 @@ export function Propostas() {
 
       {/* Ação em lote */}
       {selecao.size > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-40 ml-[218px] border-t border-line bg-surface/95 px-8 py-4 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-[1240px] items-center gap-5">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 px-4 py-3 backdrop-blur-xl md:ml-[218px] md:px-8 md:py-4">
+          <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-3 md:gap-5">
             <div>
               <div className="text-[13px] text-ink">
                 <span className="num">{selecao.size}</span> propostas selecionadas

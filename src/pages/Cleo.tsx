@@ -393,7 +393,7 @@ export function Cleo() {
             <span className="text-[12px] text-gold">{IDENTIDADE.papel}</span>
           </div>
           <p className="mb-4 text-[12.5px] leading-relaxed text-muted">{IDENTIDADE.origem}</p>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {PRINCIPIOS.map((p) => (
               <div key={p.titulo}>
                 <div className="mb-1 text-[12.5px] text-cleo">{p.titulo}</div>

@@ -288,8 +288,8 @@ export function ModoApresentacao() {
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] flex justify-center p-6">
-      <div className="pointer-events-auto w-[min(920px,94vw)] rounded-2xl border border-gold/25 bg-surface/96 px-6 py-4 shadow-2xl backdrop-blur-xl">
-        <div className="flex items-center gap-5">
+      <div className="pointer-events-auto w-[min(920px,96vw)] rounded-2xl border border-gold/25 bg-surface/96 px-6 py-4 shadow-2xl backdrop-blur-xl">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-5">
           {/* A chave pela cena reanima o texto: a narração entra, não troca */}
           <div key={cena} className="pagina-entra min-w-0 flex-1">
             <div className="mb-1.5 flex items-center gap-3">

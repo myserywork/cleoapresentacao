@@ -75,7 +75,7 @@ export function MeuDia() {
         </Panel>
       )}
 
-      <div className="grid grid-cols-[1.6fr_1fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4">
         <Panel className="overflow-hidden">
           <PanelHeader eyebrow="Prioridade" titulo="Por onde começar" />
           <ol className="divide-y divide-line-soft">

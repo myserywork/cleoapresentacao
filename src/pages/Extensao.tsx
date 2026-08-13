@@ -50,7 +50,7 @@ export function Extensao() {
       {/* O herói: núcleo + dois sistemas */}
       <Panel className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(700px_360px_at_50%_-10%,rgba(139,108,240,0.14),transparent_70%)]" />
-        <div className="relative grid grid-cols-[1fr_auto_1fr] items-center gap-8 px-8 py-9">
+        <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-center gap-8 px-8 py-9">
           <a
             href={`${base}/sistemas/sei`}
             target="_blank"
@@ -101,7 +101,7 @@ export function Extensao() {
 
       {/* O recurso que muda o jogo: levar a sessão para a Cleo */}
       <Panel className="overflow-hidden border-gold/25">
-        <div className="grid grid-cols-[1.3fr_1fr] gap-0">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-0">
           <div className="p-6">
             <div className="mb-2 flex items-center gap-2">
               <Lock size={15} className="text-gold" />
@@ -157,7 +157,7 @@ export function Extensao() {
         </div>
       </Panel>
 
-      <div className="grid grid-cols-[1.3fr_1fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_1fr] gap-4">
         {/* Instalação */}
         <Panel>
           <PanelHeader
@@ -224,7 +224,7 @@ export function Extensao() {
       {/* Como funciona por dentro */}
       <Panel>
         <PanelHeader eyebrow="Por dentro" titulo="A arquitetura, sem mistério" />
-        <div className="grid grid-cols-3 gap-6 px-5 py-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-5 py-6">
           {[
             ['1 · A extensão injeta', 'Ao abrir o SEI ou o TransfereGov, o content script reconhece a página e injeta o painel da Cleo sobre ela.'],
             ['2 · Você autoriza e dispara', 'O painel mostra os ritos disponíveis. Você clica; a extensão manda a ordem para a página pela ponte de mensagens.'],

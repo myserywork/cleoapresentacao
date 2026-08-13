@@ -105,7 +105,7 @@ export function Documentos() {
         )}
       </header>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Panel className="px-5 py-4">
           <Numero rotulo="Documentos" valor={numero(todos.length)} detalhe="Nos processos do órgão" />
         </Panel>
@@ -138,7 +138,7 @@ export function Documentos() {
         </Panel>
       </div>
 
-      <div className="grid grid-cols-[1fr_460px] items-start gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_460px] items-start gap-4">
         <Panel className="overflow-hidden">
           <div className="flex flex-wrap items-center gap-3 border-b border-line px-5 pt-1 pb-3">
             <Abas

@@ -162,7 +162,7 @@ export function ParlamentarFicha() {
         </div>
       </header>
 
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <Panel className="px-5 py-4">
           <Numero rotulo="Indicado" valor={moedaCompacta(carteira.valorIndicado)} tom="gold" />
         </Panel>
@@ -196,7 +196,7 @@ export function ParlamentarFicha() {
         </Panel>
       </div>
 
-      <div className="grid grid-cols-[1.9fr_1fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.9fr_1fr] gap-4">
         <Panel className="overflow-hidden">
           <PanelHeader
             eyebrow="Carteira"

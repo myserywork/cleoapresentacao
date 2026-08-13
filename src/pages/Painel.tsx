@@ -198,10 +198,14 @@ export function Painel() {
             <span className="num text-ink">{emTramite}</span> aguardando decisão
           </div>
         </div>
-        <FitaDeTramite dados={resumo.porSituacao} total={resumo.totalPropostas} />
+        <div className="-mx-1 overflow-x-auto px-1">
+          <div className="min-w-[560px] md:min-w-0">
+            <FitaDeTramite dados={resumo.porSituacao} total={resumo.totalPropostas} />
+          </div>
+        </div>
       </Panel>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Indicador
           rotulo="Valor global"
           valor={resumo.valorGlobal}
@@ -236,7 +240,7 @@ export function Painel() {
       </div>
 
       {/* Sinais que mudam a semana da coordenação, com o caminho para agir */}
-      <div className="grid grid-cols-[1fr_1fr_1fr_1.15fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1.15fr] gap-4">
         <Sinal
           para="/orcamento"
           eyebrow="Fim de exercício"
@@ -271,7 +275,7 @@ export function Painel() {
         />
       </div>
 
-      <div className="grid grid-cols-[1.55fr_1fr] gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.55fr_1fr] gap-4">
         <Panel>
           <PanelHeader eyebrow="Últimos 18 meses" titulo="Entrada de propostas" />
           <div className="px-4 pt-3 pb-2">
@@ -317,7 +321,7 @@ export function Painel() {
         </Panel>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Panel>
           <PanelHeader eyebrow="Fases" titulo="Propostas por situação" />
           <div className="px-5 py-5">
