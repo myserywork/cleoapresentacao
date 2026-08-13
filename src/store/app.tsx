@@ -16,7 +16,7 @@ import type {
   RegraGatilho,
   Rito,
 } from '@/data/types'
-import type { FiltroPropostas } from '@/comandos/tipos'
+import type { FiltroPropostas, WidgetSpec } from '@/comandos/tipos'
 
 export interface ExecucaoPendente {
   propostaId: string
@@ -105,6 +105,11 @@ interface AppState {
   focoCerebro: string | null
   setFocoCerebro: (id: string | null) => void
 
+  /** Widget flutuante em foco — a Cleo mostra sem tirar a pessoa da tela. */
+  widget: WidgetSpec | null
+  abrirWidget: (w: WidgetSpec) => void
+  fecharWidget: () => void
+
   rastro: Rastro | null
   setRastro: (r: Rastro | null) => void
 
@@ -185,6 +190,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [auditoriaDaSessao, setAuditoria] = useState<EventoAuditoria[]>([])
   const [filtroPropostas, setFiltroPropostas] = useState<FiltroPropostas>({})
   const [focoCerebro, setFocoCerebro] = useState<string | null>(null)
+  const [widget, setWidget] = useState<WidgetSpec | null>(null)
   const [rastro, setRastro] = useState<Rastro | null>(null)
   const [apresentando, setApresentando] = useState(false)
   const [comparacao, setComparacao] = useState<string[]>([])
@@ -342,6 +348,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setFiltroPropostas,
       focoCerebro,
       setFocoCerebro,
+      widget,
+      abrirWidget: setWidget,
+      fecharWidget: () => setWidget(null),
       rastro,
       setRastro,
       apresentando,
@@ -371,6 +380,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       auditoriaDaSessao,
       filtroPropostas,
       focoCerebro,
+      widget,
       rastro,
       apresentando,
       publico,

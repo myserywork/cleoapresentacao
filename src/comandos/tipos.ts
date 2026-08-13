@@ -24,8 +24,37 @@ export type Acao =
   | { tipo: 'executar-automacao'; propostaId: string; gatilho: Gatilho; motivo?: string }
   | { tipo: 'executar-rito'; propostaId: string; gatilhos: Gatilho[]; motivo?: string }
   | { tipo: 'focar-no-cerebro'; noId: string; motivo?: string }
+  | { tipo: 'abrir-widget'; widget: WidgetSpec; motivo?: string }
   | { tipo: 'destacar'; seletor: string; rotulo: string }
   | { tipo: 'esperar'; ms: number }
+
+/**
+ * Especificação de um widget flutuante.
+ *
+ * A ideia que muda a conversa: em vez de trocar de página, a Cleo abre um painel
+ * sobre a tela mostrando o que interessa, com a opção de aprofundar na página
+ * inteira. O `tipo` decide o que o palco renderiza; `href` é o "abrir completo".
+ */
+export type TipoWidget =
+  | 'orcamento'
+  | 'vigencias'
+  | 'contas'
+  | 'emendas'
+  | 'equipe'
+  | 'padroes'
+  | 'proposta'
+  | 'tabela'
+  | 'grafico'
+
+export interface WidgetSpec {
+  titulo: string
+  subtitulo?: string
+  tipo: TipoWidget
+  /** Parâmetros do renderizador — id de proposta, tabela pronta, etc. */
+  params?: Record<string, unknown>
+  /** Rota para abrir a versão completa; o palco mostra "Abrir página". */
+  href?: string
+}
 
 export interface Comando {
   id: string

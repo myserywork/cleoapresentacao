@@ -14,7 +14,7 @@ const RESPIRO_MS = 750
  */
 export function useExecutor() {
   const navegar = useNavigate()
-  const { setFiltroPropostas, abrirExecucao, setFocoCerebro, setRastro } = useApp()
+  const { setFiltroPropostas, abrirExecucao, setFocoCerebro, setRastro, abrirWidget } = useApp()
   const cancelado = useRef(false)
 
   const dormir = (ms: number) =>
@@ -64,6 +64,12 @@ export function useExecutor() {
             navegar('/cerebro')
             break
 
+          // O widget não tira a pessoa de onde ela está: mostra por cima, com a
+          // opção de abrir a página inteira se ela quiser aprofundar.
+          case 'abrir-widget':
+            abrirWidget(acao.widget)
+            break
+
           case 'destacar':
             setRastro({ rotulo: acao.rotulo })
             break
@@ -81,7 +87,7 @@ export function useExecutor() {
         window.setTimeout(() => setRastro(null), 2200)
       }
     },
-    [navegar, setFiltroPropostas, abrirExecucao, setFocoCerebro, setRastro],
+    [navegar, setFiltroPropostas, abrirExecucao, setFocoCerebro, setRastro, abrirWidget],
   )
 
   const cancelar = useCallback(() => {

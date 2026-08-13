@@ -6,6 +6,7 @@ import { PaletaComando } from '@/components/PaletaComando'
 import { RastroCopiloto } from '@/components/RastroCopiloto'
 import { ModoApresentacao } from '@/components/ModoApresentacao'
 import { Tour } from '@/components/Tour'
+import { PalcoWidget } from '@/components/PalcoWidget'
 import { Painel } from '@/pages/Painel'
 import { Propostas } from '@/pages/Propostas'
 import { PropostaDetalhe } from '@/pages/PropostaDetalhe'
@@ -95,6 +96,7 @@ export function App() {
       {/* Camadas que atravessam a aplicação inteira */}
       <ModalAutomacao />
       <ModalLote />
+      <PalcoWidget />
       <PaletaComando />
       <RastroCopiloto />
       <ModoApresentacao />

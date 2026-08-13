@@ -138,6 +138,22 @@ function detectarUf(q: string, contexto?: ContextoConversa): string | undefined 
 function ofertasParaProposta(p: Proposta): OfertaAcao[] {
   const ofertas: OfertaAcao[] = [
     {
+      // Espiar sem sair do lugar; abrir de verdade é a oferta seguinte.
+      rotulo: 'Espiar aqui',
+      acoes: [
+        {
+          tipo: 'abrir-widget',
+          widget: {
+            titulo: `Proposta ${p.numero}`,
+            subtitulo: 'Resumo, ciclo e alertas',
+            tipo: 'proposta',
+            params: { id: p.id },
+            href: `/propostas/${p.id}`,
+          },
+        },
+      ],
+    },
+    {
       rotulo: 'Abrir a proposta',
       acoes: [{ tipo: 'abrir-proposta', propostaId: p.id }],
     },
@@ -273,6 +289,21 @@ export function responder(
           ]),
         },
         oferecidas: [
+          {
+            rotulo: 'Mostrar aqui',
+            destacada: true,
+            acoes: [
+              {
+                tipo: 'abrir-widget',
+                widget: {
+                  titulo: 'Emendas parlamentares',
+                  subtitulo: 'Execução e pressão por gabinete',
+                  tipo: 'emendas',
+                  href: '/emendas',
+                },
+              },
+            ],
+          },
           { rotulo: 'Abrir a carteira de emendas', acoes: [{ tipo: 'navegar', para: '/emendas' }] },
           ...(topo
             ? [
@@ -314,10 +345,21 @@ export function responder(
         },
         oferecidas: [
           {
-            rotulo: 'Abrir a execução orçamentária',
+            rotulo: 'Mostrar aqui',
             destacada: true,
-            acoes: [{ tipo: 'navegar', para: '/orcamento' }],
+            acoes: [
+              {
+                tipo: 'abrir-widget',
+                widget: {
+                  titulo: 'Execução orçamentária',
+                  subtitulo: 'Funil, saldo a empenhar e risco de restos a pagar',
+                  tipo: 'orcamento',
+                  href: '/orcamento',
+                },
+              },
+            ],
           },
+          { rotulo: 'Abrir a página', acoes: [{ tipo: 'navegar', para: '/orcamento' }] },
         ],
         seguintes: ['Simular empenho das maiores', 'Quanto vira restos a pagar?'],
       },
@@ -356,10 +398,21 @@ export function responder(
         },
         oferecidas: [
           {
-            rotulo: 'Abrir a régua de vencimento',
+            rotulo: 'Mostrar aqui',
             destacada: true,
-            acoes: [{ tipo: 'navegar', para: '/vigencias' }],
+            acoes: [
+              {
+                tipo: 'abrir-widget',
+                widget: {
+                  titulo: 'Vigências a vencer',
+                  subtitulo: 'Convênios com 30 dias ou menos',
+                  tipo: 'vigencias',
+                  href: '/vigencias',
+                },
+              },
+            ],
           },
+          { rotulo: 'Abrir a página', acoes: [{ tipo: 'navegar', para: '/vigencias' }] },
         ],
         seguintes: ['Quais estão com prestação de contas atrasada?'],
       },
@@ -381,10 +434,21 @@ export function responder(
         ],
         oferecidas: [
           {
-            rotulo: 'Abrir a prestação de contas',
+            rotulo: 'Mostrar aqui',
             destacada: true,
-            acoes: [{ tipo: 'navegar', para: '/contas' }],
+            acoes: [
+              {
+                tipo: 'abrir-widget',
+                widget: {
+                  titulo: 'Prestação de contas',
+                  subtitulo: 'Inadimplência que trava novo repasse',
+                  tipo: 'contas',
+                  href: '/contas',
+                },
+              },
+            ],
           },
+          { rotulo: 'Abrir a página', acoes: [{ tipo: 'navegar', para: '/contas' }] },
         ],
         seguintes: ['Quais convênios vencem em 30 dias?', 'Quem são os proponentes com pior histórico?'],
       },
@@ -414,10 +478,21 @@ export function responder(
         },
         oferecidas: [
           {
-            rotulo: 'Abrir a carga da equipe',
+            rotulo: 'Mostrar aqui',
             destacada: true,
-            acoes: [{ tipo: 'navegar', para: '/equipe' }],
+            acoes: [
+              {
+                tipo: 'abrir-widget',
+                widget: {
+                  titulo: 'Carga da equipe',
+                  subtitulo: 'Ocupação por analista',
+                  tipo: 'equipe',
+                  href: '/equipe',
+                },
+              },
+            ],
           },
+          { rotulo: 'Abrir a página', acoes: [{ tipo: 'navegar', para: '/equipe' }] },
         ],
         seguintes: ['Como redistribuir a carteira?'],
       },
@@ -479,10 +554,21 @@ export function responder(
             : undefined,
         oferecidas: [
           {
-            rotulo: 'Examinar os padrões',
+            rotulo: 'Mostrar aqui',
             destacada: true,
-            acoes: [{ tipo: 'navegar', para: '/padroes' }],
+            acoes: [
+              {
+                tipo: 'abrir-widget',
+                widget: {
+                  titulo: 'Padrões da carteira',
+                  subtitulo: 'O que se repete, concentra ou encosta no limite',
+                  tipo: 'padroes',
+                  href: '/padroes',
+                },
+              },
+            ],
           },
+          { rotulo: 'Abrir a página', acoes: [{ tipo: 'navegar', para: '/padroes' }] },
         ],
       },
     }
