@@ -28,6 +28,7 @@ import {
   TOM_SITUACAO,
   Vazio,
 } from '@/components/ui'
+import { Autorizado } from '@/components/Autorizacao'
 
 const SITUACOES: SituacaoProposta[] = [
   'Cadastrada',
@@ -519,18 +520,20 @@ export function Propostas() {
               >
                 <Columns3 size={13} /> Comparar
               </Botao>
-              <Botao
-                onClick={() => {
-                  abrirLote({
-                    ritoId: 'rt-instrucao',
-                    titulo: `Instrução completa — ${selecao.size} propostas`,
-                    propostaIds: [...selecao],
-                  })
-                  setSelecao(new Set())
-                }}
-              >
-                <Layers size={13} /> Rodar em lote
-              </Botao>
+              <Autorizado permissao="rito.executar_lote">
+                <Botao
+                  onClick={() => {
+                    abrirLote({
+                      ritoId: 'rt-instrucao',
+                      titulo: `Instrução completa — ${selecao.size} propostas`,
+                      propostaIds: [...selecao],
+                    })
+                    setSelecao(new Set())
+                  }}
+                >
+                  <Layers size={13} /> Rodar em lote
+                </Botao>
+              </Autorizado>
               <Botao
                 onClick={() => {
                   const criadas = solicitarAprovacao([...selecao])

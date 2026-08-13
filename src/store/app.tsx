@@ -17,6 +17,12 @@ import type {
   Rito,
 } from '@/data/types'
 import type { FiltroPropostas, WidgetSpec } from '@/comandos/tipos'
+import {
+  usuariosIniciais,
+  type Permissao,
+  type PerfilId,
+  type Usuario,
+} from '@/dominio/permissoes'
 
 export interface ExecucaoPendente {
   propostaId: string
@@ -110,6 +116,14 @@ interface AppState {
   abrirWidget: (w: WidgetSpec) => void
   fecharWidget: () => void
 
+  /** Quem está usando a plataforma agora — define o que ela deixa fazer. */
+  usuarios: Usuario[]
+  usuarioAtualId: string
+  setUsuarioAtualId: (id: string) => void
+  salvarUsuario: (u: Usuario) => void
+  salvarPerfilCustom: (perfil: PerfilId, permissoes: Permissao[]) => void
+  permissoesDoPerfil: Record<string, Permissao[] | undefined>
+
   rastro: Rastro | null
   setRastro: (r: Rastro | null) => void
 
@@ -150,6 +164,9 @@ interface Persistido {
   ritosProprios?: Rito[]
   regras?: RegraGatilho[]
   tourVisto?: boolean
+  usuarios?: Usuario[]
+  usuarioAtualId?: string
+  permissoesDoPerfil?: Record<string, Permissao[] | undefined>
 }
 
 function ler(): Persistido {
@@ -191,6 +208,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [filtroPropostas, setFiltroPropostas] = useState<FiltroPropostas>({})
   const [focoCerebro, setFocoCerebro] = useState<string | null>(null)
   const [widget, setWidget] = useState<WidgetSpec | null>(null)
+  const [usuarios, setUsuarios] = useState<Usuario[]>(() => salvo.usuarios ?? usuariosIniciais())
+  // Começa no coordenador do primeiro órgão: o perfil que melhor demonstra
+  const [usuarioAtualId, setUsuarioAtualId] = useState(
+    salvo.usuarioAtualId ?? 'an-midr-0',
+  )
+  const [permissoesDoPerfil, setPermissoesDoPerfil] = useState<Record<string, Permissao[] | undefined>>(
+    salvo.permissoesDoPerfil ?? {},
+  )
   const [rastro, setRastro] = useState<Rastro | null>(null)
   const [apresentando, setApresentando] = useState(false)
   const [comparacao, setComparacao] = useState<string[]>([])
@@ -208,8 +233,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const decisoes: Record<string, 'pendente' | 'aprovada' | 'recusada'> = {}
     for (const a of aprovacoes) if (a.decidida !== 'pendente') decisoes[a.id] = a.decidida
-    gravar({ orgaoId, tema, publico, decisoes, comentarios, ritosProprios, regras, tourVisto })
-  }, [orgaoId, tema, publico, aprovacoes, comentarios, ritosProprios, regras, tourVisto])
+    gravar({
+      orgaoId,
+      tema,
+      publico,
+      decisoes,
+      comentarios,
+      ritosProprios,
+      regras,
+      tourVisto,
+      usuarios,
+      usuarioAtualId,
+      permissoesDoPerfil,
+    })
+  }, [
+    orgaoId,
+    tema,
+    publico,
+    aprovacoes,
+    comentarios,
+    ritosProprios,
+    regras,
+    tourVisto,
+    usuarios,
+    usuarioAtualId,
+    permissoesDoPerfil,
+  ])
 
   const notificar = useCallback((n: Omit<Notificacao, 'id' | 'criadoEm' | 'lida'>) => {
     setNotificacoes((prev) => [
@@ -351,6 +400,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       widget,
       abrirWidget: setWidget,
       fecharWidget: () => setWidget(null),
+      usuarios,
+      usuarioAtualId,
+      setUsuarioAtualId,
+      salvarUsuario: (u: Usuario) =>
+        setUsuarios((prev) => prev.map((x) => (x.id === u.id ? u : x))),
+      salvarPerfilCustom: (perfil: PerfilId, permissoes: Permissao[]) =>
+        setPermissoesDoPerfil((prev) => ({ ...prev, [perfil]: permissoes })),
+      permissoesDoPerfil,
       rastro,
       setRastro,
       apresentando,
@@ -381,6 +438,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       filtroPropostas,
       focoCerebro,
       widget,
+      usuarios,
+      usuarioAtualId,
+      permissoesDoPerfil,
       rastro,
       apresentando,
       publico,

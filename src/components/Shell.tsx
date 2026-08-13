@@ -25,6 +25,7 @@ import {
   ReceiptText,
   Sparkles,
   Timer,
+  UserCog,
   Users,
   Wallet,
 } from 'lucide-react'
@@ -34,6 +35,7 @@ import { useApp } from '@/store/app'
 import { ORGAOS, aprovacoesDoOrgao, diligenciasDoOrgao } from '@/data/repo'
 import { carteiraDeVigencias, diasAte, resumoPrestacoes } from '@/dominio/ciclo'
 import { cn } from '@/lib/format'
+import { SeloPerfil } from '@/components/Autorizacao'
 
 interface ItemNav {
   to: string
@@ -85,6 +87,7 @@ const GRUPOS: { titulo: string; itens: ItemNav[] }[] = [
       { to: '/documentos', rotulo: 'Documentos', icone: FileStack },
       { to: '/extensao', rotulo: 'Extensão', icone: Puzzle },
       { to: '/cofre', rotulo: 'Cofre de sessões', icone: KeyRound },
+      { to: '/usuarios', rotulo: 'Usuários', icone: UserCog },
       { to: '/auditoria', rotulo: 'Auditoria', icone: Building2 },
     ],
   },
@@ -266,6 +269,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {tema === 'escuro' ? <Sun size={13} /> : <Moon size={13} />}
             </button>
           </div>
+          <SeloPerfil className="mb-1" />
           <div className="flex items-center gap-2 px-2 pt-1 text-[10.5px] text-faint">
             <Sparkles size={11} className="text-cleo" />
             <span>Cleo ativa · v3</span>

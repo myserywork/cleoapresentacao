@@ -20,6 +20,7 @@ import { recomendar, type Decisao } from '@/dominio/recomendacao'
 import { cn, data, desde, moeda, moedaCompacta, numero } from '@/lib/format'
 import { Badge, Botao, Panel, SituacaoBadge, Vazio, type Tom } from '@/components/ui'
 import { Medidor } from '@/components/dados'
+import { Autorizado } from '@/components/Autorizacao'
 
 const ROTULO_TIPO: Record<TipoAprovacao, string> = {
   aprovar_proposta: 'Aprovar proposta',
@@ -555,15 +556,21 @@ function ContextoDecisao({
         >
           Abrir a proposta inteira
         </Link>
+        {/* A decisão respeita a alçada: acima do teto do perfil, o botão explica
+            a quem o pedido sobe em vez de simplesmente sumir. */}
         <div className="ml-auto flex gap-2.5">
-          <Botao variante="perigo" onClick={() => aoDecidir('recusada')}>
-            <X size={14} /> Recusar
-            <kbd className="num ml-1 text-[9.5px] opacity-60">R</kbd>
-          </Botao>
-          <Botao variante="primario" onClick={() => aoDecidir('aprovada')}>
-            <Check size={14} /> Aprovar
-            <kbd className="num ml-1 text-[9.5px] opacity-60">A</kbd>
-          </Botao>
+          <Autorizado permissao="aprovacao.decidir" valor={proposta.valorGlobal}>
+            <Botao variante="perigo" onClick={() => aoDecidir('recusada')}>
+              <X size={14} /> Recusar
+              <kbd className="num ml-1 text-[9.5px] opacity-60">R</kbd>
+            </Botao>
+          </Autorizado>
+          <Autorizado permissao="aprovacao.decidir" valor={proposta.valorGlobal}>
+            <Botao variante="primario" onClick={() => aoDecidir('aprovada')}>
+              <Check size={14} /> Aprovar
+              <kbd className="num ml-1 text-[9.5px] opacity-60">A</kbd>
+            </Botao>
+          </Autorizado>
         </div>
       </div>
     </Panel>
