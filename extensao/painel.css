@@ -1,0 +1,172 @@
+/* Painel injetado da Cleo — vive sobre o SEI e o TransfereGov */
+
+.cleo-painel {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 2147483647;
+  width: 320px;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  color: #e7edf8;
+  background: linear-gradient(180deg, #17122e 0%, #100c22 100%);
+  border: 1px solid rgba(139, 108, 240, 0.4);
+  border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(8, 6, 20, 0.55);
+  overflow: hidden;
+  transition: transform 260ms cubic-bezier(0.22, 0.8, 0.36, 1), width 220ms ease;
+}
+.cleo-painel.cleo-recolhido {
+  transform: translateX(268px);
+}
+
+.cleo-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.cleo-marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.cleo-nucleo {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e9e1ff, #8b6cf0 60%, #5b3fc4);
+  box-shadow: 0 0 14px rgba(139, 108, 240, 0.7);
+  animation: cleo-pulsa 2.4s ease-in-out infinite;
+}
+.cleo-ok .cleo-nucleo {
+  animation-duration: 1.6s;
+}
+@keyframes cleo-pulsa {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 14px rgba(139, 108, 240, 0.7); }
+  50% { transform: scale(1.12); box-shadow: 0 0 22px rgba(139, 108, 240, 0.95); }
+}
+.cleo-titulo {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.cleo-sub {
+  font-size: 10.5px;
+  color: #8b7fd0;
+  margin-top: 1px;
+}
+.cleo-toggle {
+  background: transparent;
+  border: none;
+  color: #8698b3;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.cleo-toggle:hover {
+  color: #e7edf8;
+}
+
+.cleo-corpo {
+  padding: 12px 14px 14px;
+}
+.cleo-consentimento {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #a99fdc;
+  background: rgba(139, 108, 240, 0.1);
+  border: 1px solid rgba(139, 108, 240, 0.25);
+  border-radius: 9px;
+  padding: 9px 11px;
+  margin-bottom: 11px;
+}
+.cleo-consentimento b {
+  color: #d9cffb;
+}
+
+.cleo-ritos {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.cleo-ritos.cleo-ocupado {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.cleo-rito {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #e7edf8;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease;
+}
+.cleo-rito:hover {
+  border-color: rgba(223, 181, 82, 0.5);
+  background: rgba(223, 181, 82, 0.08);
+}
+.cleo-rito-nome {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.cleo-rito-desc {
+  font-size: 10.5px;
+  color: #8698b3;
+  line-height: 1.35;
+}
+
+.cleo-barra-wrap {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 99px;
+  margin: 12px 0 10px;
+  overflow: hidden;
+}
+.cleo-barra {
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #8b6cf0, #35c3a7);
+  transition: width 320ms ease;
+}
+
+.cleo-log {
+  max-height: 148px;
+  overflow-y: auto;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  line-height: 1.7;
+}
+.cleo-log-linha {
+  color: #8698b3;
+}
+.cleo-log-linha.cleo-ok {
+  color: #35c3a7;
+}
+.cleo-log-linha.cleo-fazendo {
+  color: #b49bf7;
+}
+.cleo-log-linha.cleo-inicio {
+  color: #dfb552;
+}
+.cleo-log-linha.cleo-fim {
+  color: #35c3a7;
+  font-weight: 500;
+}
+
+.cleo-rodape {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 9.5px;
+  color: #5a6a7f;
+  line-height: 1.4;
+}

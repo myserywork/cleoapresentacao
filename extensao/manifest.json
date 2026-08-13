@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "Cleo — copiloto do SEI e do TransfereGov",
+  "version": "1.0.0",
+  "description": "A Cleopatra opera o SEI e o TransfereGov dentro da sua própria sessão, com a sua autorização. Nenhuma senha sai do seu navegador.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Cleo",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://127.0.0.1/*",
+        "http://localhost/*",
+        "https://*.trycloudflare.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["painel.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["storage", "scripting"],
+  "host_permissions": [
+    "http://127.0.0.1/*",
+    "http://localhost/*",
+    "https://*.trycloudflare.com/*"
+  ]
+}

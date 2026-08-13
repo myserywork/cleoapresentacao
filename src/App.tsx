@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation } from 'react-router-dom'
 import { Shell } from '@/components/Shell'
 import { ModalAutomacao } from '@/components/simulacao/ModalAutomacao'
 import { ModalLote } from '@/components/simulacao/ModalLote'
@@ -32,8 +32,25 @@ import { Documentos } from '@/pages/Documentos'
 import { Cleo } from '@/pages/Cleo'
 import { Relatorio } from '@/pages/Relatorio'
 import { Comparar } from '@/pages/Comparar'
+import { Extensao } from '@/pages/Extensao'
+import { SeiPage } from '@/sistemas/SeiPage'
+import { TgovPage } from '@/sistemas/TgovPage'
 
 export function App() {
+  const { pathname } = useLocation()
+
+  // As páginas de sistema são "outros sites": renderizam sem o shell da
+  // Cleopatra, para a extensão do Chrome injetar seu painel sobre elas — como
+  // faria no SEI e no TransfereGov de verdade.
+  if (pathname.startsWith('/sistemas/')) {
+    return (
+      <Routes>
+        <Route path="/sistemas/sei" element={<SeiPage />} />
+        <Route path="/sistemas/tgov" element={<TgovPage />} />
+      </Routes>
+    )
+  }
+
   return (
     <>
       <Shell>
@@ -57,6 +74,7 @@ export function App() {
           <Route path="/ritos" element={<Ritos />} />
           <Route path="/minutas" element={<Minutas />} />
           <Route path="/documentos" element={<Documentos />} />
+          <Route path="/extensao" element={<Extensao />} />
           <Route path="/auditoria" element={<Auditoria />} />
 
           <Route path="/cleo" element={<Cleo />} />

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        width: 300px;
+        font-family: system-ui, -apple-system, sans-serif;
+        background: linear-gradient(180deg, #17122e, #0f0b20);
+        color: #e7edf8;
+      }
+      .topo {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 16px 16px 12px;
+      }
+      .nucleo {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, #e9e1ff, #8b6cf0 60%, #5b3fc4);
+        box-shadow: 0 0 18px rgba(139, 108, 240, 0.7);
+      }
+      h1 {
+        font-size: 15px;
+        margin: 0;
+        letter-spacing: 0.14em;
+      }
+      .sub {
+        font-size: 11px;
+        color: #8b7fd0;
+        margin-top: 2px;
+      }
+      .corpo {
+        padding: 4px 16px 16px;
+      }
+      p {
+        font-size: 12px;
+        line-height: 1.55;
+        color: #a99fdc;
+      }
+      .linha {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+        font-size: 11.5px;
+        color: #b8c0d4;
+        margin-bottom: 8px;
+        line-height: 1.45;
+      }
+      .ponto {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #35c3a7;
+        margin-top: 5px;
+        flex-shrink: 0;
+      }
+      a.botao {
+        display: block;
+        text-align: center;
+        text-decoration: none;
+        background: #8b6cf0;
+        color: #fff;
+        font-size: 12.5px;
+        font-weight: 500;
+        padding: 9px;
+        border-radius: 9px;
+        margin-top: 6px;
+      }
+      a.botao.secundario {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: #b8c0d4;
+      }
+      .rodape {
+        font-size: 10px;
+        color: #5a6a7f;
+        padding: 0 16px 14px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topo">
+      <span class="nucleo"></span>
+      <div>
+        <h1>CLEO</h1>
+        <div class="sub">copiloto do SEI e do TransfereGov</div>
+      </div>
+    </div>
+    <div class="corpo">
+      <p>A Cleo opera os sistemas oficiais dentro da <b>sua própria sessão</b>, com a sua autorização. Nenhuma senha sai do navegador.</p>
+      <div class="linha"><span class="ponto"></span> Abra o SEI ou o TransfereGov e o copiloto aparece sozinho.</div>
+      <div class="linha"><span class="ponto"></span> Escolha o rito e acompanhe cada passo em tempo real.</div>
+      <div class="linha"><span class="ponto"></span> Cada execução fica registrada na trilha de auditoria.</div>
+      <a class="botao" id="abrir" href="#" target="_blank">Abrir nosso SEI de demonstração</a>
+      <a class="botao secundario" id="abrir-tgov" href="#" target="_blank">Abrir nosso TransfereGov</a>
+    </div>
+    <div class="rodape">
+      Versão de demonstração 1.0.0 — opera apenas os sistemas de teste da Cleopatra. Abre no mesmo
+      endereço em que a Cleopatra está aberta.
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
