@@ -36,6 +36,7 @@ import { Comparar } from '@/pages/Comparar'
 import { Extensao } from '@/pages/Extensao'
 import { Cofre } from '@/pages/Cofre'
 import { Usuarios } from '@/pages/Usuarios'
+import { Prefeitura } from '@/pages/Prefeitura'
 import { SeiPage } from '@/sistemas/SeiPage'
 import { TgovPage } from '@/sistemas/TgovPage'
 
@@ -80,6 +81,7 @@ export function App() {
           <Route path="/extensao" element={<Extensao />} />
           <Route path="/cofre" element={<Cofre />} />
           <Route path="/usuarios" element={<Usuarios />} />
+          <Route path="/prefeitura" element={<Prefeitura />} />
           <Route path="/auditoria" element={<Auditoria />} />
 
           <Route path="/cleo" element={<Cleo />} />

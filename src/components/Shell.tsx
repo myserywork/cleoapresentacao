@@ -24,6 +24,7 @@ import {
   MessagesSquare,
   ReceiptText,
   Sparkles,
+  Target,
   Timer,
   UserCog,
   Users,
@@ -112,8 +113,28 @@ const GRUPOS: { titulo: string; itens: ItemNav[] }[] = [
   },
 ]
 
+/** A prefeitura tem outra vida: pede, acompanha e responde diligência. */
+const GRUPOS_PREFEITURA: { titulo: string; itens: ItemNav[] }[] = [
+  {
+    titulo: 'Solicitar',
+    itens: [
+      { to: '/prefeitura', rotulo: 'Início', icone: LayoutDashboard, fim: true },
+      { to: '/prefeitura', rotulo: 'Oportunidades', icone: Target },
+      { to: '/prefeitura', rotulo: 'Meus pedidos', icone: FileStack },
+    ],
+  },
+  {
+    titulo: 'Inteligência',
+    itens: [
+      { to: '/cleo', rotulo: 'Cleo', icone: Sparkles },
+      { to: '/assistente', rotulo: 'Assistente', icone: MessagesSquare },
+    ],
+  },
+]
+
 export function Shell({ children }: { children: React.ReactNode }) {
-  const { orgaoId, setOrgaoId, aprovacoes, tema, alternarTema, comparacao } = useApp()
+  const { orgaoId, setOrgaoId, aprovacoes, tema, alternarTema, comparacao, modulo, setModulo } =
+    useApp()
   const { pathname } = useLocation()
 
   const pendentes = aprovacoesDoOrgao(orgaoId).filter(
@@ -170,6 +191,33 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
+        {/* O switch entre os dois lados do balcão: quem analisa e quem pede */}
+        <div className="px-3 pb-2.5">
+          <div className="flex rounded-lg border border-line bg-abyss/60 p-0.5">
+            {(
+              [
+                ['ministerio', 'Ministério'],
+                ['prefeitura', 'Prefeitura'],
+              ] as const
+            ).map(([id, rotulo]) => (
+              <button
+                key={id}
+                onClick={() => setModulo(id)}
+                className={cn(
+                  'flex-1 rounded-[6px] px-2 py-1.5 text-[11.5px] transition-colors',
+                  modulo === id
+                    ? id === 'prefeitura'
+                      ? 'bg-teal/15 text-teal'
+                      : 'bg-gold/15 text-gold'
+                    : 'text-muted hover:text-ink',
+                )}
+              >
+                {rotulo}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="px-3 pb-3">
           <label className="eyebrow mb-1.5 block px-2">Órgão</label>
           <select
@@ -186,7 +234,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 pb-2">
-          {GRUPOS.map((grupo) => (
+          {(modulo === 'prefeitura' ? GRUPOS_PREFEITURA : GRUPOS).map((grupo) => (
             <div key={grupo.titulo} className="mb-2">
               <div className="eyebrow mb-0.5 px-3 text-[9px] opacity-70">{grupo.titulo}</div>
               <div className="flex flex-col gap-px">

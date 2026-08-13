@@ -63,6 +63,8 @@ export interface Notificacao {
 }
 
 export type Tema = 'escuro' | 'claro'
+/** Os dois lados do balcão: quem analisa e quem pede. */
+export type Modulo = 'ministerio' | 'prefeitura'
 export type Publico = 'gestor' | 'tecnico' | 'parlamentar'
 
 interface AppState {
@@ -71,6 +73,10 @@ interface AppState {
 
   tema: Tema
   alternarTema: () => void
+
+  /** Ministério analisa o que foi pedido; prefeitura orquestra o pedido. */
+  modulo: Modulo
+  setModulo: (m: Modulo) => void
 
   execucoesDaSessao: Automacao[]
   registrarExecucao: (a: Automacao) => void
@@ -158,6 +164,7 @@ const CHAVE = 'cleopatra.sessao.v1'
 interface Persistido {
   orgaoId?: string
   tema?: Tema
+  modulo?: Modulo
   publico?: Publico
   decisoes?: Record<string, 'pendente' | 'aprovada' | 'recusada'>
   comentarios?: Comentario[]
@@ -193,6 +200,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [orgaoId, setOrgaoId] = useState(salvo.orgaoId ?? ORGAOS[0].id)
   const [tema, setTema] = useState<Tema>(salvo.tema ?? 'escuro')
+  const [modulo, setModulo] = useState<Modulo>(salvo.modulo ?? 'ministerio')
   const [publico, setPublico] = useState<Publico>(salvo.publico ?? 'gestor')
   const [execucoesDaSessao, setExecucoes] = useState<Automacao[]>([])
   const [execucaoAtiva, setExecucaoAtiva] = useState<ExecucaoPendente | null>(null)
@@ -236,6 +244,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     gravar({
       orgaoId,
       tema,
+      modulo,
       publico,
       decisoes,
       comentarios,
@@ -249,6 +258,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [
     orgaoId,
     tema,
+    modulo,
     publico,
     aprovacoes,
     comentarios,
@@ -372,6 +382,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setOrgaoId,
       tema,
       alternarTema: () => setTema((t) => (t === 'escuro' ? 'claro' : 'escuro')),
+      modulo,
+      setModulo,
       execucoesDaSessao,
       registrarExecucao,
       execucaoAtiva,
@@ -428,6 +440,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [
       orgaoId,
       tema,
+      modulo,
       execucoesDaSessao,
       execucaoAtiva,
       loteAtivo,
