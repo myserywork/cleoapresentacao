@@ -1,89 +1,104 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUp, MessagesSquare, Sun, Volume2, VolumeX } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import {
+  ArrowUp,
+  Info,
+  Mic,
+  MicOff,
+  MessagesSquare,
+  Square,
+  Sun,
+  Volume2,
+  VolumeX,
+} from 'lucide-react'
 import { useApp } from '@/store/app'
-import { getOrgao, getProponente } from '@/data/repo'
+import { diligenciasDoOrgao, getOrgao, getProponente } from '@/data/repo'
 import { responder, type ContextoConversa, type Resposta } from '@/assistente/motor'
+import { useEscuta, useFala } from '@/assistente/voz'
+import { IDENTIDADE, PENSANDO, PRINCIPIOS, saudacao, TONS, type Tom } from '@/assistente/identidade'
 import { useExecutor } from '@/comandos/executor'
+import { usePermissao } from '@/dominio/usePermissao'
 import { fimDeExercicio } from '@/dominio/orcamento'
-import { carteiraDeVigencias, resumoPrestacoes, diasAte } from '@/dominio/ciclo'
-import { diligenciasDoOrgao } from '@/data/repo'
+import { carteiraDeVigencias, diasAte, resumoPrestacoes } from '@/dominio/ciclo'
 import { filaDoDia } from '@/dominio/riscos'
 import { carteirasPorParlamentar } from '@/dominio/emendas'
 import { cn, moedaCompacta, numero } from '@/lib/format'
+import { Badge } from '@/components/ui'
 
 /**
  * A Cleo.
  *
- * Não é um chat com avatar: é a projeção da inteligência da casa. Um núcleo
- * vivo no centro da tela, o estado do órgão orbitando em volta, e uma única
- * pergunta de cada vez — feita em voz alta, se quiser. O Assistente é a mesa
- * de trabalho; esta tela é a presença.
+ * Não é um chat com avatar: é a projeção da inteligência da casa. Núcleo vivo
+ * no centro, o estado do órgão orbitando, e uma conversa por vez — falada, se
+ * a pessoa quiser. Ela ouve, responde em voz alta e abre widgets em vez de
+ * arrastar você para outra tela.
  */
 
 type Estado = 'ociosa' | 'ouvindo' | 'pensando' | 'falando'
 
 /* ---------- O núcleo ---------- */
 
-function Nucleo({ estado }: { estado: Estado }) {
+function Nucleo({ estado, volume }: { estado: Estado; volume: number }) {
   const ref = useRef<HTMLCanvasElement>(null)
   const estadoRef = useRef(estado)
+  const volRef = useRef(volume)
   estadoRef.current = estado
+  volRef.current = volume
 
   useEffect(() => {
     const canvas = ref.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')!
-    const TAM = 320
+    const TAM = 300
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
     canvas.width = TAM * dpr
     canvas.height = TAM * dpr
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     const c = TAM / 2
 
-    // Partículas orbitais: cada uma com raio, fase e velocidade próprios
-    const particulas = Array.from({ length: 64 }, (_, i) => ({
-      raio: 74 + (i % 5) * 11 + (i % 3) * 4,
-      fase: (i / 64) * Math.PI * 2,
-      veloc: 0.0016 + (i % 7) * 0.00042,
-      tam: 0.9 + (i % 3) * 0.65,
+    const particulas = Array.from({ length: 58 }, (_, i) => ({
+      raio: 70 + (i % 5) * 10 + (i % 3) * 4,
+      fase: (i / 58) * Math.PI * 2,
+      veloc: 0.0016 + (i % 7) * 0.0004,
+      tam: 0.9 + (i % 3) * 0.6,
     }))
 
     let quadro = 0
     const desenhar = (agora: number) => {
       const e = estadoRef.current
-      const ritmo = e === 'pensando' ? 3.1 : e === 'falando' ? 1.9 : e === 'ouvindo' ? 1.35 : 1
+      const ritmo = e === 'pensando' ? 3 : e === 'falando' ? 2 : e === 'ouvindo' ? 1.4 : 1
       const t = agora * ritmo
 
       ctx.clearRect(0, 0, TAM, TAM)
 
-      // Respiração do halo central
-      const pulso = 1 + Math.sin(t / 900) * 0.07 + (e === 'falando' ? Math.sin(t / 90) * 0.05 : 0)
-      const nucleoR = 46 * pulso
+      // Ouvindo: o núcleo responde ao volume do microfone
+      const reacao = e === 'ouvindo' ? 1 + volRef.current * 0.35 : 1
+      const pulso =
+        (1 + Math.sin(t / 900) * 0.07 + (e === 'falando' ? Math.sin(t / 85) * 0.06 : 0)) * reacao
+      const nucleoR = 44 * pulso
 
-      const halo = ctx.createRadialGradient(c, c, nucleoR * 0.2, c, c, nucleoR * 2.6)
-      halo.addColorStop(0, 'rgba(139,108,240,0.85)')
-      halo.addColorStop(0.4, 'rgba(139,108,240,0.28)')
-      halo.addColorStop(1, 'rgba(139,108,240,0)')
+      const halo = ctx.createRadialGradient(c, c, nucleoR * 0.2, c, c, nucleoR * 2.7)
+      halo.addColorStop(0, e === 'ouvindo' ? 'rgba(53,195,167,0.8)' : 'rgba(139,108,240,0.85)')
+      halo.addColorStop(0.4, e === 'ouvindo' ? 'rgba(53,195,167,0.24)' : 'rgba(139,108,240,0.26)')
+      halo.addColorStop(1, 'transparent')
       ctx.fillStyle = halo
       ctx.beginPath()
-      ctx.arc(c, c, nucleoR * 2.6, 0, Math.PI * 2)
+      ctx.arc(c, c, nucleoR * 2.7, 0, Math.PI * 2)
       ctx.fill()
 
       const miolo = ctx.createRadialGradient(c - 8, c - 10, 4, c, c, nucleoR)
-      miolo.addColorStop(0, 'rgba(233,225,255,0.95)')
-      miolo.addColorStop(0.55, 'rgba(160,132,246,0.9)')
-      miolo.addColorStop(1, 'rgba(96,70,190,0.85)')
+      miolo.addColorStop(0, 'rgba(240,233,255,0.96)')
+      miolo.addColorStop(0.55, e === 'ouvindo' ? 'rgba(90,205,180,0.9)' : 'rgba(160,132,246,0.9)')
+      miolo.addColorStop(1, e === 'ouvindo' ? 'rgba(20,120,102,0.85)' : 'rgba(96,70,190,0.85)')
       ctx.fillStyle = miolo
       ctx.beginPath()
       ctx.arc(c, c, nucleoR, 0, Math.PI * 2)
       ctx.fill()
 
-      // Arcos orbitais: três anéis girando em sentidos e ritmos diferentes
       const arcos = [
-        { r: 68, largura: 1.4, vel: 1, abre: 1.9, cor: 'rgba(139,108,240,0.55)' },
-        { r: 86, largura: 1.1, vel: -0.62, abre: 2.6, cor: 'rgba(223,181,82,0.4)' },
-        { r: 104, largura: 0.9, vel: 0.4, abre: 1.2, cor: 'rgba(53,195,167,0.35)' },
+        { r: 65, largura: 1.4, vel: 1, abre: 1.9, cor: 'rgba(139,108,240,0.55)' },
+        { r: 82, largura: 1.1, vel: -0.62, abre: 2.6, cor: 'rgba(223,181,82,0.42)' },
+        { r: 99, largura: 0.9, vel: 0.4, abre: 1.2, cor: 'rgba(53,195,167,0.36)' },
       ]
       for (const a of arcos) {
         const inicio = (t / 1400) * a.vel
@@ -98,11 +113,10 @@ function Nucleo({ estado }: { estado: Estado }) {
         ctx.stroke()
       }
 
-      // Poeira orbital
       for (const p of particulas) {
         const ang = p.fase + t * p.veloc * 0.06
-        const x = c + Math.cos(ang) * p.raio
-        const y = c + Math.sin(ang) * p.raio * 0.94
+        const x = c + Math.cos(ang) * p.raio * reacao
+        const y = c + Math.sin(ang) * p.raio * 0.94 * reacao
         ctx.fillStyle = 'rgba(180,155,247,0.5)'
         ctx.beginPath()
         ctx.arc(x, y, p.tam, 0, Math.PI * 2)
@@ -115,10 +129,10 @@ function Nucleo({ estado }: { estado: Estado }) {
     return () => cancelAnimationFrame(quadro)
   }, [])
 
-  return <canvas ref={ref} style={{ width: 320, height: 320 }} aria-hidden />
+  return <canvas ref={ref} style={{ width: 300, height: 300 }} aria-hidden />
 }
 
-/* ---------- Máquina de escrever ---------- */
+/* ---------- Datilografia ---------- */
 
 function useDatilografia(texto: string, ativo: boolean, aoTerminar?: () => void) {
   const [visivel, setVisivel] = useState('')
@@ -136,7 +150,7 @@ function useDatilografia(texto: string, ativo: boolean, aoTerminar?: () => void)
         window.clearInterval(t)
         aoTerminar?.()
       }
-    }, 14)
+    }, 13)
     return () => window.clearInterval(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [texto, ativo])
@@ -148,16 +162,85 @@ function useDatilografia(texto: string, ativo: boolean, aoTerminar?: () => void)
 export function Cleo() {
   const { orgaoId } = useApp()
   const { executar } = useExecutor()
+  const { eu, perfil } = usePermissao()
   const orgao = getOrgao(orgaoId)!
 
   const [estado, setEstado] = useState<Estado>('ociosa')
   const [pergunta, setPergunta] = useState('')
   const [ultimaPergunta, setUltimaPergunta] = useState('')
   const [resposta, setResposta] = useState<Resposta | null>(null)
-  const [voz, setVoz] = useState(false)
+  const [vozLigada, setVozLigada] = useState(false)
+  const [tom, setTom] = useState<Tom>('objetiva')
+  const [mostrarPerfil, setMostrarPerfil] = useState(false)
+  const [volume, setVolume] = useState(0)
   const contexto = useRef<ContextoConversa>({})
+  const [frasePensando] = useState(() => PENSANDO[Math.floor(Math.random() * PENSANDO.length)])
 
-  /* Os sinais do órgão orbitando a presença */
+  const { falar, calar, falando } = useFala()
+
+  const responderTexto = useCallback(
+    (limpo: string) => {
+      setPergunta('')
+      setUltimaPergunta(limpo)
+      setResposta(null)
+      setEstado('pensando')
+      window.setTimeout(() => {
+        const r = responder(limpo, orgaoId, contexto.current)
+        contexto.current = r.contexto
+        setResposta(r.resposta)
+        setEstado('falando')
+        if (vozLigada) falar(r.resposta.texto)
+      }, 850)
+    },
+    [orgaoId, vozLigada, falar],
+  )
+
+  const escuta = useEscuta((texto) => responderTexto(texto))
+
+  // Nível do microfone para o núcleo reagir enquanto ela ouve
+  useEffect(() => {
+    if (!escuta.ouvindo) {
+      setVolume(0)
+      return
+    }
+    let ctx: AudioContext | null = null
+    let stream: MediaStream | null = null
+    let quadro = 0
+    navigator.mediaDevices
+      ?.getUserMedia({ audio: true })
+      .then((s) => {
+        stream = s
+        ctx = new AudioContext()
+        const fonte = ctx.createMediaStreamSource(s)
+        const analisador = ctx.createAnalyser()
+        analisador.fftSize = 256
+        fonte.connect(analisador)
+        const dados = new Uint8Array(analisador.frequencyBinCount)
+        const medir = () => {
+          analisador.getByteFrequencyData(dados)
+          const media = dados.reduce((a, b) => a + b, 0) / dados.length
+          setVolume(Math.min(media / 90, 1))
+          quadro = requestAnimationFrame(medir)
+        }
+        medir()
+      })
+      .catch(() => {
+        /* sem permissão de áudio o núcleo só não reage — a escuta segue */
+      })
+    return () => {
+      cancelAnimationFrame(quadro)
+      stream?.getTracks().forEach((t) => t.stop())
+      void ctx?.close()
+    }
+  }, [escuta.ouvindo])
+
+  useEffect(() => {
+    if (escuta.ouvindo) setEstado('ouvindo')
+    else if (estado === 'ouvindo') setEstado('ociosa')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [escuta.ouvindo])
+
+  /* Sinais do órgão orbitando a presença */
   const sinais = useMemo(() => {
     const fim = fimDeExercicio(orgaoId)
     const contas = resumoPrestacoes(orgaoId)
@@ -171,15 +254,11 @@ export function Cleo() {
     const gabinete = carteirasPorParlamentar(orgaoId)[0]
     return [
       `${moedaCompacta(fim.saldoAEmpenhar)} a empenhar em ${fim.diasUteis} dias úteis`,
-      fila
-        ? `a prioridade do dia é ${fila.proposta.numero} — ${fila.motivo.toLowerCase()}`
-        : 'fila do dia em dia',
+      fila ? `a prioridade do dia é ${fila.proposta.numero} — ${fila.motivo.toLowerCase()}` : 'fila em dia',
       `${numero(vigencias)} convênio(s) vencendo em 30 dias`,
       `${numero(contas.atrasadas)} prestação(ões) de contas em atraso`,
       `${numero(diligencias)} diligência(s) vencida(s) esperando reiteração`,
-      gabinete
-        ? `a maior pressão de gabinete é de ${gabinete.parlamentar.nome}`
-        : 'nenhuma pressão de gabinete acumulada',
+      gabinete ? `maior pressão de gabinete: ${gabinete.parlamentar.nome}` : 'sem pressão acumulada',
     ]
   }, [orgaoId])
   const [sinalAtivo, setSinalAtivo] = useState(0)
@@ -190,51 +269,20 @@ export function Cleo() {
     return () => window.clearInterval(t)
   }, [estado, sinais])
 
-  const falar = useCallback(
-    (texto: string) => {
-      if (!voz || !('speechSynthesis' in window)) return
-      window.speechSynthesis.cancel()
-      const u = new SpeechSynthesisUtterance(texto)
-      u.lang = 'pt-BR'
-      u.rate = 1.06
-      window.speechSynthesis.speak(u)
-    },
-    [voz],
-  )
-
-  const perguntar = useCallback(
-    (texto: string) => {
-      const limpo = texto.trim()
-      if (!limpo) return
-      setPergunta('')
-      setUltimaPergunta(limpo)
-      setResposta(null)
-      setEstado('pensando')
-      window.setTimeout(() => {
-        const r = responder(limpo, orgaoId, contexto.current)
-        contexto.current = r.contexto
-        setResposta(r.resposta)
-        setEstado('falando')
-        falar(r.resposta.texto)
-      }, 900)
-    },
-    [orgaoId, falar],
-  )
-
   function briefing() {
     const fim = fimDeExercicio(orgaoId)
     const contas = resumoPrestacoes(orgaoId)
     const fila = filaDoDia(orgaoId, 3)
     const prop = fila[0] ? getProponente(fila[0].proposta.proponenteId) : undefined
     const texto = [
-      `Bom dia. O ${orgao.sigla} tem ${moedaCompacta(fim.saldoAEmpenhar)} a empenhar em ${fim.diasUteis} dias úteis — ritmo necessário de ${moedaCompacta(fim.ritmoNecessario)} por dia.`,
+      `${saudacao(eu?.nome)} O ${orgao.sigla} tem ${moedaCompacta(fim.saldoAEmpenhar)} a empenhar em ${fim.diasUteis} dias úteis — ritmo necessário de ${moedaCompacta(fim.ritmoNecessario)} por dia.`,
       fila[0]
         ? `Se eu fosse começar por uma coisa: a ${fila[0].proposta.numero}, de ${prop?.nome}. Motivo: ${fila[0].motivo.toLowerCase()}.`
         : '',
       contas.atrasadas > 0
         ? `Há ${contas.atrasadas} prestações de contas em atraso travando ${contas.proponentesBloqueados} proponentes.`
         : 'Nenhuma prestação de contas em atraso.',
-      'Quer que eu detalhe algum desses pontos, ou disparo o rito da prioridade do dia?',
+      'Quer que eu detalhe algum desses pontos?',
     ]
       .filter(Boolean)
       .join(' ')
@@ -246,14 +294,14 @@ export function Cleo() {
       setResposta({
         texto,
         seguintes: [
-          'Executar o rito completo na prioridade do dia',
+          'Quanto falta empenhar até dezembro?',
           'Quais convênios vencem em 30 dias?',
           'Como está a carga da equipe?',
         ],
       })
       setEstado('falando')
-      falar(texto)
-    }, 900)
+      if (vozLigada) falar(texto)
+    }, 850)
   }
 
   const textoDigitado = useDatilografia(resposta?.texto ?? '', estado === 'falando', () =>
@@ -262,24 +310,55 @@ export function Cleo() {
 
   return (
     <div className="relative flex h-screen w-full flex-col items-center overflow-hidden">
-      {/* Fundo: a mesma noite do Cérebro, mais funda */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_540px_at_50%_30%,#141033_0%,transparent_65%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_540px_at_50%_28%,#141033_0%,transparent_65%)]" />
 
-      <header className="z-10 flex w-full items-center justify-between px-8 pt-6">
+      <header className="z-10 flex w-full items-start justify-between px-8 pt-6">
         <div>
           <div className="eyebrow">A presença · {orgao.sigla}</div>
+          {perfil && (
+            <div className="mt-1 text-[11px] text-faint">
+              operando pela alçada de {eu?.nome?.split(' ')[0]} · {perfil.nome}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-lg border border-line bg-surface/80 p-0.5 backdrop-blur-xl">
+            {TONS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTom(t.id)}
+                title={t.descricao}
+                className={cn(
+                  'rounded-md px-2.5 py-1.5 text-[11.5px] transition-colors',
+                  tom === t.id ? 'bg-cleo/15 text-cleo' : 'text-muted hover:text-ink',
+                )}
+              >
+                {t.nome}
+              </button>
+            ))}
+          </div>
           <button
-            onClick={() => setVoz((v) => !v)}
+            onClick={() => {
+              if (vozLigada) calar()
+              setVozLigada((v) => !v)
+            }}
             className={cn(
               'flex items-center gap-2 rounded-lg border border-line bg-surface/80 px-3 py-2 text-[12px] backdrop-blur-xl transition-colors',
-              voz ? 'border-cleo/50 text-cleo' : 'text-muted hover:text-ink',
+              vozLigada ? 'border-cleo/50 text-cleo' : 'text-muted hover:text-ink',
             )}
             title="A Cleo lê as respostas em voz alta"
           >
-            {voz ? <Volume2 size={13} /> : <VolumeX size={13} />}
-            {voz ? 'Voz ativa' : 'Voz'}
+            {vozLigada ? <Volume2 size={13} /> : <VolumeX size={13} />}
+            {vozLigada ? 'Voz ativa' : 'Voz'}
+          </button>
+          <button
+            onClick={() => setMostrarPerfil((v) => !v)}
+            className={cn(
+              'flex items-center gap-2 rounded-lg border border-line bg-surface/80 px-3 py-2 text-[12px] backdrop-blur-xl transition-colors',
+              mostrarPerfil ? 'border-gold/50 text-gold' : 'text-muted hover:text-ink',
+            )}
+          >
+            <Info size={13} /> Quem é a Cleo
           </button>
           <Link
             to="/assistente"
@@ -290,23 +369,49 @@ export function Cleo() {
         </div>
       </header>
 
-      <div className="z-10 -mt-2 flex flex-col items-center">
-        <Nucleo estado={estado} />
+      <div className="z-10 -mt-1 flex flex-col items-center">
+        <Nucleo estado={estado} volume={volume} />
         <h1 className="-mt-7 font-display text-[30px] font-semibold tracking-[0.42em] text-ink">
           CLEO
         </h1>
         <p className="mt-1 h-5 text-[12.5px] text-muted">
           {estado === 'pensando'
-            ? 'consultando a carteira…'
+            ? frasePensando
             : estado === 'falando'
               ? 'respondendo'
               : estado === 'ouvindo'
-                ? 'ouvindo'
+                ? escuta.parcial || 'ouvindo…'
                 : sinais[sinalAtivo]}
         </p>
       </div>
 
-      {/* A conversa: uma troca por vez, como quem fala com alguém */}
+      {/* Ficha de identidade */}
+      {mostrarPerfil && (
+        <div className="pagina-entra z-10 mt-4 w-full max-w-[760px] rounded-2xl border border-gold/25 bg-surface/95 px-6 py-5 backdrop-blur-xl">
+          <div className="mb-3 flex items-baseline gap-3">
+            <span className="text-[15px] text-ink">{IDENTIDADE.nome}</span>
+            <span className="text-[12px] text-gold">{IDENTIDADE.papel}</span>
+          </div>
+          <p className="mb-4 text-[12.5px] leading-relaxed text-muted">{IDENTIDADE.origem}</p>
+          <div className="grid grid-cols-2 gap-4">
+            {PRINCIPIOS.map((p) => (
+              <div key={p.titulo}>
+                <div className="mb-1 text-[12.5px] text-cleo">{p.titulo}</div>
+                <p className="text-[11.5px] leading-relaxed text-muted">{p.texto}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-3">
+            {IDENTIDADE.jeito.map((j) => (
+              <Badge key={j} tom="inert">
+                {j}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* A conversa */}
       <div className="z-10 mt-5 flex w-full max-w-[760px] flex-1 flex-col items-center gap-4 overflow-y-auto px-6">
         {ultimaPergunta && (
           <div className="self-end rounded-2xl rounded-br-md border border-line bg-raised px-4 py-2.5 text-[13px] text-ink">
@@ -349,7 +454,7 @@ export function Cleo() {
                 {resposta.oferecidas?.map((o) => (
                   <button
                     key={o.rotulo}
-                    onClick={() => void executar(o.acoes, { silencioso: false })}
+                    onClick={() => void executar(o.acoes, { silencioso: true })}
                     className={cn(
                       'rounded-full border px-3.5 py-1.5 text-[12.5px] transition-colors',
                       o.destacada
@@ -363,7 +468,7 @@ export function Cleo() {
                 {resposta.seguintes?.map((s) => (
                   <button
                     key={s}
-                    onClick={() => perguntar(s)}
+                    onClick={() => responderTexto(s)}
                     className="rounded-full border border-cleo/35 px-3.5 py-1.5 text-[12.5px] text-cleo transition-colors hover:bg-cleo/10"
                   >
                     {s}
@@ -386,7 +491,7 @@ export function Cleo() {
               (s) => (
                 <button
                   key={s}
-                  onClick={() => perguntar(s)}
+                  onClick={() => responderTexto(s)}
                   className="rounded-full border border-line bg-surface/70 px-4 py-2 text-[13px] text-muted transition-colors hover:text-ink"
                 >
                   {s}
@@ -397,24 +502,62 @@ export function Cleo() {
         )}
       </div>
 
-      {/* A pergunta */}
+      {/* A pergunta — teclado ou voz */}
       <div className="z-10 w-full max-w-[760px] px-6 pb-7">
+        {escuta.erro && (
+          <div className="mb-2 rounded-lg border border-alert/30 bg-alert/[0.06] px-3.5 py-2 text-[11.5px] text-alert">
+            {escuta.erro}
+          </div>
+        )}
         <form
           onSubmit={(e) => {
             e.preventDefault()
-            perguntar(pergunta)
+            if (pergunta.trim()) responderTexto(pergunta.trim())
           }}
-          className="flex items-center gap-2 rounded-2xl border border-line bg-surface/85 px-4 py-2 backdrop-blur-xl focus-within:border-cleo/50"
+          className={cn(
+            'flex items-center gap-2 rounded-2xl border bg-surface/85 px-4 py-2 backdrop-blur-xl transition-colors',
+            escuta.ouvindo ? 'border-teal/60' : 'border-line focus-within:border-cleo/50',
+          )}
         >
           <input
-            value={pergunta}
+            value={escuta.ouvindo ? escuta.parcial : pergunta}
             onChange={(e) => setPergunta(e.target.value)}
-            onFocus={() => estado === 'ociosa' && setEstado('ouvindo')}
-            onBlur={() => estado === 'ouvindo' && setEstado('ociosa')}
-            placeholder={`Pergunte, ou mande a Cleo agir no ${orgao.sigla}…`}
+            readOnly={escuta.ouvindo}
+            placeholder={
+              escuta.ouvindo ? 'Estou ouvindo…' : `Fale ou escreva — a Cleo age no ${orgao.sigla}`
+            }
             className="h-10 flex-1 bg-transparent text-[14px] text-ink placeholder:text-faint focus:outline-none"
             aria-label="Pergunta para a Cleo"
           />
+
+          {falando && (
+            <button
+              type="button"
+              onClick={calar}
+              className="flex size-9 items-center justify-center rounded-xl border border-line text-muted hover:text-ink"
+              title="Parar de falar"
+            >
+              <Square size={13} />
+            </button>
+          )}
+
+          {escuta.suportado && (
+            <button
+              type="button"
+              onClick={() => (escuta.ouvindo ? escuta.parar() : escuta.ouvir())}
+              className={cn(
+                'flex size-9 items-center justify-center rounded-xl transition-colors',
+                escuta.ouvindo
+                  ? 'bg-teal text-[#04150f]'
+                  : 'border border-line text-muted hover:text-ink',
+              )}
+              title={escuta.ouvindo ? 'Parar de ouvir' : 'Falar com a Cleo'}
+              aria-label="Microfone"
+            >
+              {escuta.ouvindo ? <MicOff size={15} /> : <Mic size={15} />}
+            </button>
+          )}
+
           <button
             type="submit"
             disabled={!pergunta.trim()}
@@ -425,8 +568,11 @@ export function Cleo() {
           </button>
         </form>
         <p className="mt-2 text-center text-[10.5px] text-faint">
-          A Cleo responde com os dados da carteira e executa na interface — nada é enviado aos
-          sistemas oficiais.
+          {escuta.ouvindo
+            ? 'Microfone aberto — a Cleo está ouvindo esta aba.'
+            : escuta.suportado
+              ? 'Clique no microfone para falar. Nada é enviado aos sistemas oficiais.'
+              : 'Este navegador não reconhece voz — use o teclado.'}
         </p>
       </div>
     </div>
