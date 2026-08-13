@@ -59,8 +59,13 @@ export function TgovPage() {
   useEffect(() => {
     document.title = 'TransfereGov — Transferências da União'
     document.documentElement.dataset.cleoSistema = 'tgov'
+    document.documentElement.dataset.cleoUsuario = 'gov.br · usuário de serviço MIDR'
+    const token = Math.random().toString(36).slice(2) + Date.now().toString(36)
+    document.cookie = `TGOV_SESSAO=${token}; path=/; SameSite=Lax; max-age=7200`
+    document.cookie = `TGOV_GOVBR=selo-prata; path=/; SameSite=Lax; max-age=7200`
     return () => {
       delete document.documentElement.dataset.cleoSistema
+      delete document.documentElement.dataset.cleoUsuario
     }
   }, [])
 

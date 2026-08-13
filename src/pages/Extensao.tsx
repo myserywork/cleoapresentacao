@@ -1,11 +1,14 @@
 import { useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import {
   ArrowUpRight,
   Globe,
   Download,
   KeyRound,
+  Lock,
   MousePointerClick,
   Puzzle,
+  RefreshCw,
   ShieldCheck,
   Sparkles,
   Workflow,
@@ -94,6 +97,64 @@ export function Extensao() {
           Com a extensão instalada, o copiloto aparece sozinho e opera a página; sem ela, um painel
           de reserva demonstra o mesmo no modo local.
         </p>
+      </Panel>
+
+      {/* O recurso que muda o jogo: levar a sessão para a Cleo */}
+      <Panel className="overflow-hidden border-gold/25">
+        <div className="grid grid-cols-[1.3fr_1fr] gap-0">
+          <div className="p-6">
+            <div className="mb-2 flex items-center gap-2">
+              <Lock size={15} className="text-gold" />
+              <span className="eyebrow text-gold">O pulo do gato</span>
+            </div>
+            <h2 className="text-[18px] leading-tight">Leve a sessão autenticada para a Cleo</h2>
+            <p className="mt-2 max-w-[62ch] text-[12.5px] leading-relaxed text-muted">
+              Operar na hora é bom; não precisar operar é melhor. Um clique no painel captura a
+              sessão que o usuário já abriu — inclusive os cookies <span className="num text-ink">httpOnly</span>,
+              que nem a página enxerga — e a entrega à Cleopatra. Com a sessão viva, a fila de ritos
+              roda no servidor <span className="text-ink">sem a aba aberta</span>. A madrugada
+              trabalha pelo servidor.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-4">
+              {[
+                [ShieldCheck, 'Nenhuma senha — só a sessão já autenticada'],
+                [RefreshCw, 'Perto de expirar, a Cleo pede renovação'],
+                [Workflow, 'Mesmo contrato de eventos dos workers'],
+              ].map(([Icone, texto]) => {
+                const I = Icone as typeof ShieldCheck
+                return (
+                  <span key={texto as string} className="flex items-center gap-2 text-[11.5px] text-muted">
+                    <I size={13} className="text-teal" /> {texto as string}
+                  </span>
+                )
+              })}
+            </div>
+            <Link to="/cofre" className="mt-5 inline-block">
+              <Botao variante="primario">
+                <KeyRound size={13} /> Abrir o Cofre de Sessões
+              </Botao>
+            </Link>
+          </div>
+
+          <div className="flex flex-col justify-center gap-3 border-l border-line bg-abyss/30 p-6">
+            {[
+              ['Captura', 'A extensão lê os cookies de sessão do domínio e os empacota.'],
+              ['Guarda', 'O cofre mantém a sessão com a validade contando.'],
+              ['Opera', 'A Cleo usa a sessão viva para trabalhar a fila sozinha.'],
+              ['Renova', 'No fim da validade, pede ao usuário um instante para recapturar.'],
+            ].map(([t, d], i) => (
+              <div key={t} className="flex items-start gap-3">
+                <span className="num mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-[10px] text-gold">
+                  {i + 1}
+                </span>
+                <div>
+                  <div className="text-[12.5px] text-ink">{t}</div>
+                  <p className="text-[11px] text-muted">{d}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </Panel>
 
       <div className="grid grid-cols-[1.3fr_1fr] gap-4">

@@ -1,172 +1,297 @@
-/* Painel injetado da Cleo — vive sobre o SEI e o TransfereGov */
+/* Painel injetado da Cleopatra — identidade navy + dourado, roxo só de acento.
+   Vive sobre o SEI e o TransfereGov. */
 
-.cleo-painel {
+.clp-painel {
+  --clp-abyss: #070a12;
+  --clp-surface: #0d1421;
+  --clp-line: #1d2a41;
+  --clp-ink: #e7edf8;
+  --clp-muted: #8698b3;
+  --clp-faint: #5a6a7f;
+  --clp-gold: #dfb552;
+  --clp-teal: #35c3a7;
+  --clp-cleo: #8b6cf0;
+  --clp-alert: #e2564d;
+
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: 18px;
+  right: 18px;
   z-index: 2147483647;
-  width: 320px;
-  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
-  color: #e7edf8;
-  background: linear-gradient(180deg, #17122e 0%, #100c22 100%);
-  border: 1px solid rgba(139, 108, 240, 0.4);
-  border-radius: 14px;
-  box-shadow: 0 18px 50px rgba(8, 6, 20, 0.55);
+  width: 328px;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--clp-ink);
+  background:
+    radial-gradient(420px 220px at 80% -10%, rgba(223, 181, 82, 0.08), transparent 60%),
+    linear-gradient(180deg, #0e1524 0%, #090d17 100%);
+  border: 1px solid var(--clp-line);
+  border-radius: 16px;
+  box-shadow: 0 22px 60px rgba(3, 5, 12, 0.6);
   overflow: hidden;
-  transition: transform 260ms cubic-bezier(0.22, 0.8, 0.36, 1), width 220ms ease;
+  transition: transform 300ms cubic-bezier(0.22, 0.8, 0.36, 1);
 }
-.cleo-painel.cleo-recolhido {
-  transform: translateX(268px);
+.clp-painel.clp-recolhido {
+  transform: translateX(276px);
 }
 
-.cleo-cabecalho {
+.clp-cabecalho {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 13px 15px;
+  border-bottom: 1px solid var(--clp-line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
 }
-.cleo-marca {
+.clp-marca {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
 }
-.cleo-nucleo {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #e9e1ff, #8b6cf0 60%, #5b3fc4);
-  box-shadow: 0 0 14px rgba(139, 108, 240, 0.7);
-  animation: cleo-pulsa 2.4s ease-in-out infinite;
+.clp-selo {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 35% 28%, rgba(223, 181, 82, 0.35), transparent 60%),
+    #0d1421;
+  border: 1px solid rgba(223, 181, 82, 0.4);
+  background-image: url('icons/icon48.png');
+  background-size: cover;
+  box-shadow: 0 0 0 3px rgba(223, 181, 82, 0.08);
 }
-.cleo-ok .cleo-nucleo {
-  animation-duration: 1.6s;
+.clp-titulo {
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--clp-ink);
 }
-@keyframes cleo-pulsa {
-  0%, 100% { transform: scale(1); box-shadow: 0 0 14px rgba(139, 108, 240, 0.7); }
-  50% { transform: scale(1.12); box-shadow: 0 0 22px rgba(139, 108, 240, 0.95); }
-}
-.cleo-titulo {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-}
-.cleo-sub {
+.clp-sub {
   font-size: 10.5px;
-  color: #8b7fd0;
-  margin-top: 1px;
+  color: var(--clp-gold);
+  margin-top: 2px;
+  opacity: 0.85;
 }
-.cleo-toggle {
+.clp-toggle {
   background: transparent;
   border: none;
-  color: #8698b3;
+  color: var(--clp-faint);
   font-size: 18px;
   cursor: pointer;
   padding: 0 4px;
   line-height: 1;
 }
-.cleo-toggle:hover {
-  color: #e7edf8;
+.clp-toggle:hover {
+  color: var(--clp-ink);
 }
 
-.cleo-corpo {
-  padding: 12px 14px 14px;
+.clp-corpo {
+  padding: 13px 15px 15px;
 }
-.cleo-consentimento {
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: #a99fdc;
-  background: rgba(139, 108, 240, 0.1);
-  border: 1px solid rgba(139, 108, 240, 0.25);
-  border-radius: 9px;
-  padding: 9px 11px;
-  margin-bottom: 11px;
+.clp-abas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 13px;
 }
-.cleo-consentimento b {
-  color: #d9cffb;
+.clp-aba {
+  font-size: 11px;
+  color: var(--clp-abyss);
+  background: var(--clp-gold);
+  padding: 2px 9px;
+  border-radius: 99px;
+  font-weight: 600;
+}
+.clp-sistema {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--clp-muted);
+  border: 1px solid var(--clp-line);
+  padding: 2px 8px;
+  border-radius: 99px;
 }
 
-.cleo-ritos {
+.clp-secao-titulo {
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--clp-muted);
+  margin-bottom: 9px;
+}
+
+.clp-ritos {
   display: flex;
   flex-direction: column;
   gap: 7px;
 }
-.cleo-ritos.cleo-ocupado {
+.clp-ritos.clp-ocupado {
   opacity: 0.5;
   pointer-events: none;
 }
-.cleo-rito {
+.clp-rito {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
   text-align: left;
-  padding: 9px 11px;
-  border-radius: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: #e7edf8;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--clp-line);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--clp-ink);
   cursor: pointer;
-  transition: border-color 140ms ease, background 140ms ease;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
 }
-.cleo-rito:hover {
-  border-color: rgba(223, 181, 82, 0.5);
-  background: rgba(223, 181, 82, 0.08);
+.clp-rito:hover {
+  border-color: rgba(223, 181, 82, 0.55);
+  background: rgba(223, 181, 82, 0.07);
+  transform: translateY(-1px);
 }
-.cleo-rito-nome {
+.clp-rito-nome {
   font-size: 12.5px;
-  font-weight: 500;
+  font-weight: 600;
 }
-.cleo-rito-desc {
+.clp-rito-desc {
   font-size: 10.5px;
-  color: #8698b3;
+  color: var(--clp-muted);
   line-height: 1.35;
 }
 
-.cleo-barra-wrap {
+.clp-barra-wrap {
   height: 4px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 99px;
-  margin: 12px 0 10px;
+  margin: 12px 0 9px;
   overflow: hidden;
 }
-.cleo-barra {
+.clp-barra {
   height: 100%;
   width: 0%;
   border-radius: 99px;
-  background: linear-gradient(90deg, #8b6cf0, #35c3a7);
+  background: linear-gradient(90deg, var(--clp-gold), var(--clp-teal));
   transition: width 320ms ease;
 }
 
-.cleo-log {
-  max-height: 148px;
+.clp-log {
+  max-height: 110px;
   overflow-y: auto;
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-family: 'Consolas', ui-monospace, monospace;
   font-size: 10.5px;
   line-height: 1.7;
 }
-.cleo-log-linha {
-  color: #8698b3;
+.clp-log-linha {
+  color: var(--clp-muted);
 }
-.cleo-log-linha.cleo-ok {
-  color: #35c3a7;
+.clp-log-linha.clp-ok {
+  color: var(--clp-teal);
 }
-.cleo-log-linha.cleo-fazendo {
+.clp-log-linha.clp-fazendo {
   color: #b49bf7;
 }
-.cleo-log-linha.cleo-inicio {
-  color: #dfb552;
+.clp-log-linha.clp-inicio {
+  color: var(--clp-gold);
 }
-.cleo-log-linha.cleo-fim {
-  color: #35c3a7;
+.clp-log-linha.clp-fim {
+  color: var(--clp-teal);
   font-weight: 500;
 }
 
-.cleo-rodape {
-  margin-top: 10px;
-  padding-top: 9px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 9.5px;
-  color: #5a6a7f;
-  line-height: 1.4;
+.clp-divisor {
+  height: 1px;
+  background: var(--clp-line);
+  margin: 14px 0;
+}
+
+/* Sessão autenticada */
+.clp-sessao-txt {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--clp-muted);
+  margin: 0 0 9px;
+}
+.clp-btn-sessao {
+  width: 100%;
+  padding: 9px;
+  border-radius: 10px;
+  border: none;
+  background: var(--clp-gold);
+  color: #151003;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.clp-btn-sessao:hover {
+  background: #eecb74;
+}
+.clp-btn-sessao.clp-fantasma {
+  background: transparent;
+  border: 1px solid var(--clp-line);
+  color: var(--clp-muted);
+}
+.clp-btn-sessao.clp-fantasma:hover {
+  color: var(--clp-ink);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.clp-sessao-card {
+  border-radius: 11px;
+  border: 1px solid var(--clp-line);
+  padding: 11px 12px;
+}
+.clp-sessao-card.clp-valida {
+  border-color: rgba(53, 195, 167, 0.35);
+  background: rgba(53, 195, 167, 0.06);
+}
+.clp-sessao-card.clp-perto {
+  border-color: rgba(223, 181, 82, 0.45);
+  background: rgba(223, 181, 82, 0.07);
+}
+.clp-sessao-card.clp-expirada {
+  border-color: rgba(226, 86, 77, 0.45);
+  background: rgba(226, 86, 77, 0.07);
+}
+.clp-sessao-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--clp-ink);
+}
+.clp-pino {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--clp-teal);
+  box-shadow: 0 0 8px currentColor;
+}
+.clp-perto .clp-pino {
+  background: var(--clp-gold);
+}
+.clp-expirada .clp-pino {
+  background: var(--clp-alert);
+}
+.clp-relogio {
+  margin-left: auto;
+  font-family: 'Consolas', monospace;
+  font-size: 11.5px;
+  color: var(--clp-muted);
+}
+.clp-sessao-meta {
+  font-size: 10px;
+  color: var(--clp-faint);
+  margin: 7px 0 10px;
+  font-family: 'Consolas', monospace;
+}
+.clp-sessao-acoes .clp-btn-sessao {
+  padding: 7px;
+  font-size: 11.5px;
+}
+
+.clp-rodape {
+  margin-top: 13px;
+  padding-top: 10px;
+  border-top: 1px solid var(--clp-line);
+  font-size: 9px;
+  color: var(--clp-faint);
+  line-height: 1.5;
 }

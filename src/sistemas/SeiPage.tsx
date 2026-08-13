@@ -143,8 +143,15 @@ export function SeiPage() {
   useEffect(() => {
     document.title = 'SEI · Sistema Eletrônico de Informações'
     document.documentElement.dataset.cleoSistema = 'sei'
+    document.documentElement.dataset.cleoUsuario = 'SNPDC · usuário de serviço'
+    // Cookie de sessão autenticada — é o que a extensão captura e leva para a
+    // Cleopatra. Simula o SESSIONID que o SEI grava ao logar.
+    const token = Math.random().toString(36).slice(2) + Date.now().toString(36)
+    document.cookie = `SEI_SESSAO=${token}; path=/; SameSite=Lax; max-age=7200`
+    document.cookie = `SEI_USUARIO=servico.midr; path=/; SameSite=Lax; max-age=7200`
     return () => {
       delete document.documentElement.dataset.cleoSistema
+      delete document.documentElement.dataset.cleoUsuario
     }
   }, [])
 

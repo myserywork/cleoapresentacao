@@ -5,109 +5,83 @@
     <style>
       :root {
         color-scheme: dark;
+        --gold: #dfb552;
+        --ink: #e7edf8;
+        --muted: #8698b3;
+        --line: #1d2a41;
+        --teal: #35c3a7;
       }
-      * {
-        box-sizing: border-box;
-      }
+      * { box-sizing: border-box; }
       body {
         margin: 0;
-        width: 300px;
-        font-family: system-ui, -apple-system, sans-serif;
-        background: linear-gradient(180deg, #17122e, #0f0b20);
-        color: #e7edf8;
+        width: 320px;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background:
+          radial-gradient(420px 240px at 80% -10%, rgba(223, 181, 82, 0.08), transparent 60%),
+          linear-gradient(180deg, #0e1524, #080c15);
+        color: var(--ink);
       }
       .topo {
         display: flex;
         align-items: center;
-        gap: 11px;
-        padding: 16px 16px 12px;
+        gap: 12px;
+        padding: 17px 17px 13px;
       }
-      .nucleo {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        background: radial-gradient(circle at 35% 30%, #e9e1ff, #8b6cf0 60%, #5b3fc4);
-        box-shadow: 0 0 18px rgba(139, 108, 240, 0.7);
+      .selo {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background-image: url('icons/icon128.png');
+        background-size: cover;
+        border: 1px solid rgba(223, 181, 82, 0.4);
       }
-      h1 {
-        font-size: 15px;
-        margin: 0;
-        letter-spacing: 0.14em;
-      }
-      .sub {
-        font-size: 11px;
-        color: #8b7fd0;
-        margin-top: 2px;
-      }
-      .corpo {
-        padding: 4px 16px 16px;
-      }
-      p {
-        font-size: 12px;
-        line-height: 1.55;
-        color: #a99fdc;
-      }
-      .linha {
-        display: flex;
-        gap: 8px;
-        align-items: flex-start;
+      h1 { font-size: 14px; margin: 0; letter-spacing: 0.22em; font-weight: 700; }
+      .sub { font-size: 10.5px; color: var(--gold); margin-top: 2px; opacity: 0.85; }
+      .corpo { padding: 2px 17px 16px; }
+      p { font-size: 12px; line-height: 1.55; color: var(--muted); margin: 6px 0 12px; }
+      p b { color: var(--ink); }
+      .rotulo { font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin: 4px 0 8px; }
+      .sessoes { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+      .sessao {
+        display: flex; align-items: center; gap: 9px;
+        border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px;
         font-size: 11.5px;
-        color: #b8c0d4;
-        margin-bottom: 8px;
-        line-height: 1.45;
       }
-      .ponto {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #35c3a7;
-        margin-top: 5px;
-        flex-shrink: 0;
-      }
+      .sessao.vazia { color: var(--muted); justify-content: center; font-size: 11px; }
+      .pino { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 8px currentColor; flex-shrink: 0; }
+      .sistema { font-weight: 600; }
+      .tempo { margin-left: auto; font-family: 'Consolas', monospace; color: var(--muted); font-size: 10.5px; }
       a.botao {
-        display: block;
-        text-align: center;
-        text-decoration: none;
-        background: #8b6cf0;
-        color: #fff;
-        font-size: 12.5px;
-        font-weight: 500;
-        padding: 9px;
-        border-radius: 9px;
-        margin-top: 6px;
+        display: block; text-align: center; text-decoration: none;
+        background: var(--gold); color: #151003; font-size: 12.5px; font-weight: 600;
+        padding: 9px; border-radius: 10px; margin-top: 6px;
       }
-      a.botao.secundario {
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        color: #b8c0d4;
-      }
-      .rodape {
-        font-size: 10px;
-        color: #5a6a7f;
-        padding: 0 16px 14px;
-        line-height: 1.5;
-      }
+      a.botao.secundario { background: transparent; border: 1px solid var(--line); color: #b8c0d4; font-weight: 500; }
+      .rodape { font-size: 9.5px; color: #5a6a7f; padding: 4px 17px 15px; line-height: 1.5; }
     </style>
   </head>
   <body>
     <div class="topo">
-      <span class="nucleo"></span>
+      <span class="selo"></span>
       <div>
-        <h1>CLEO</h1>
+        <h1>CLEOPATRA</h1>
         <div class="sub">copiloto do SEI e do TransfereGov</div>
       </div>
     </div>
     <div class="corpo">
-      <p>A Cleo opera os sistemas oficiais dentro da <b>sua própria sessão</b>, com a sua autorização. Nenhuma senha sai do navegador.</p>
-      <div class="linha"><span class="ponto"></span> Abra o SEI ou o TransfereGov e o copiloto aparece sozinho.</div>
-      <div class="linha"><span class="ponto"></span> Escolha o rito e acompanhe cada passo em tempo real.</div>
-      <div class="linha"><span class="ponto"></span> Cada execução fica registrada na trilha de auditoria.</div>
-      <a class="botao" id="abrir" href="#" target="_blank">Abrir nosso SEI de demonstração</a>
+      <p>A Cleo opera os sistemas na <b>sua sessão</b> e pode <b>levar a sessão autenticada</b> para continuar sozinha. Nenhuma senha sai do navegador.</p>
+
+      <div class="rotulo">Sessões na Cleo</div>
+      <div class="sessoes" id="sessoes">
+        <div class="sessao vazia">Nenhuma sessão capturada ainda.</div>
+      </div>
+
+      <a class="botao" id="abrir" href="#" target="_blank">Abrir nosso SEI</a>
       <a class="botao secundario" id="abrir-tgov" href="#" target="_blank">Abrir nosso TransfereGov</a>
     </div>
     <div class="rodape">
-      Versão de demonstração 1.0.0 — opera apenas os sistemas de teste da Cleopatra. Abre no mesmo
-      endereço em que a Cleopatra está aberta.
+      Demonstração 1.1.0 — abre no mesmo endereço em que a Cleopatra está aberta. Opera apenas os
+      sistemas de teste.
     </div>
     <script src="popup.js"></script>
   </body>

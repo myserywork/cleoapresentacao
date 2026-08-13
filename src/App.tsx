@@ -33,6 +33,7 @@ import { Cleo } from '@/pages/Cleo'
 import { Relatorio } from '@/pages/Relatorio'
 import { Comparar } from '@/pages/Comparar'
 import { Extensao } from '@/pages/Extensao'
+import { Cofre } from '@/pages/Cofre'
 import { SeiPage } from '@/sistemas/SeiPage'
 import { TgovPage } from '@/sistemas/TgovPage'
 
@@ -75,6 +76,7 @@ export function App() {
           <Route path="/minutas" element={<Minutas />} />
           <Route path="/documentos" element={<Documentos />} />
           <Route path="/extensao" element={<Extensao />} />
+          <Route path="/cofre" element={<Cofre />} />
           <Route path="/auditoria" element={<Auditoria />} />
 
           <Route path="/cleo" element={<Cleo />} />
