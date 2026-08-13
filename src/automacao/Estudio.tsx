@@ -26,14 +26,38 @@ import { Badge, Botao, Campo, Panel } from '@/components/ui'
  * do processo que a autuação devolve é o mesmo que a anexação usa.
  */
 
+type TipoNo = TipoPasso | 'inicio' | 'confirmar' | 'repensar'
+
 interface NoFluxo {
   id: string
-  tipo: TipoPasso | 'inicio'
+  tipo: TipoNo
   rotulo: string
   parametro: string
   x: number
   y: number
 }
+
+/**
+ * Nós de verificação.
+ *
+ * Automação séria não é "executou, acabou": é "executou, confere se deu certo,
+ * e se não deu, repensa". O nó de confirmação lê o resultado no próprio
+ * sistema — o processo existe mesmo? o documento entrou na árvore? — e abre
+ * dois caminhos. O de repensar é onde a Cleo tenta outra rota antes de
+ * desistir e chamar gente.
+ */
+const NOS_ESPECIAIS: { tipo: TipoNo; rotulo: string; descricao: string }[] = [
+  {
+    tipo: 'confirmar',
+    rotulo: 'Confirmar resultado',
+    descricao: 'Volta ao sistema e verifica se a ação anterior realmente aconteceu.',
+  },
+  {
+    tipo: 'repensar',
+    rotulo: 'Repensar rota',
+    descricao: 'Não deu certo: tenta caminho alternativo antes de chamar uma pessoa.',
+  },
+]
 
 interface Ligacao {
   de: string
@@ -61,6 +85,12 @@ const SAIDAS: Partial<Record<TipoPasso, { nome: string; descricao: string }[]>> 
   incluir_bloco: [{ nome: 'bloco.id', descricao: 'Bloco em que o processo entrou' }],
 }
 
+/** O que a confirmação publica para quem vem depois dela. */
+const SAIDA_CONFIRMACAO = [
+  { nome: 'confirmacao.ok', descricao: 'Verdadeiro se o sistema confirmou a ação' },
+  { nome: 'confirmacao.evidencia', descricao: 'O que foi encontrado na verificação' },
+]
+
 const LARGURA_NO = 190
 const ALTURA_NO = 64
 
@@ -75,19 +105,25 @@ function fluxoInicial(): { nos: NoFluxo[]; ligacoes: Ligacao[] } {
     { id: 'n5', tipo: 'gerar_documento', rotulo: 'Termo de análise', parametro: 'Minuta m1 em {{processo.numero}}', x: 1280, y: 120 },
     { id: 'n6', tipo: 'incluir_bloco', rotulo: 'Bloco de assinatura', parametro: 'Bloco da unidade', x: 1530, y: 120 },
     { id: 'n7', tipo: 'notificar', rotulo: 'Avisar analista', parametro: 'Instrução concluída', x: 1780, y: 220 },
-    { id: 'n8', tipo: 'aguardar', rotulo: 'Esperar 5 min', parametro: 'Sessão instável', x: 780, y: 330 },
-    { id: 'n9', tipo: 'notificar', rotulo: 'Alertar falha', parametro: 'Retomada agendada', x: 1030, y: 330 },
+    { id: 'n8', tipo: 'aguardar', rotulo: 'Esperar 5 min', parametro: 'Sessão instável', x: 780, y: 360 },
+    { id: 'n9', tipo: 'repensar', rotulo: 'Repensar rota', parametro: 'Tentar pela busca de processo', x: 1030, y: 360 },
+    { id: 'nc', tipo: 'confirmar', rotulo: 'Confirmar autuação', parametro: 'Processo existe na árvore?', x: 1030, y: 20 },
+    { id: 'nx', tipo: 'notificar', rotulo: 'Chamar o analista', parametro: 'Duas tentativas sem sucesso', x: 1280, y: 360 },
   ]
   const ligacoes: Ligacao[] = [
     { de: 'inicio', para: 'n1', porta: 'sucesso' },
     { de: 'n1', para: 'n2', porta: 'sucesso' },
     { de: 'n2', para: 'n3', porta: 'sucesso' },
-    { de: 'n3', para: 'n4', porta: 'sucesso' },
+    { de: 'n3', para: 'nc', porta: 'sucesso' },
+    { de: 'nc', para: 'n4', porta: 'sucesso' },
+    { de: 'nc', para: 'n9', porta: 'falha' },
     { de: 'n4', para: 'n5', porta: 'sucesso' },
     { de: 'n5', para: 'n6', porta: 'sucesso' },
     { de: 'n6', para: 'n7', porta: 'sucesso' },
     { de: 'n3', para: 'n8', porta: 'falha' },
     { de: 'n8', para: 'n9', porta: 'sucesso' },
+    { de: 'n9', para: 'n3', porta: 'sucesso' },
+    { de: 'n9', para: 'nx', porta: 'falha' },
   ]
   return { nos, ligacoes }
 }
@@ -107,6 +143,9 @@ export function Estudio() {
 
   const palco = useRef<HTMLDivElement>(null)
   const arrastando = useRef<{ id: string; dx: number; dy: number } | null>(null)
+  // Câmera do palco: arrastar o fundo move tudo, a roda dá zoom no ponteiro
+  const [cam, setCam] = useState({ x: -20, y: -10, z: 0.66 })
+  const panRef = useRef<{ x: number; y: number; camX: number; camY: number } | null>(null)
   const [fioAtivo, setFioAtivo] = useState<{
     de: string
     porta: 'sucesso' | 'falha'
@@ -114,14 +153,37 @@ export function Estudio() {
     y: number
   } | null>(null)
 
-  const posDoPalco = useCallback((e: { clientX: number; clientY: number }) => {
+  /** Converte a posição do ponteiro para coordenadas do mundo do fluxo. */
+  const posDoPalco = useCallback(
+    (e: { clientX: number; clientY: number }) => {
+      const r = palco.current?.getBoundingClientRect()
+      if (!r) return { x: 0, y: 0 }
+      return {
+        x: (e.clientX - r.left - cam.x) / cam.z,
+        y: (e.clientY - r.top - cam.y) / cam.z,
+      }
+    },
+    [cam],
+  )
+
+  function enquadrarTudo() {
     const r = palco.current?.getBoundingClientRect()
-    if (!r) return { x: 0, y: 0 }
-    return {
-      x: e.clientX - r.left + (palco.current?.scrollLeft ?? 0),
-      y: e.clientY - r.top + (palco.current?.scrollTop ?? 0),
-    }
-  }, [])
+    if (!r || nos.length === 0) return
+    const minX = Math.min(...nos.map((n) => n.x))
+    const maxX = Math.max(...nos.map((n) => n.x + LARGURA_NO))
+    const minY = Math.min(...nos.map((n) => n.y))
+    const maxY = Math.max(...nos.map((n) => n.y + ALTURA_NO))
+    // Piso de 55%: enquadrar não pode transformar o fluxo em formiga
+    const z = Math.max(
+      Math.min((r.width - 40) / (maxX - minX), (r.height - 40) / (maxY - minY), 1.4),
+      0.55,
+    )
+    setCam({
+      z,
+      x: r.width / 2 - ((minX + maxX) / 2) * z,
+      y: r.height / 2 - ((minY + maxY) / 2) * z,
+    })
+  }
 
   /* ---------- Variáveis disponíveis no nó selecionado ---------- */
 
@@ -155,9 +217,9 @@ export function Estudio() {
     for (const idAnterior of anteriores(noSelecionado.id)) {
       const n = nos.find((x) => x.id === idAnterior)
       if (!n || n.tipo === 'inicio') continue
-      for (const s of SAIDAS[n.tipo] ?? []) {
-        if (!lista.some((x) => x.nome === s.nome))
-          lista.push({ ...s, origem: n.rotulo })
+      const saidas = n.tipo === 'confirmar' ? SAIDA_CONFIRMACAO : (SAIDAS[n.tipo as TipoPasso] ?? [])
+      for (const s of saidas) {
+        if (!lista.some((x) => x.nome === s.nome)) lista.push({ ...s, origem: n.rotulo })
       }
     }
     return lista
@@ -184,6 +246,14 @@ export function Estudio() {
   /* ---------- Interação ---------- */
 
   function aoMover(e: React.PointerEvent) {
+    if (panRef.current) {
+      setCam((c) => ({
+        ...c,
+        x: panRef.current!.camX + (e.clientX - panRef.current!.x),
+        y: panRef.current!.camY + (e.clientY - panRef.current!.y),
+      }))
+      return
+    }
     if (arrastando.current) {
       const p = posDoPalco(e)
       const { id, dx, dy } = arrastando.current
@@ -209,8 +279,9 @@ export function Estudio() {
     setFioAtivo(null)
   }
 
-  function adicionarNo(tipo: TipoPasso) {
-    const modelo = PASSOS_DISPONIVEIS.find((p) => p.tipo === tipo)!
+  function adicionarNo(tipo: TipoNo) {
+    const especial = NOS_ESPECIAIS.find((n) => n.tipo === tipo)
+    const modelo = especial ?? PASSOS_DISPONIVEIS.find((p) => p.tipo === tipo)!
     const id = `n-${Date.now()}`
     setNos((prev) => [
       ...prev,
@@ -257,7 +328,11 @@ export function Estudio() {
             ...prev,
             n.tipo === 'inicio'
               ? '▸ Gatilho disparado — proposta 0713672-79/2026'
-              : `✓ ${n.rotulo}${n.parametro ? ` · ${n.parametro.replace('{{proposta.numero}}', '0713672-79/2026').replace('{{processo.numero}}', '59000.412877/2026-31')}` : ''}`,
+              : n.tipo === 'confirmar'
+              ? `🔎 ${n.rotulo} — confirmado: processo 59000.412877/2026-31 existe na árvore`
+              : n.tipo === 'repensar'
+                ? `↻ ${n.rotulo} — tentando caminho alternativo`
+                : `✓ ${n.rotulo}${n.parametro ? ` · ${n.parametro.replace('{{proposta.numero}}', '0713672-79/2026').replace('{{processo.numero}}', '59000.412877/2026-31')}` : ''}`,
           ])
         if (i === caminho.length - 1) {
           window.setTimeout(() => setRodando(false), 900)
@@ -278,7 +353,7 @@ export function Estudio() {
     }
     const passos: PassoRito[] = caminho
       .map((id) => nos.find((n) => n.id === id))
-      .filter((n): n is NoFluxo => !!n && n.tipo !== 'inicio')
+      .filter((n): n is NoFluxo => !!n && n.tipo !== 'inicio' && n.tipo !== 'confirmar' && n.tipo !== 'repensar')
       .map((n, i) => ({ id: `p${i}`, tipo: n.tipo as TipoPasso, rotulo: n.rotulo, parametro: n.parametro }))
 
     const rito: Rito = {
@@ -332,7 +407,7 @@ export function Estudio() {
         <div className="border-b border-line px-4 py-3">
           <div className="eyebrow">Paleta</div>
         </div>
-        <ul className="max-h-[540px] divide-y divide-line-soft overflow-y-auto">
+        <ul className="max-h-[300px] divide-y divide-line-soft overflow-y-auto">
           {PASSOS_DISPONIVEIS.map((p) => (
             <li key={p.tipo}>
               <button
@@ -345,6 +420,24 @@ export function Estudio() {
             </li>
           ))}
         </ul>
+
+        {/* Verificação: o que separa automação séria de "executou e torceu" */}
+        <div className="border-t border-line px-4 py-2.5">
+          <div className="eyebrow mb-1.5">Verificação</div>
+          {NOS_ESPECIAIS.map((n) => (
+            <button
+              key={n.tipo}
+              onClick={() => adicionarNo(n.tipo)}
+              className="mb-1 w-full rounded-lg border border-line px-2.5 py-2 text-left transition-colors hover:border-teal/40 hover:bg-teal/[0.05]"
+            >
+              <div className="flex items-center gap-1.5">
+                <Plus size={10} className="shrink-0 text-teal" />
+                <span className="text-[11.5px] text-ink">{n.rotulo}</span>
+              </div>
+              <p className="mt-0.5 pl-[16px] text-[10px] leading-snug text-faint">{n.descricao}</p>
+            </button>
+          ))}
+        </div>
         <p className="border-t border-line px-4 py-3 text-[10.5px] leading-relaxed text-faint">
           Clique para pôr no palco; arraste pelo título; puxe um fio da porta{' '}
           <span className="text-teal">verde</span> (sucesso) ou{' '}
@@ -376,17 +469,80 @@ export function Estudio() {
         <div
           ref={palco}
           onPointerMove={aoMover}
+          onPointerDown={(e) => {
+            // Arrastar o fundo move a câmera; sobre um nó, quem manda é o nó
+            if (e.target === e.currentTarget || (e.target as HTMLElement).dataset.fundo) {
+              panRef.current = { x: e.clientX, y: e.clientY, camX: cam.x, camY: cam.y }
+            }
+          }}
           onPointerUp={() => {
             arrastando.current = null
+            panRef.current = null
             setFioAtivo(null)
           }}
-          className="relative h-[520px] overflow-auto"
+          onPointerLeave={() => {
+            panRef.current = null
+          }}
+          onWheel={(e) => {
+            e.preventDefault()
+            const r = palco.current!.getBoundingClientRect()
+            const mx = e.clientX - r.left
+            const my = e.clientY - r.top
+            const fator = e.deltaY < 0 ? 1.12 : 1 / 1.12
+            setCam((c) => {
+              const z = Math.min(Math.max(c.z * fator, 0.3), 2.4)
+              // Zoom ancorado no ponteiro: o ponto sob o cursor não escapa
+              return { z, x: mx - ((mx - c.x) / c.z) * z, y: my - ((my - c.y) / c.z) * z }
+            })
+          }}
+          className={cn(
+            'relative h-[520px] overflow-hidden',
+            panRef.current ? 'cursor-grabbing' : 'cursor-grab',
+          )}
           style={{
             backgroundImage: 'radial-gradient(circle, rgba(125,140,166,0.13) 1px, transparent 1px)',
-            backgroundSize: '22px 22px',
+            backgroundSize: `${22 * cam.z}px ${22 * cam.z}px`,
+            backgroundPosition: `${cam.x}px ${cam.y}px`,
           }}
+          data-fundo="1"
         >
-          <div className="relative" style={{ width: 2050, height: 700 }}>
+          {/* Controles da câmera */}
+          <div className="absolute right-3 bottom-3 z-20 flex items-center gap-1 rounded-lg border border-line bg-surface/95 px-1.5 py-1 backdrop-blur">
+            <button
+              onClick={() => setCam((c) => ({ ...c, z: Math.max(c.z / 1.2, 0.3) }))}
+              className="px-2 py-0.5 text-[13px] text-muted hover:text-ink"
+              title="Afastar"
+            >
+              −
+            </button>
+            <span className="num w-10 text-center text-[10.5px] text-faint">
+              {Math.round(cam.z * 100)}%
+            </span>
+            <button
+              onClick={() => setCam((c) => ({ ...c, z: Math.min(c.z * 1.2, 2.4) }))}
+              className="px-2 py-0.5 text-[13px] text-muted hover:text-ink"
+              title="Aproximar"
+            >
+              +
+            </button>
+            <button
+              onClick={enquadrarTudo}
+              className="ml-1 border-l border-line px-2 py-0.5 text-[10.5px] text-muted hover:text-ink"
+              title="Enquadrar o fluxo inteiro"
+            >
+              ajustar
+            </button>
+          </div>
+
+          <div
+            className="absolute origin-top-left"
+            style={{
+              transform: `translate(${cam.x}px, ${cam.y}px) scale(${cam.z})`,
+              width: 2200,
+              height: 760,
+            }}
+            data-fundo="1"
+          >
             <svg className="pointer-events-none absolute inset-0" width={2050} height={700}>
               {ligacoes.map((l, i) => {
                 const de = nos.find((n) => n.id === l.de)
@@ -434,14 +590,20 @@ export function Estudio() {
             {nos.map((n) => {
               const aceso = acesos.has(n.id)
               const inicio = n.tipo === 'inicio'
+              const confirma = n.tipo === 'confirmar'
+              const repensa = n.tipo === 'repensar'
               return (
                 <div
                   key={n.id}
                   className={cn(
-                    'absolute rounded-xl border transition-shadow select-none',
-                    inicio ? 'border-gold/55 bg-gold/[0.1]' : 'border-line bg-surface',
+                    'absolute border transition-shadow select-none',
+                    // A confirmação é losangular no espírito: cantos mais suaves
+                    // e cor própria, para o olho separar "fazer" de "conferir"
+                    confirma ? 'rounded-2xl border-teal/50 bg-teal/[0.07]' : repensa ? 'rounded-2xl border-gold/50 bg-gold/[0.07]' : 'rounded-xl',
+                    inicio && 'border-gold/55 bg-gold/[0.1]',
+                    !inicio && !confirma && !repensa && 'border-line bg-surface',
                     selecionado === n.id && 'ring-1 ring-gold/60',
-                    aceso && 'shadow-[0_0_18px_rgba(53,195,167,0.35)] border-teal/60',
+                    aceso && 'border-teal/60 shadow-[0_0_18px_rgba(53,195,167,0.35)]',
                   )}
                   style={{ left: n.x, top: n.y, width: LARGURA_NO, height: ALTURA_NO }}
                   onClick={() => setSelecionado(n.id)}
@@ -457,7 +619,10 @@ export function Estudio() {
                       <CheckCircle2 size={11} className="shrink-0 text-teal" />
                     ) : (
                       <span
-                        className={cn('size-1.5 shrink-0 rounded-full', inicio ? 'bg-gold' : 'bg-cleo')}
+                        className={cn(
+                          'size-1.5 shrink-0 rounded-full',
+                          inicio ? 'bg-gold' : confirma ? 'bg-teal' : repensa ? 'bg-gold' : 'bg-cleo',
+                        )}
                       />
                     )}
                     <span className="truncate text-[11.5px] font-medium text-ink">{n.rotulo}</span>
