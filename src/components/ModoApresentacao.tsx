@@ -98,6 +98,24 @@ export function ModoApresentacao() {
           acoes: [{ tipo: 'navegar', para: '/auditoria' }],
         },
         {
+          titulo: 'Verificação, não torcida',
+          narracao:
+            'O estúdio tem nós que confirmam se a ação deu certo no próprio sistema, e nós que repensam a rota antes de chamar uma pessoa. Automação séria não é "executou, acabou".',
+          acoes: [{ tipo: 'navegar', para: '/ritos' }],
+        },
+        {
+          titulo: 'A extensão e o cofre de sessões',
+          narracao:
+            'A extensão opera na sessão do próprio usuário — inclusive lendo cookies httpOnly que a página não enxerga — e leva a sessão para a Cleo trabalhar sem a aba aberta.',
+          acoes: [{ tipo: 'navegar', para: '/cofre' }],
+        },
+        {
+          titulo: 'Permissão e alçada no código',
+          narracao:
+            '22 permissões nomeadas, 5 perfis com teto de valor. O botão que a pessoa não pode usar não some: explica o motivo e a quem o pedido sobe.',
+          acoes: [{ tipo: 'navegar', para: '/usuarios' }],
+        },
+        {
           titulo: 'O grafo do conhecimento',
           narracao:
             'Órgão, programa, proponente, proposta, processo, documento, emenda e parlamentar no mesmo modelo. Os vínculos são os do próprio banco.',
@@ -139,6 +157,12 @@ export function ModoApresentacao() {
           acoes: [{ tipo: 'navegar', para: '/cerebro' }],
         },
         {
+          titulo: 'O município do outro lado',
+          narracao:
+            'O módulo Prefeitura mostra como o pedido nasce: a Cleo acha o programa certo e escreve o ofício na linguagem que o ministério exige — menos devolução, mais obra.',
+          acoes: [{ tipo: 'navegar', para: '/prefeitura' }],
+        },
+        {
           titulo: 'Uma página para levar',
           narracao:
             'O relatório executivo sai pronto, em linguagem de ofício, com os números que sustentam qualquer conversa.',
@@ -151,24 +175,27 @@ export function ModoApresentacao() {
       {
         titulo: 'O órgão numa tela',
         narracao:
-          'Toda a carteira de convênios em um lugar só: onde cada proposta está agora, quanto vale e o que já foi empenhado.',
+          'Toda a carteira de convênios em um lugar só: onde cada proposta está agora, quanto vale, o que já foi empenhado — e os quatro sinais que mudam a semana da coordenação.',
         acoes: [{ tipo: 'navegar', para: '/' }],
+      },
+      {
+        titulo: 'Por onde começar hoje',
+        narracao:
+          'A fila do dia, ordenada por risco, prazo consumido e valor. Cada proposta já vem com a próxima ação pronta para executar.',
+        acoes: [{ tipo: 'navegar', para: '/meu-dia' }],
       },
       {
         titulo: 'O que está parado',
         narracao:
           'A Cleo sabe o que não anda. Estas propostas estão sem movimento há mais de trinta dias — e é aqui que o dinheiro fica retido.',
         acoes: [
-          {
-            tipo: 'filtrar-propostas',
-            filtro: { paradaHaDias: 30, ordenarPor: 'parada' },
-          },
+          { tipo: 'filtrar-propostas', filtro: { paradaHaDias: 30, ordenarPor: 'parada' } },
         ],
       },
       {
         titulo: 'Uma proposta por dentro',
         narracao:
-          'Empenhos, cronograma, documentos, linha do tempo e o que ainda falta para habilitar. Sem abrir o TransfereGov nem o SEI.',
+          'Ciclo de vida, saúde da instrução, conformidade com a regra à vista, emenda de origem, prazos legais com base normativa e previsão de celebração.',
         acoes: [{ tipo: 'abrir-proposta', propostaId: alvo.id }],
       },
       {
@@ -192,20 +219,80 @@ export function ModoApresentacao() {
       {
         titulo: 'A decisão continua sua',
         narracao:
-          'Nada é concluído sem o aval do gestor. Aprove uma a uma ou selecione várias — e o registro de quem decidiu fica.',
+          'Cada pedido chega com a recomendação da Cleo, os fatos que a sustentam e o grau de confiança. E respeita a alçada: acima do teto do perfil, sobe para quem pode.',
         acoes: [{ tipo: 'navegar', para: '/aprovacoes' }],
+      },
+      {
+        titulo: 'De quem é o dinheiro',
+        narracao:
+          'A carteira organizada por quem cobra: valor indicado, valor empenhado e quantas propostas estão paradas em cada gabinete.',
+        acoes: [{ tipo: 'navegar', para: '/emendas' }],
+      },
+      {
+        titulo: 'O relógio de dezembro',
+        narracao:
+          'Dotação, empenho, liquidação e pagamento — com o nome do que sobra em cada degrau e o ritmo necessário para não devolver recurso ao Tesouro.',
+        acoes: [{ tipo: 'navegar', para: '/orcamento' }],
+      },
+      {
+        titulo: 'O que vence antes do fim do trimestre',
+        narracao:
+          'Convênio é contrato com data para morrer. A régua mostra o que vence em 30, 60 e 90 dias, e o que ainda dá para prorrogar.',
+        acoes: [{ tipo: 'navegar', para: '/vigencias' }],
+      },
+      {
+        titulo: 'Quem está travado',
+        narracao:
+          'Prestação de contas em atraso bloqueia o proponente para qualquer transferência nova. Aqui está quanto da carteira isso trava.',
+        acoes: [{ tipo: 'navegar', para: '/contas' }],
+      },
+      {
+        titulo: 'Qualquer automação, sem código',
+        narracao:
+          'O estúdio visual: nós ligados por fios, caminho de sucesso e de falha, variáveis passando entre passos e nós que confirmam se a ação deu certo.',
+        acoes: [{ tipo: 'navegar', para: '/ritos' }],
+      },
+      {
+        titulo: 'O documento se escreve sozinho',
+        narracao:
+          'A minuta é um documento com variáveis vivas: verde é o que a Cleo calcula do cadastro, dourado é a lacuna que espera julgamento humano.',
+        acoes: [{ tipo: 'navegar', para: '/minutas' }],
+      },
+      {
+        titulo: 'A hierarquia da casa vira regra da máquina',
+        narracao:
+          'Cada ação é uma permissão nomeada, cada perfil tem alçada, e a Cleo herda a alçada de quem a acionou. Ela nunca faz o que a pessoa não poderia fazer sozinha.',
+        acoes: [{ tipo: 'navegar', para: '/usuarios' }],
+      },
+      {
+        titulo: 'A Cleo dentro do navegador',
+        narracao:
+          'Uma extensão real opera o SEI e o TransfereGov na sessão do próprio servidor — e pode levar a sessão autenticada para a Cleo trabalhar a madrugada sozinha.',
+        acoes: [{ tipo: 'navegar', para: '/extensao' }],
+      },
+      {
+        titulo: 'Tudo auditável',
+        narracao:
+          'Quem fez, quando, em quê, com qual perfil e sob qual alçada. Automação que não se explica não passa em controle — esta explica.',
+        acoes: [{ tipo: 'navegar', para: '/auditoria' }],
       },
       {
         titulo: 'Pergunte em português',
         narracao:
-          'Não é um relatório para pedir ao setor de TI. É uma pergunta — e a Cleo consulta, responde e ainda executa o que você mandar.',
-        acoes: [{ tipo: 'navegar', para: '/assistente' }],
+          'Ela consulta, responde e executa. E quando mostra algo, abre um painel sobre a tela em vez de tirar você do lugar onde estava.',
+        acoes: [{ tipo: 'navegar', para: '/cleo' }],
       },
       {
         titulo: 'Tudo que a Cleo sabe',
         narracao:
-          'Cada ponto é um registro do órgão; cada linha, uma relação real. Este é o conhecimento acumulado, e ele cresce a cada processo.',
+          'Cada ponto é um registro do órgão; cada linha, uma relação real. Sete histórias guiadas e a linha do tempo do conhecimento sendo aprendido.',
         acoes: [{ tipo: 'navegar', para: '/cerebro' }],
+      },
+      {
+        titulo: 'O outro lado do balcão',
+        narracao:
+          'O módulo Prefeitura: a Cleo trabalhando para quem pede o recurso. Acha o programa que aceita o projeto e escreve o ofício na linguagem que o ministério exige.',
+        acoes: [{ tipo: 'navegar', para: '/prefeitura' }],
       },
       {
         titulo: 'O que isso devolve',

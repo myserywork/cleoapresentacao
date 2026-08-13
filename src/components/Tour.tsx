@@ -64,7 +64,25 @@ const PARADAS: Parada[] = [
     rota: '/assistente',
     titulo: 'O assistente opera a interface',
     texto:
-      'Pergunte em português. Ele responde com número, tabela e gráfico — e executa a ação na tela, em vez de descrever o que faria.',
+      'Pergunte em português. Ele responde com número, tabela e gráfico — e, quando mostra algo, abre um painel sobre a tela em vez de tirar você do lugar.',
+  },
+  {
+    rota: '/usuarios',
+    titulo: 'A máquina obedece à hierarquia',
+    texto:
+      'Cada ação é uma permissão nomeada e cada perfil tem alçada. A Cleo herda a alçada de quem a acionou — nunca faz o que a pessoa não poderia fazer sozinha.',
+  },
+  {
+    rota: '/extensao',
+    titulo: 'A Cleo dentro do navegador',
+    texto:
+      'Uma extensão real opera o SEI e o TransfereGov na sessão do próprio servidor, e pode levar a sessão autenticada para a Cleo continuar sozinha.',
+  },
+  {
+    rota: '/prefeitura',
+    titulo: 'O outro lado do balcão',
+    texto:
+      'O módulo Prefeitura: a mesma inteligência trabalhando para quem pede o recurso — achando o programa certo e escrevendo o ofício que o ministério aceita.',
   },
 ]
 
