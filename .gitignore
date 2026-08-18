@@ -28,3 +28,6 @@ dist-ssr
 
 # Emulador local do Cloudflare Pages
 .wrangler/
+
+# Segredos do emulador local — nunca sobem
+.dev.vars
