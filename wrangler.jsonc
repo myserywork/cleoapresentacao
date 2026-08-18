@@ -1,0 +1,14 @@
+{
+  // Configuração do Cloudflare Pages.
+  //
+  // Com o diretório de saída declarado aqui, tanto o deploy pela linha de
+  // comando quanto o build automático pelo GitHub usam a mesma definição — não
+  // há um ajuste no painel que possa divergir do repositório.
+  //
+  // A apresentação é estática: nenhuma variável de ambiente, nenhum binding,
+  // nenhum serviço. O que sobe é o dist/ inteiro.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cleopatra-apresentacao",
+  "compatibility_date": "2026-08-18",
+  "pages_build_output_dir": "dist"
+}
