@@ -248,6 +248,17 @@
 }
 
 @layer utilities {
+  /* Régua que rola de lado (abas, filtros, fichas) sem exibir barra: a barra
+     de 10px sob uma linha de abas parece defeito, e o conteúdo cortado na
+     borda já anuncia que há mais adiante. */
+  .rolagem-discreta {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .rolagem-discreta::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Atalho para leitor de tela: visível só quando recebe foco pelo teclado */
   .pular-para-conteudo {
     position: absolute;

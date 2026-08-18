@@ -333,7 +333,7 @@ export function MeusPaineis() {
 
   return (
     <div className="mx-auto flex max-w-[1240px] flex-col gap-5">
-      <header className="flex items-end justify-between gap-6">
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
           <div className="eyebrow mb-2">Visão do gestor</div>
           <h1 className="text-[26px] leading-tight">Meus painéis</h1>
@@ -347,7 +347,7 @@ export function MeusPaineis() {
             value={nome}
             onChange={(e) => setNome(e.target.value)}
             placeholder="Nome do painel"
-            className="w-[190px]"
+            className="w-full min-w-[130px] sm:w-[190px]"
             aria-label="Nome do painel"
           />
           <Botao variante="primario" onClick={salvar}>
@@ -473,10 +473,13 @@ export function MeusPaineis() {
 
       {escolhendo && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-abyss/85 p-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-abyss/85 p-4 backdrop-blur-sm sm:p-6"
           onClick={() => setEscolhendo(false)}
         >
-          <div className="panel w-[640px] bg-surface p-5" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="panel max-h-[88vh] w-full max-w-[640px] overflow-y-auto bg-surface p-4 sm:p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h3 className="text-[16px]">Adicionar bloco</h3>

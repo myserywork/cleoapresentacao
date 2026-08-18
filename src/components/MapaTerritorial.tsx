@@ -132,12 +132,19 @@ export function MapaTerritorial({
 
   return (
     <div onMouseLeave={() => setAtivo(null)}>
+      {/* Vinte e sete bolhas num palmo de celular viram borrão: abaixo de sm o
+          mesmo dado vira ranking, que é o que cabe e o que se lê. */}
+      <div className="sm:hidden">
+        <RankingUf itens={itens} ativo={ativo} aoTocar={setAtivo} />
+      </div>
+
       <svg
         viewBox={`0 0 ${LARGURA} ${ALTURA_VB}`}
         style={{ width: '100%', height: altura }}
         preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label="Distribuição do valor sob gestão por unidade da federação"
+        className="hidden sm:block"
       >
         {/* Fios até a âncora geográfica: a bolha cedeu espaço, não mudou de lugar */}
         {bolhas.map((b) => {
@@ -169,7 +176,8 @@ export function MapaTerritorial({
               key={b.uf}
               opacity={apagada ? 0.3 : 1}
               onMouseEnter={() => setAtivo(b.uf)}
-              style={{ cursor: 'default', transition: 'opacity 160ms ease-out' }}
+              onClick={() => setAtivo((a) => (a === b.uf ? null : b.uf))}
+              style={{ cursor: 'pointer', transition: 'opacity 160ms ease-out' }}
             >
               <circle
                 cx={b.x}
@@ -241,12 +249,68 @@ export function MapaTerritorial({
             <span className="num text-gold">{moedaCompacta(emFoco.valor)}</span>
           </>
         ) : (
-          <span className="text-faint">
-            Cada bolha é uma UF, presa ao seu ponto geográfico pelo fio, dimensionada pelo valor
-            sob gestão.
-          </span>
+          <>
+            <span className="text-faint sm:hidden">
+              Valor sob gestão por unidade da federação. Toque numa linha para os números.
+            </span>
+            <span className="hidden text-faint sm:inline">
+              Cada bolha é uma UF, presa ao seu ponto geográfico pelo fio, dimensionada pelo valor
+              sob gestão.
+            </span>
+          </>
         )}
       </div>
     </div>
+  )
+}
+
+/** Quantas UFs cabem no celular antes de a lista virar rolagem infinita. */
+const TOPO_MOBILE = 9
+
+function RankingUf({
+  itens,
+  ativo,
+  aoTocar,
+}: {
+  itens: ItemUf[]
+  ativo: string | null
+  aoTocar: (uf: string | null) => void
+}) {
+  const ordenado = [...itens].sort((a, b) => b.valor - a.valor)
+  const topo = ordenado.slice(0, TOPO_MOBILE)
+  const resto = ordenado.slice(TOPO_MOBILE)
+  const teto = topo[0]?.valor || 1
+
+  return (
+    <ul className="flex flex-col gap-2 pb-3">
+      {topo.map((i) => (
+        <li key={i.uf}>
+          <button
+            onClick={() => aoTocar(ativo === i.uf ? null : i.uf)}
+            className="flex w-full items-center gap-3 text-left"
+          >
+            <span className="num w-6 shrink-0 text-[12px] text-ink">{i.uf}</span>
+            <span className="h-2.5 min-w-0 flex-1 overflow-hidden rounded-full bg-white/[0.05]">
+              <span
+                className="block h-full rounded-full transition-[width] duration-500"
+                style={{
+                  width: `${Math.max((i.valor / teto) * 100, 3)}%`,
+                  background: 'var(--color-viz-gold)',
+                  opacity: ativo && ativo !== i.uf ? 0.35 : 0.85,
+                }}
+              />
+            </span>
+            <span className="num w-[74px] shrink-0 text-right text-[11.5px] whitespace-nowrap text-gold">
+              {moedaCompacta(i.valor)}
+            </span>
+          </button>
+        </li>
+      ))}
+      {resto.length > 0 && (
+        <li className="num pt-0.5 text-[11px] text-faint">
+          + {resto.length} UFs somando {moedaCompacta(resto.reduce((s, i) => s + i.valor, 0))}
+        </li>
+      )}
+    </ul>
   )
 }

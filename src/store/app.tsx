@@ -23,6 +23,7 @@ import {
   type PerfilId,
   type Usuario,
 } from '@/dominio/permissoes'
+import type { TipoProponente } from '@/prefeitura/roteador'
 
 export interface ExecucaoPendente {
   propostaId: string
@@ -77,6 +78,14 @@ interface AppState {
   /** Ministério analisa o que foi pedido; prefeitura orquestra o pedido. */
   modulo: Modulo
   setModulo: (m: Modulo) => void
+
+  /**
+   * Quem pede, no módulo cliente. Fica no estado global porque muda a
+   * navegação inteira, não só o conteúdo da página: uma OSC não acessa emenda
+   * parlamentar, então o item da bancada não deve nem existir na barra.
+   */
+  proponente: TipoProponente
+  setProponente: (p: TipoProponente) => void
 
   execucoesDaSessao: Automacao[]
   registrarExecucao: (a: Automacao) => void
@@ -165,6 +174,7 @@ interface Persistido {
   orgaoId?: string
   tema?: Tema
   modulo?: Modulo
+  proponente?: TipoProponente
   publico?: Publico
   decisoes?: Record<string, 'pendente' | 'aprovada' | 'recusada'>
   comentarios?: Comentario[]
@@ -201,6 +211,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [orgaoId, setOrgaoId] = useState(salvo.orgaoId ?? ORGAOS[0].id)
   const [tema, setTema] = useState<Tema>(salvo.tema ?? 'escuro')
   const [modulo, setModulo] = useState<Modulo>(salvo.modulo ?? 'ministerio')
+  const [proponente, setProponente] = useState<TipoProponente>(salvo.proponente ?? 'municipio')
   const [publico, setPublico] = useState<Publico>(salvo.publico ?? 'gestor')
   const [execucoesDaSessao, setExecucoes] = useState<Automacao[]>([])
   const [execucaoAtiva, setExecucaoAtiva] = useState<ExecucaoPendente | null>(null)
@@ -245,6 +256,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       orgaoId,
       tema,
       modulo,
+      proponente,
       publico,
       decisoes,
       comentarios,
@@ -383,6 +395,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       tema,
       alternarTema: () => setTema((t) => (t === 'escuro' ? 'claro' : 'escuro')),
       modulo,
+      proponente,
+      setProponente,
       setModulo,
       execucoesDaSessao,
       registrarExecucao,
@@ -441,6 +455,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       orgaoId,
       tema,
       modulo,
+      proponente,
       execucoesDaSessao,
       execucaoAtiva,
       loteAtivo,

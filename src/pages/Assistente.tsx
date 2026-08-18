@@ -89,7 +89,7 @@ export function Assistente() {
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-56px)] max-w-[900px] flex-col">
+    <div className="mx-auto flex h-[calc(100dvh-140px)] max-w-[900px] flex-col md:h-[calc(100dvh-56px)]">
       <header className="pb-5">
         <div className="eyebrow mb-2">Assistente</div>
         <h1 className="text-[26px] leading-tight">Pergunte à Cleo</h1>

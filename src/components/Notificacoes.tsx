@@ -57,8 +57,10 @@ export function Notificacoes() {
         )}
       </button>
 
+      {/* No celular a barra é uma gaveta estreita: a caixa sai dela e ocupa a
+          largura da tela. No desktop ela abre ao lado, sem tapar a navegação. */}
       {aberta && (
-        <div className="absolute bottom-0 left-full z-50 ml-3 w-[330px] rounded-xl border border-line bg-surface/97 shadow-2xl backdrop-blur-xl">
+        <div className="fixed inset-x-3 bottom-3 z-50 rounded-xl border border-line bg-surface/97 shadow-2xl backdrop-blur-xl md:absolute md:inset-x-auto md:bottom-0 md:left-full md:ml-3 md:w-[330px]">
           <div className="border-b border-line px-4 py-2.5">
             <span className="eyebrow">Atividade</span>
           </div>

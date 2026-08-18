@@ -1,7 +1,11 @@
-/* Painel injetado da Cleopatra — identidade navy + dourado, roxo só de acento.
-   Vive sobre o SEI e o TransfereGov. */
+/* Cleopatra — copiloto injetado sobre o SEI e o TransfereGov.
+   Identidade navy + dourado, roxo só de acento.
 
-.clp-painel {
+   A regra que governa este arquivo: o copiloto mora num orbe pequeno no canto,
+   e o painel só existe enquanto for chamado. Painel permanente sobre um sistema
+   de governo tapa exatamente a tela que a pessoa veio operar. */
+
+:root {
   --clp-abyss: #070a12;
   --clp-surface: #0d1421;
   --clp-line: #1d2a41;
@@ -12,140 +16,333 @@
   --clp-teal: #35c3a7;
   --clp-cleo: #8b6cf0;
   --clp-alert: #e2564d;
+  --clp-fonte: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --clp-mono: 'Consolas', ui-monospace, monospace;
+}
 
+/* ==================== O orbe ==================== */
+
+.clp-orbe {
   position: fixed;
-  top: 18px;
-  right: 18px;
+  right: 22px;
+  bottom: 22px;
   z-index: 2147483647;
-  width: 328px;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(223, 181, 82, 0.28), transparent 62%),
+    linear-gradient(180deg, #0e1524, #080c15);
+  box-shadow:
+    0 0 0 1px rgba(223, 181, 82, 0.28),
+    0 14px 34px rgba(3, 5, 12, 0.55);
+  display: grid;
+  place-items: center;
+  transition:
+    transform 220ms cubic-bezier(0.22, 0.8, 0.36, 1),
+    box-shadow 220ms ease;
+  /* Entra depois da página, para não competir com o carregamento dela */
+  animation: clp-chega 520ms cubic-bezier(0.22, 0.8, 0.36, 1) both;
+}
+.clp-orbe:hover {
+  transform: scale(1.06);
+  box-shadow:
+    0 0 0 1px rgba(223, 181, 82, 0.55),
+    0 16px 38px rgba(3, 5, 12, 0.6);
+}
+.clp-orbe:focus-visible {
+  outline: 2px solid var(--clp-gold);
+  outline-offset: 3px;
+}
+.clp-orbe-ativo {
+  transform: scale(0.94);
+  box-shadow:
+    0 0 0 1px rgba(223, 181, 82, 0.7),
+    0 10px 26px rgba(3, 5, 12, 0.5);
+}
+
+@keyframes clp-chega {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.clp-orbe-marca {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  grid-area: 1 / 1;
+  pointer-events: none;
+}
+
+/* Anel de progresso: continua contando com o painel fechado, que é o ponto
+   de fechar o painel durante a execução. */
+.clp-anel {
+  grid-area: 1 / 1;
+  width: 54px;
+  height: 54px;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+.clp-anel-trilho {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.07);
+  stroke-width: 2.5;
+}
+.clp-anel-arco {
+  fill: none;
+  stroke: var(--clp-gold);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  opacity: 0;
+  transition:
+    stroke-dashoffset 320ms ease,
+    opacity 200ms ease;
+}
+.clp-orbe-executando .clp-anel-arco {
+  opacity: 1;
+}
+.clp-orbe-executando {
+  animation: clp-respira 2.2s ease-in-out infinite;
+}
+@keyframes clp-respira {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(223, 181, 82, 0.4),
+      0 14px 34px rgba(3, 5, 12, 0.55);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(223, 181, 82, 0.85),
+      0 0 22px rgba(223, 181, 82, 0.35),
+      0 14px 34px rgba(3, 5, 12, 0.55);
+  }
+}
+
+/* Terminou: um pulso verde curto, e volta ao repouso. */
+.clp-orbe-concluido .clp-anel-arco {
+  stroke: var(--clp-teal);
+  opacity: 1;
+}
+
+/* A página respondeu ao anúncio: o orbe ganha o ponto dourado de "pronta". */
+.clp-orbe-vivo::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--clp-teal);
+  box-shadow: 0 0 8px rgba(53, 195, 167, 0.9);
+}
+
+.clp-orbe-selo {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--clp-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #151003;
+  background: var(--clp-gold);
+  border-radius: 99px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
+.clp-orbe-selo[hidden] {
+  display: none;
+}
+
+/* ==================== O painel ==================== */
+
+.clp-painel {
+  position: fixed;
+  right: 22px;
+  bottom: 88px;
+  z-index: 2147483646;
+  width: 340px;
+  max-height: min(78vh, 640px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-family: var(--clp-fonte);
   color: var(--clp-ink);
   background:
     radial-gradient(420px 220px at 80% -10%, rgba(223, 181, 82, 0.08), transparent 60%),
     linear-gradient(180deg, #0e1524 0%, #090d17 100%);
   border: 1px solid var(--clp-line);
   border-radius: 16px;
-  box-shadow: 0 22px 60px rgba(3, 5, 12, 0.6);
-  overflow: hidden;
-  transition: transform 300ms cubic-bezier(0.22, 0.8, 0.36, 1);
+  box-shadow: 0 22px 60px rgba(3, 5, 12, 0.62);
+  animation: clp-abre 220ms cubic-bezier(0.22, 0.8, 0.36, 1);
 }
-.clp-painel.clp-recolhido {
-  transform: translateX(276px);
+.clp-painel[hidden] {
+  display: none;
+}
+@keyframes clp-abre {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
-.clp-cabecalho {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 13px 15px;
-  border-bottom: 1px solid var(--clp-line);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
+.clp-painel::-webkit-scrollbar {
+  width: 8px;
 }
-.clp-marca {
+.clp-painel::-webkit-scrollbar-thumb {
+  background: #223148;
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Cabeçalho — gruda no topo enquanto o corpo rola */
+.clp-cabecalho {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 11px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--clp-line);
+  background: linear-gradient(180deg, #101828 0%, #0d1421 100%);
 }
 .clp-selo {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background:
-    radial-gradient(circle at 35% 28%, rgba(223, 181, 82, 0.35), transparent 60%),
-    #0d1421;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
   border: 1px solid rgba(223, 181, 82, 0.4);
-  background-image: url('icons/icon48.png');
-  background-size: cover;
   box-shadow: 0 0 0 3px rgba(223, 181, 82, 0.08);
+  flex-shrink: 0;
+}
+.clp-marca-txt {
+  min-width: 0;
+  flex: 1;
 }
 .clp-titulo {
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.22em;
-  color: var(--clp-ink);
+  letter-spacing: 0.2em;
 }
 .clp-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 10.5px;
   color: var(--clp-gold);
   margin-top: 2px;
-  opacity: 0.85;
 }
-.clp-toggle {
-  background: transparent;
-  border: none;
-  color: var(--clp-faint);
-  font-size: 18px;
-  cursor: pointer;
-  padding: 0 4px;
-  line-height: 1;
+.clp-pulso {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--clp-cleo);
+  animation: clp-pisca 1.1s ease-in-out infinite;
 }
-.clp-toggle:hover {
-  color: var(--clp-ink);
-}
-
-.clp-corpo {
-  padding: 13px 15px 15px;
-}
-.clp-abas {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 13px;
-}
-.clp-aba {
-  font-size: 11px;
-  color: var(--clp-abyss);
-  background: var(--clp-gold);
-  padding: 2px 9px;
-  border-radius: 99px;
-  font-weight: 600;
+@keyframes clp-pisca {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
 }
 .clp-sistema {
-  margin-left: auto;
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--clp-muted);
   border: 1px solid var(--clp-line);
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 99px;
+  white-space: nowrap;
+}
+.clp-fechar {
+  background: transparent;
+  border: none;
+  color: var(--clp-faint);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+}
+.clp-fechar:hover {
+  color: var(--clp-ink);
 }
 
+.clp-corpo {
+  padding: 4px 14px 14px;
+}
+
+/* Seções — a régua que organiza tudo */
+.clp-secao {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--clp-line);
+}
+.clp-secao:last-of-type {
+  border-bottom: none;
+}
 .clp-secao-titulo {
-  font-size: 9.5px;
+  font-size: 9px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--clp-muted);
   margin-bottom: 9px;
 }
 
+/* Ritos */
 .clp-ritos {
   display: flex;
   flex-direction: column;
   gap: 7px;
 }
 .clp-ritos.clp-ocupado {
-  opacity: 0.5;
+  opacity: 0.45;
   pointer-events: none;
 }
 .clp-rito {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
+  gap: 3px;
+  width: 100%;
   text-align: left;
-  padding: 9px 12px;
-  border-radius: 10px;
+  padding: 10px 12px;
+  border-radius: 11px;
   border: 1px solid var(--clp-line);
   background: rgba(255, 255, 255, 0.02);
   color: var(--clp-ink);
   cursor: pointer;
-  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
+  font-family: inherit;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    transform 140ms ease;
 }
 .clp-rito:hover {
   border-color: rgba(223, 181, 82, 0.55);
   background: rgba(223, 181, 82, 0.07);
   transform: translateY(-1px);
+}
+.clp-rito:focus-visible {
+  outline: 2px solid var(--clp-gold);
+  outline-offset: 2px;
 }
 .clp-rito-nome {
   font-size: 12.5px;
@@ -154,33 +351,44 @@
 .clp-rito-desc {
   font-size: 10.5px;
   color: var(--clp-muted);
-  line-height: 1.35;
+  line-height: 1.4;
+}
+.clp-rito-meta {
+  font-family: var(--clp-mono);
+  font-size: 9.5px;
+  color: var(--clp-faint);
+  margin-top: 2px;
 }
 
+/* Execução */
 .clp-barra-wrap {
   height: 4px;
   background: rgba(255, 255, 255, 0.06);
   border-radius: 99px;
-  margin: 12px 0 9px;
+  margin-bottom: 10px;
   overflow: hidden;
 }
 .clp-barra {
   height: 100%;
-  width: 0%;
   border-radius: 99px;
   background: linear-gradient(90deg, var(--clp-gold), var(--clp-teal));
   transition: width 320ms ease;
 }
-
 .clp-log {
-  max-height: 110px;
+  max-height: 128px;
   overflow-y: auto;
-  font-family: 'Consolas', ui-monospace, monospace;
+  font-family: var(--clp-mono);
   font-size: 10.5px;
-  line-height: 1.7;
+  line-height: 1.75;
 }
 .clp-log-linha {
+  display: flex;
+  gap: 7px;
   color: var(--clp-muted);
+}
+.clp-log-marca {
+  flex-shrink: 0;
+  width: 9px;
 }
 .clp-log-linha.clp-ok {
   color: var(--clp-teal);
@@ -193,21 +401,15 @@
 }
 .clp-log-linha.clp-fim {
   color: var(--clp-teal);
-  font-weight: 500;
-}
-
-.clp-divisor {
-  height: 1px;
-  background: var(--clp-line);
-  margin: 14px 0;
+  font-weight: 600;
 }
 
 /* Sessão autenticada */
 .clp-sessao-txt {
   font-size: 11px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--clp-muted);
-  margin: 0 0 9px;
+  margin: 0 0 10px;
 }
 .clp-btn-sessao {
   width: 100%;
@@ -216,6 +418,7 @@
   border: none;
   background: var(--clp-gold);
   color: #151003;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -232,7 +435,6 @@
   color: var(--clp-ink);
   background: rgba(255, 255, 255, 0.04);
 }
-
 .clp-sessao-card {
   border-radius: 11px;
   border: 1px solid var(--clp-line);
@@ -263,6 +465,7 @@
   border-radius: 50%;
   background: var(--clp-teal);
   box-shadow: 0 0 8px currentColor;
+  flex-shrink: 0;
 }
 .clp-perto .clp-pino {
   background: var(--clp-gold);
@@ -272,15 +475,16 @@
 }
 .clp-relogio {
   margin-left: auto;
-  font-family: 'Consolas', monospace;
+  font-family: var(--clp-mono);
   font-size: 11.5px;
   color: var(--clp-muted);
+  white-space: nowrap;
 }
 .clp-sessao-meta {
   font-size: 10px;
   color: var(--clp-faint);
   margin: 7px 0 10px;
-  font-family: 'Consolas', monospace;
+  font-family: var(--clp-mono);
 }
 .clp-sessao-acoes .clp-btn-sessao {
   padding: 7px;
@@ -288,10 +492,35 @@
 }
 
 .clp-rodape {
-  margin-top: 13px;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid var(--clp-line);
   font-size: 9px;
   color: var(--clp-faint);
-  line-height: 1.5;
+  line-height: 1.55;
+}
+
+/* Telas estreitas: o painel ocupa a largura útil e nasce do rodapé */
+@media (max-width: 460px) {
+  .clp-painel {
+    left: 12px;
+    right: 12px;
+    bottom: 84px;
+    width: auto;
+    max-height: 72vh;
+  }
+  .clp-orbe {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clp-orbe,
+  .clp-painel,
+  .clp-anel-arco,
+  .clp-barra,
+  .clp-pulso {
+    animation: none !important;
+    transition: none !important;
+  }
 }

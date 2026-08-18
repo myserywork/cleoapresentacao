@@ -53,7 +53,7 @@ export function Relatorio() {
 
   return (
     <div className="mx-auto flex max-w-[900px] flex-col gap-4">
-      <div className="nao-imprimir flex items-end justify-between gap-6">
+      <div className="nao-imprimir flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
           <div className="eyebrow mb-2">Documento</div>
           <h1 className="text-[26px] leading-tight">Relatório executivo</h1>

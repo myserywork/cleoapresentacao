@@ -127,8 +127,8 @@ export function Aprovacoes() {
   }, [pendentes, indice, atual, aplicar, confirmando, desfazer, reverter])
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-56px)] max-w-[1320px] flex-col gap-4">
-      <header className="flex items-end justify-between gap-6">
+    <div className="mx-auto flex min-h-[calc(100dvh-96px)] max-w-[1320px] flex-col gap-4 md:h-[calc(100dvh-56px)] md:min-h-0">
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
           <div className="eyebrow mb-2">Decisão do gestor</div>
           <h1 className="text-[26px] leading-tight">Aprovações</h1>
@@ -277,7 +277,7 @@ export function Aprovacoes() {
 
       {confirmando && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-abyss/85 p-6 backdrop-blur-sm">
-          <div className="panel w-[440px] bg-surface p-6">
+          <div className="panel w-full max-w-[440px] bg-surface p-5 sm:p-6">
             <h3 className="text-[16px]">
               {confirmando.decisao === 'aprovada' ? 'Aprovar' : 'Recusar'} {confirmando.rotulo}?
             </h3>
@@ -307,7 +307,10 @@ export function Aprovacoes() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-abyss/85 p-6 backdrop-blur-sm"
           onClick={() => setMostrarAtalhos(false)}
         >
-          <div className="panel w-[380px] bg-surface p-6" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="panel w-full max-w-[380px] bg-surface p-5 sm:p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="mb-4 text-[16px]">Atalhos</h3>
             <ul className="flex flex-col gap-2.5">
               {[

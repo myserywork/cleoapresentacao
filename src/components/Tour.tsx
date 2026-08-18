@@ -82,7 +82,7 @@ const PARADAS: Parada[] = [
     rota: '/prefeitura',
     titulo: 'O outro lado do balcão',
     texto:
-      'O módulo Prefeitura: a mesma inteligência trabalhando para quem pede o recurso — achando o programa certo e escrevendo o ofício que o ministério aceita.',
+      'A mesma inteligência para quem pede o recurso. Descreva a necessidade em português e ela devolve a quem pedir, sob qual instrumento e como — e não só para prefeituras: consórcio, estado, OSC e estatal pedem sob normas diferentes.',
   },
 ]
 
@@ -131,7 +131,7 @@ export function Tour() {
   const ultimo = passo === PARADAS.length - 1
 
   return (
-    <div className="nao-imprimir fixed right-6 bottom-6 z-40 w-[380px]">
+    <div className="nao-imprimir fixed right-3 bottom-3 left-3 z-40 md:right-6 md:bottom-6 md:left-auto md:w-[380px]">
       <Panel className="overflow-hidden bg-surface shadow-2xl">
         <div className="flex items-start justify-between gap-3 border-b border-line px-5 py-3.5">
           <div className="flex items-center gap-2">

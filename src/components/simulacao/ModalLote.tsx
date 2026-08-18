@@ -141,9 +141,9 @@ export function ModalLote() {
     : 0
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-abyss/85 p-6 backdrop-blur-sm">
-      <Panel className="flex max-h-[86vh] w-full max-w-[900px] flex-col overflow-hidden bg-surface">
-        <div className="flex items-start justify-between gap-4 border-b border-line px-6 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-abyss/85 p-3 backdrop-blur-sm sm:p-6">
+      <Panel className="flex max-h-[92vh] w-full max-w-[900px] flex-col overflow-hidden bg-surface sm:max-h-[86vh]">
+        <div className="flex items-start justify-between gap-4 border-b border-line px-4 py-3.5 sm:px-6 sm:py-4">
           <div>
             <div className="eyebrow mb-1.5">Execução em lote · {rito.nome}</div>
             <h3 className="text-[17px]">{loteAtivo.titulo}</h3>
@@ -157,8 +157,8 @@ export function ModalLote() {
           </button>
         </div>
 
-        <div className="flex items-center gap-5 border-b border-line px-6 py-3.5">
-          <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-line px-4 py-3.5 sm:flex-nowrap sm:px-6">
+          <div className="min-w-[220px] flex-1">
             <div className="mb-1.5 flex items-baseline justify-between gap-3">
               <span className="text-[12px] text-muted">
                 <span className="num text-ink">{concluidos}</span> de{' '}
@@ -196,7 +196,10 @@ export function ModalLote() {
             const proposta = getProposta(item.propostaId)
             const proponente = proposta && getProponente(proposta.proponenteId)
             return (
-              <li key={item.propostaId} className="flex items-center gap-4 px-6 py-3">
+              <li
+                key={item.propostaId}
+                className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:flex-nowrap sm:px-6"
+              >
                 <span className="w-4 shrink-0">
                   {item.estado === 'concluido' && <Check size={14} className="text-teal" />}
                   {item.estado === 'falha' && <AlertTriangle size={14} className="text-alert" />}
@@ -216,31 +219,36 @@ export function ModalLote() {
                   {proponente?.nome}
                 </span>
 
-                <span
-                  className={cn(
-                    'w-[210px] shrink-0 truncate text-[11.5px]',
-                    item.estado === 'falha' ? 'text-alert' : 'text-faint',
-                  )}
-                >
-                  {item.estado === 'fila'
-                    ? 'na fila'
-                    : item.estado === 'falha'
-                      ? 'sessão do SEI expirada'
-                      : rito.passos[item.passo]?.rotulo}
-                </span>
+                {/* No celular passo e progresso descem para a segunda linha;
+                    no desktop `contents` desmancha o invólucro e eles voltam
+                    a ser colunas da mesma linha. */}
+                <div className="order-last flex w-full items-center gap-3 sm:order-none sm:contents">
+                  <span
+                    className={cn(
+                      'min-w-0 flex-1 truncate text-[11.5px] sm:w-[210px] sm:flex-none sm:shrink-0',
+                      item.estado === 'falha' ? 'text-alert' : 'text-faint',
+                    )}
+                  >
+                    {item.estado === 'fila'
+                      ? 'na fila'
+                      : item.estado === 'falha'
+                        ? 'sessão do SEI expirada'
+                        : rito.passos[item.passo]?.rotulo}
+                  </span>
 
-                <div className="w-[110px] shrink-0">
-                  <Medidor
-                    valor={item.progresso}
-                    tom={
-                      item.estado === 'falha'
-                        ? 'alert'
-                        : item.estado === 'concluido'
-                          ? 'teal'
-                          : 'cleo'
-                    }
-                    altura={4}
-                  />
+                  <div className="w-[110px] shrink-0">
+                    <Medidor
+                      valor={item.progresso}
+                      tom={
+                        item.estado === 'falha'
+                          ? 'alert'
+                          : item.estado === 'concluido'
+                            ? 'teal'
+                            : 'cleo'
+                      }
+                      altura={4}
+                    />
+                  </div>
                 </div>
 
                 <span className="w-[86px] shrink-0 text-right">

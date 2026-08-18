@@ -123,7 +123,31 @@ const PARTIDOS = [
   'PCdoB',
 ]
 
+/**
+ * Bancada com tamanho proporcional ao estado.
+ *
+ * Sortear a UF uniformemente daria a Roraima a mesma bancada de São Paulo — e
+ * quebra na hora em que alguém abre a lista de um estado grande e encontra um
+ * parlamentar só. Os estados abaixo entram repetidos no sorteio, na ordem de
+ * grandeza das bancadas reais na Câmara.
+ */
+const PESO_BANCADA: Record<string, number> = {
+  SP: 7,
+  MG: 5,
+  RJ: 5,
+  BA: 4,
+  RS: 3,
+  PR: 3,
+  PE: 3,
+  CE: 3,
+  PA: 2,
+  SC: 2,
+  GO: 2,
+  MA: 2,
+}
+
 function geraParlamentares(qtd: number): Parlamentar[] {
+  const urna = UFS.flatMap((uf) => Array<string>(PESO_BANCADA[uf] ?? 1).fill(uf))
   const lista: Parlamentar[] = []
   const usados = new Set<string>()
   let tentativas = 0
@@ -136,7 +160,7 @@ function geraParlamentares(qtd: number): Parlamentar[] {
       id: `pl${lista.length + 1}`,
       nome,
       partido: pick(PARTIDOS),
-      uf: pick(UFS),
+      uf: pick(urna),
       casa: chance(0.78) ? 'Câmara' : 'Senado',
     })
   }
@@ -443,16 +467,27 @@ function geraDiligencias(): Diligencia[] {
   const lista: Diligencia[] = []
   for (const p of candidatas) {
     if (!chance(0.42)) continue
-    const criadaHa = intBetween(3, 160)
     const prazoDias = 15
     const respondida = chance(0.52)
+
+    // A idade da diligência é escolhida depois de saber se ela foi respondida.
+    // Sorteando a idade primeiro, quase toda diligência em aberto nascia com
+    // mais de 15 dias — e o órgão aparecia com 100% das diligências vencidas,
+    // que é retrato de órgão abandonado, não de órgão em operação. Em aberto,
+    // a maioria ainda está dentro do prazo; a minoria vencida é o problema.
+    const vencida = !respondida && chance(0.28)
+    const criadaHa = respondida
+      ? intBetween(20, 160)
+      : vencida
+        ? intBetween(prazoDias + 2, 70)
+        : intBetween(0, prazoDias - 2)
+
     const qtdItens = intBetween(1, 4)
     const itens: string[] = []
     while (itens.length < qtdItens) {
       const item = pick(ITENS_DILIGENCIA)
       if (!itens.includes(item)) itens.push(item)
     }
-    const vencida = criadaHa > prazoDias && !respondida
     lista.push({
       id: `dl${lista.length + 1}`,
       propostaId: p.id,

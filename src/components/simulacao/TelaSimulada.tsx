@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Lock, RotateCw, Search, Shield, Star } from 'lucide-react'
 import type { Cena, Corpo } from '@/simulacao/tipos'
 import { cn } from '@/lib/format'
@@ -706,7 +706,65 @@ function TelaTransfereGov({ cena, duracaoMs }: { cena: Cena; duracaoMs: number }
 
 /* ============================ Moldura ============================ */
 
+/** Largura para a qual o SEI e o TransfereGov foram desenhados. */
+const LARGURA_BASE = 880
+
+/**
+ * Zoom, não reflow.
+ *
+ * O SEI e o TransfereGov nunca foram responsivos. Espremer os elementos para
+ * caberem num celular descaracterizaria a tela — e é justamente a
+ * familiaridade dela que faz a simulação passar por real. Então, quando não
+ * cabe, a página inteira encolhe em escala, como o zoom do navegador faria.
+ * Acima da largura de projeto nada muda: o layout volta a ser fluido.
+ */
+function Escala({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [escala, setEscala] = useState(1)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const medir = () => setEscala(Math.min(1, el.clientWidth / LARGURA_BASE))
+    medir()
+    const observador = new ResizeObserver(medir)
+    observador.observe(el)
+    return () => observador.disconnect()
+  }, [])
+
+  if (escala >= 1) {
+    return (
+      <div ref={ref} className="h-full">
+        {children}
+      </div>
+    )
+  }
+
+  return (
+    <div ref={ref} className="h-full overflow-hidden">
+      <div
+        style={{
+          width: LARGURA_BASE,
+          height: `${100 / escala}%`,
+          transform: `scale(${escala})`,
+          transformOrigin: 'top left',
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
 export function TelaSimulada({ cena, duracaoMs }: { cena: Cena; duracaoMs: number }) {
+  return (
+    <Escala>
+      <TelaSimuladaInterna cena={cena} duracaoMs={duracaoMs} />
+    </Escala>
+  )
+}
+
+function TelaSimuladaInterna({ cena, duracaoMs }: { cena: Cena; duracaoMs: number }) {
   return (
     <div className="relative flex h-full flex-col overflow-hidden rounded-lg border border-line bg-[#dfe4ea]">
       {/* Cromo do navegador */}

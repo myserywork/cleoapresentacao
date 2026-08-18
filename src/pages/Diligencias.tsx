@@ -242,7 +242,7 @@ export function Diligencias() {
         <BotaoExportar nome={`diligencias-${orgao.sigla}`} itens={todas} colunas={colunasAguardando} />
       </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <Panel className="px-5 py-4">
           <Numero
             rotulo="Aguardando resposta"

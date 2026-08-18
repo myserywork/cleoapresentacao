@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
   Boxes,
   BrainCircuit,
   Building2,
   Command,
   Columns3,
+  Compass,
   Fingerprint,
+  FileSignature,
   FileStack,
   FileText,
   Gauge,
   GitBranch,
+  HandCoins,
   KeyRound,
   Landmark,
   Mails,
@@ -47,6 +50,8 @@ interface ItemNav {
   fim?: boolean
   /** Chave do contador exibido à direita. */
   contador?: 'aprovacoes' | 'vigencias' | 'contas' | 'diligencias'
+  /** Some quando o proponente não é ente público — OSC e estatal não acessam emenda. */
+  soEntePublico?: boolean
 }
 
 /**
@@ -118,11 +123,24 @@ const GRUPOS: { titulo: string; itens: ItemNav[] }[] = [
 /** A prefeitura tem outra vida: pede, acompanha e responde diligência. */
 const GRUPOS_PREFEITURA: { titulo: string; itens: ItemNav[] }[] = [
   {
-    titulo: 'Solicitar',
+    titulo: 'Captar',
     itens: [
-      { to: '/prefeitura', rotulo: 'Início', icone: LayoutDashboard, fim: true },
-      { to: '/prefeitura', rotulo: 'Oportunidades', icone: Target },
-      { to: '/prefeitura', rotulo: 'Meus pedidos', icone: FileStack },
+      { to: '/prefeitura', rotulo: 'A quem eu peço', icone: Compass, fim: true },
+      { to: '/prefeitura?aba=radar', rotulo: 'Radar', icone: LayoutDashboard },
+      {
+        to: '/prefeitura?aba=parlamentares',
+        rotulo: 'Quem tem saldo',
+        icone: HandCoins,
+        soEntePublico: true,
+      },
+      { to: '/prefeitura?aba=oportunidades', rotulo: 'Programas', icone: Target },
+    ],
+  },
+  {
+    titulo: 'Pedir',
+    itens: [
+      { to: '/prefeitura?aba=pedidos', rotulo: 'Meus pedidos', icone: FileStack },
+      { to: '/prefeitura?aba=oficio', rotulo: 'Ofícios', icone: FileSignature },
     ],
   },
   {
@@ -135,12 +153,36 @@ const GRUPOS_PREFEITURA: { titulo: string; itens: ItemNav[] }[] = [
 ]
 
 export function Shell({ children }: { children: React.ReactNode }) {
-  const { orgaoId, setOrgaoId, aprovacoes, tema, alternarTema, comparacao, modulo, setModulo } =
-    useApp()
-  const { pathname } = useLocation()
+  const {
+    orgaoId,
+    setOrgaoId,
+    aprovacoes,
+    tema,
+    alternarTema,
+    comparacao,
+    modulo,
+    setModulo,
+    proponente,
+  } = useApp()
+  // OSC entra por chamamento e estatal contrata pelo regulamento interno:
+  // para eles a bancada não é uma tela vazia, é uma tela que não existe.
+  const entePublico =
+    proponente === 'municipio' || proponente === 'consorcio' || proponente === 'estado'
+  const { pathname, search } = useLocation()
+  const navegar = useNavigate()
   // No celular a navegação é gaveta: ela fecha sozinha ao trocar de tela
   const [gaveta, setGaveta] = useState(false)
   useEffect(() => setGaveta(false), [pathname])
+
+  // A rota manda no módulo. Chegar em /prefeitura por link, pelo tour ou pela
+  // apresentação e continuar vendo a navegação do ministério é a plataforma
+  // discordando de si mesma na frente da sala.
+  useEffect(() => {
+    const daPrefeitura = pathname.startsWith('/prefeitura')
+    if (daPrefeitura && modulo !== 'prefeitura') setModulo('prefeitura')
+    if (!daPrefeitura && modulo === 'prefeitura' && pathname !== '/cleo' && pathname !== '/assistente')
+      setModulo('ministerio')
+  }, [pathname, modulo, setModulo])
 
   const pendentes = aprovacoesDoOrgao(orgaoId).filter(
     (a) => aprovacoes.find((x) => x.id === a.id)?.decidida === 'pendente',
@@ -210,7 +252,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
             ).map(([id, rotulo]) => (
               <button
                 key={id}
-                onClick={() => setModulo(id)}
+                // Trocar de módulo é trocar de lado do balcão: leva junto para
+                // a tela de entrada dele, senão o rótulo muda e a tela não.
+                onClick={() => {
+                  setModulo(id)
+                  navegar(id === 'prefeitura' ? '/prefeitura' : '/')
+                }}
                 className={cn(
                   'flex-1 rounded-[6px] px-2 py-1.5 text-[11.5px] transition-colors',
                   modulo === id
@@ -246,46 +293,51 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <div key={grupo.titulo} className="mb-2">
               <div className="eyebrow mb-0.5 px-3 text-[9px] opacity-70">{grupo.titulo}</div>
               <div className="flex flex-col gap-px">
-                {grupo.itens.map(({ to, rotulo, icone: Icone, fim, contador }) => {
+                {grupo.itens
+                  .filter((i) => !i.soEntePublico || entePublico)
+                  .map(({ to, rotulo, icone: Icone, fim, contador }) => {
                   const valor = contador ? contadores[contador] : 0
+                  // Os itens da Prefeitura apontam para a mesma rota com abas
+                  // diferentes; o NavLink só compara caminho, então a aba entra
+                  // na conta aqui — senão os cinco acendem juntos. Itens que
+                  // não nomeiam aba (Propostas, Emendas…) seguem ignorando a
+                  // consulta: uma proposta aberta numa aba interna continua
+                  // sendo "Propostas".
+                  const [caminho, consulta] = to.split('?')
+                  const mesmoCaminho = fim ? pathname === caminho : pathname.startsWith(caminho)
+                  const comparaAba = consulta !== undefined || fim
+                  const ativo =
+                    mesmoCaminho && (!comparaAba || search.replace('?', '') === (consulta ?? ''))
                   return (
                     <NavLink
                       key={to}
                       to={to}
                       end={fim}
-                      className={({ isActive }) =>
-                        cn(
-                          'group relative flex items-center gap-2.5 rounded-lg px-3 py-[5px] text-[12.5px] transition-colors',
-                          isActive
-                            ? 'bg-gold/10 text-gold'
-                            : 'text-muted hover:bg-white/5 hover:text-ink',
-                        )
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          {isActive && (
-                            <span className="absolute top-1/2 -left-3 h-4 w-[3px] -translate-y-1/2 rounded-r bg-gold" />
-                          )}
-                          <Icone size={15} strokeWidth={1.8} className="shrink-0" />
-                          <span className="min-w-0 flex-1 truncate">{rotulo}</span>
-                          {valor > 0 && (
-                            <span
-                              className={cn(
-                                'num rounded-full px-1.5 py-px text-[10px] font-semibold',
-                                contador === 'aprovacoes'
-                                  ? 'bg-gold/15 text-gold'
-                                  : 'bg-alert/15 text-alert',
-                              )}
-                            >
-                              {valor}
-                            </span>
-                          )}
-                        </>
+                      className={cn(
+                        'group relative flex items-center gap-2.5 rounded-lg px-3 py-[5px] text-[12.5px] transition-colors',
+                        ativo ? 'bg-gold/10 text-gold' : 'text-muted hover:bg-white/5 hover:text-ink',
                       )}
-                    </NavLink>
-                  )
-                })}
+                    >
+                      {ativo && (
+                        <span className="absolute top-1/2 -left-3 h-4 w-[3px] -translate-y-1/2 rounded-r bg-gold" />
+                      )}
+                      <Icone size={15} strokeWidth={1.8} className="shrink-0" />
+                      <span className="min-w-0 flex-1 truncate">{rotulo}</span>
+                      {valor > 0 && (
+                        <span
+                          className={cn(
+                            'num rounded-full px-1.5 py-px text-[10px] font-semibold',
+                            contador === 'aprovacoes'
+                              ? 'bg-gold/15 text-gold'
+                              : 'bg-alert/15 text-alert',
+                          )}
+                        >
+                          {valor}
+                        </span>
+                      )}
+                      </NavLink>
+                    )
+                  })}
               </div>
             </div>
           ))}
@@ -369,10 +421,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </select>
       </div>
 
+      {/* `min-w-0` não é detalhe: item de flex nasce com `min-width: auto` e se
+          recusa a encolher abaixo do conteúdo. Sem isso o conteúdo fica com a
+          largura de desktop no celular, e o `overflow-x: hidden` do body corta
+          a metade direita de todas as telas — em silêncio. */}
       <main
         id="conteudo"
         className={cn(
-          'flex-1 md:ml-[218px]',
+          'min-w-0 flex-1 md:ml-[218px]',
           telaCheia ? 'pt-14 md:pt-0' : 'px-4 pt-16 pb-8 md:px-8 md:py-7',
         )}
       >

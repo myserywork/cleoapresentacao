@@ -66,7 +66,9 @@ export function HintExtensao({
   const primario = sistema === 'SEI' ? 'Autuar processo' : 'Localizar e baixar da proposta'
   const secundario = sistema === 'SEI' ? 'Gerar documento de minuta' : 'Repetir a extração'
   return (
-    <div className="fixed top-4 right-4 z-[70] w-[300px] overflow-hidden rounded-2xl border border-[#dfb552]/25 bg-[#0b111d]/97 text-[#e7edf8] shadow-2xl backdrop-blur">
+    // Canto inferior: em cima ele cobria o cabeçalho do próprio sistema que
+    // veio demonstrar — e o cabeçalho é metade do reconhecimento da tela.
+    <div className="fixed right-4 bottom-4 z-[70] w-[300px] overflow-hidden rounded-2xl border border-[#dfb552]/25 bg-[#0b111d]/97 text-[#e7edf8] shadow-2xl backdrop-blur">
       <div className="flex items-center gap-2.5 border-b border-[#1d2a41] px-4 py-3">
         <img src="/marca/mark.png" alt="" className="size-7 rounded-md border border-[#dfb552]/40" />
         <div>

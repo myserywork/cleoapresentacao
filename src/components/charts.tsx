@@ -190,6 +190,7 @@ export function SerieTemporal({
             height={alt}
             fill="transparent"
             onMouseEnter={() => setAtivo(i)}
+            onClick={() => setAtivo(i)}
           />
         ))}
 
@@ -474,6 +475,7 @@ export function FunilExecucao({
             key={d.id}
             onMouseEnter={() => setAtivo(d.id)}
             onMouseLeave={() => setAtivo(null)}
+            onClick={() => setAtivo((a) => (a === d.id ? null : d.id))}
           >
             <div className="mb-1.5 flex items-baseline justify-between gap-4">
               <span className="text-[12.5px] text-ink">{d.rotulo}</span>
@@ -523,7 +525,9 @@ export function DistribuicaoSituacao({
     <ul className="flex flex-col gap-3">
       {dados.map((d) => (
         <li key={d.situacao} className="flex items-center gap-3">
-          <span className="w-[136px] shrink-0 truncate text-[12.5px] text-muted">{d.situacao}</span>
+          <span className="w-[96px] shrink-0 truncate text-[12.5px] text-muted sm:w-[136px]">
+            {d.situacao}
+          </span>
           <div className="h-4 flex-1 overflow-hidden rounded-[4px] bg-white/4">
             <div
               className="h-full rounded-[4px] transition-[width] duration-700 ease-out"
@@ -531,7 +535,7 @@ export function DistribuicaoSituacao({
             />
           </div>
           <span className="num w-8 shrink-0 text-right text-[12.5px] text-ink">{d.qtd}</span>
-          <span className="num w-[86px] shrink-0 text-right text-[11.5px] whitespace-nowrap text-faint">
+          <span className="num w-[68px] shrink-0 text-right text-[11.5px] whitespace-nowrap text-faint sm:w-[86px]">
             {moedaCompacta(d.valor)}
           </span>
         </li>

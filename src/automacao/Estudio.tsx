@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
   Braces,
@@ -8,6 +8,7 @@ import {
   Save,
   Square,
   Trash2,
+  Wand2,
   Zap,
 } from 'lucide-react'
 import { useApp } from '@/store/app'
@@ -93,6 +94,125 @@ const SAIDA_CONFIRMACAO = [
 
 const LARGURA_NO = 190
 const ALTURA_NO = 64
+const PASSO_COLUNA = 212
+const PASSO_LINHA = 104
+
+/**
+ * Arestas de retorno.
+ *
+ * "Repensar rota" liga de volta ao passo que falhou — é o plano B, e é o que
+ * torna o rito confiável. Mas para efeito de desenho esse fio não é uma etapa
+ * a mais: se entrar na conta da profundidade, o ciclo empurra as colunas para
+ * sempre e o fluxo vira uma faixa longa e ilegível. Uma varredura em
+ * profundidade marca as arestas que fecham ciclo; elas continuam desenhadas,
+ * só não contam como avanço.
+ */
+function arestasDeRetorno(nos: NoFluxo[], ligacoes: Ligacao[]): Set<Ligacao> {
+  const saem = new Map<string, Ligacao[]>()
+  for (const n of nos) saem.set(n.id, [])
+  for (const l of ligacoes) saem.get(l.de)?.push(l)
+
+  const retorno = new Set<Ligacao>()
+  const cor = new Map<string, 0 | 1 | 2>() // 0 intocado · 1 na pilha · 2 fechado
+
+  function visitar(id: string) {
+    cor.set(id, 1)
+    for (const l of saem.get(id) ?? []) {
+      const c = cor.get(l.para) ?? 0
+      if (c === 1) retorno.add(l)
+      else if (c === 0) visitar(l.para)
+    }
+    cor.set(id, 2)
+  }
+
+  for (const n of nos) if ((cor.get(n.id) ?? 0) === 0) visitar(n.id)
+  return retorno
+}
+
+/**
+ * Arranjo automático em camadas.
+ *
+ * Posição de nó escrita à mão envelhece: basta alguém inserir um passo no meio
+ * e o desenho vira espaguete — fios cruzando o palco inteiro, nó em cima de nó.
+ * Aqui a posição é derivada do próprio grafo:
+ *
+ *  1. **Coluna** = profundidade máxima a partir do gatilho. Assim todo passo
+ *     fica sempre à direita de quem o alimenta, e o fluxo se lê da esquerda
+ *     para a direita como se lê texto.
+ *  2. **Linha** = média das linhas de quem chega até ele (baricentro), com o
+ *     caminho de falha empurrado para baixo. É a heurística clássica contra
+ *     cruzamento de fios, e resolve a maioria dos casos de um rito real.
+ *
+ * O ciclo do "repensar" que volta ao passo anterior é ignorado no cálculo de
+ * profundidade — senão a recursão não termina e o grafo não teria camadas.
+ */
+function arranjar(nos: NoFluxo[], ligacoes: Ligacao[]): NoFluxo[] {
+  if (nos.length === 0) return nos
+  const retorno = arestasDeRetorno(nos, ligacoes)
+  const avancam = ligacoes.filter((l) => !retorno.has(l))
+
+  const entram = new Map<string, Ligacao[]>()
+  for (const n of nos) entram.set(n.id, [])
+  for (const l of avancam) entram.get(l.para)?.push(l)
+
+  // Profundidade por relaxamento sobre o grafo sem ciclos: cada passo fica uma
+  // coluna à direita do último que o alimenta.
+  const coluna = new Map<string, number>()
+  for (const n of nos) coluna.set(n.id, 0)
+  for (let volta = 0; volta < nos.length; volta++) {
+    let mudou = false
+    for (const l of avancam) {
+      const proposta = (coluna.get(l.de) ?? 0) + 1
+      if (proposta > (coluna.get(l.para) ?? 0)) {
+        coluna.set(l.para, proposta)
+        mudou = true
+      }
+    }
+    if (!mudou) break
+  }
+
+  // Linha por baricentro, varrendo da esquerda para a direita.
+  const linha = new Map<string, number>()
+  const porColuna = new Map<number, NoFluxo[]>()
+  for (const n of nos) {
+    const c = coluna.get(n.id) ?? 0
+    if (!porColuna.has(c)) porColuna.set(c, [])
+    porColuna.get(c)!.push(n)
+  }
+
+  for (const c of [...porColuna.keys()].sort((a, b) => a - b)) {
+    const daColuna = porColuna.get(c)!
+    const comPeso = daColuna.map((n) => {
+      const chegadas = entram.get(n.id) ?? []
+      const conhecidas = chegadas.filter((l) => linha.has(l.de))
+      // Sem quem o alimente (o gatilho), fica na faixa central.
+      if (conhecidas.length === 0) return { no: n, peso: 0 }
+      const media =
+        conhecidas.reduce((s, l) => s + (linha.get(l.de) ?? 0), 0) / conhecidas.length
+      // Caminho de falha desce: erro embaixo, sucesso em cima, sempre.
+      const desvio = conhecidas.every((l) => l.porta === 'falha') ? 1.15 : 0
+      return { no: n, peso: media + desvio }
+    })
+    comPeso.sort((a, b) => a.peso - b.peso)
+    comPeso.forEach((x, i) => {
+      // Empilha na ordem do baricentro, mantendo a média como âncora.
+      const base = Math.round(x.peso)
+      linha.set(x.no.id, comPeso.length === 1 ? base : base + i * 0.0001 + i)
+    })
+    // Reindexa em inteiros para as linhas não se acumularem em fração.
+    comPeso
+      .slice()
+      .sort((a, b) => (linha.get(a.no.id) ?? 0) - (linha.get(b.no.id) ?? 0))
+      .forEach((x, i) => linha.set(x.no.id, (comPeso[0] ? Math.round(comPeso[0].peso) : 0) + i))
+  }
+
+  const minLinha = Math.min(...nos.map((n) => linha.get(n.id) ?? 0))
+  return nos.map((n) => ({
+    ...n,
+    x: 40 + (coluna.get(n.id) ?? 0) * PASSO_COLUNA,
+    y: 40 + ((linha.get(n.id) ?? 0) - minLinha) * PASSO_LINHA,
+  }))
+}
 
 /** Fluxo de partida: a instrução completa, já com o plano B desenhado. */
 function fluxoInicial(): { nos: NoFluxo[]; ligacoes: Ligacao[] } {
@@ -125,7 +245,8 @@ function fluxoInicial(): { nos: NoFluxo[]; ligacoes: Ligacao[] } {
     { de: 'n9', para: 'n3', porta: 'sucesso' },
     { de: 'n9', para: 'nx', porta: 'falha' },
   ]
-  return { nos, ligacoes }
+  // Nasce arranjado: as coordenadas acima são só a ordem de escrita.
+  return { nos: arranjar(nos, ligacoes), ligacoes }
 }
 
 export function Estudio() {
@@ -135,6 +256,7 @@ export function Estudio() {
   const [ligacoes, setLigacoes] = useState<Ligacao[]>(inicial.ligacoes)
   const [selecionado, setSelecionado] = useState<string | null>('n3')
   const [nome, setNome] = useState('Instrução completa com plano B')
+  const [paletaAberta, setPaletaAberta] = useState(false)
 
   // Execução simulada: os nós acendem na ordem do caminho de sucesso
   const [rodando, setRodando] = useState(false)
@@ -166,23 +288,84 @@ export function Estudio() {
     [cam],
   )
 
-  function enquadrarTudo() {
-    const r = palco.current?.getBoundingClientRect()
-    if (!r || nos.length === 0) return
-    const minX = Math.min(...nos.map((n) => n.x))
-    const maxX = Math.max(...nos.map((n) => n.x + LARGURA_NO))
-    const minY = Math.min(...nos.map((n) => n.y))
-    const maxY = Math.max(...nos.map((n) => n.y + ALTURA_NO))
-    // Piso de 55%: enquadrar não pode transformar o fluxo em formiga
-    const z = Math.max(
-      Math.min((r.width - 40) / (maxX - minX), (r.height - 40) / (maxY - minY), 1.4),
-      0.55,
-    )
-    setCam({
-      z,
-      x: r.width / 2 - ((minX + maxX) / 2) * z,
-      y: r.height / 2 - ((minY + maxY) / 2) * z,
-    })
+  const enquadrarTudo = useCallback(
+    (lista: NoFluxo[] = nos) => {
+      const r = palco.current?.getBoundingClientRect()
+      if (!r || lista.length === 0) return
+      const minX = Math.min(...lista.map((n) => n.x))
+      const maxX = Math.max(...lista.map((n) => n.x + LARGURA_NO))
+      const minY = Math.min(...lista.map((n) => n.y))
+      const maxY = Math.max(...lista.map((n) => n.y + ALTURA_NO))
+
+      // A paleta e o inspetor flutuam por cima do palco nas telas largas. O
+      // espaço livre é o miolo entre eles — enquadrar na largura cheia
+      // esconderia o gatilho atrás da paleta, que é pior do que não enquadrar.
+      const flutuando = window.innerWidth >= 1280
+      const margemEsq = flutuando ? (paletaAberta ? 268 : 130) : 24
+      const margemDir = flutuando ? 330 : 24
+      const util = Math.max(r.width - margemEsq - margemDir, 240)
+
+      // Um rito de nove passos ocupa quase dois mil pixels. Espremer tudo na
+      // tela para cumprir a palavra "enquadrar" devolve um fluxo de 30%, que
+      // é o mesmo que não mostrar nada. Abaixo do piso de leitura, o
+      // enquadramento desiste da largura e ancora no começo do fluxo — a
+      // pessoa arrasta para ver o resto, como em qualquer editor de fluxo.
+      const PISO_LEGIVEL = 0.62
+      const cabe = Math.min(util / (maxX - minX), (r.height - 48) / (maxY - minY), 1.4)
+      const z = Math.max(cabe, PISO_LEGIVEL)
+      const centrado = cabe >= PISO_LEGIVEL
+
+      setCam({
+        z,
+        x: centrado
+          ? margemEsq + util / 2 - ((minX + maxX) / 2) * z
+          : margemEsq + 20 - minX * z,
+        y: r.height / 2 - ((minY + maxY) / 2) * z,
+      })
+    },
+    [nos, paletaAberta],
+  )
+
+  // Entra enquadrado: palco que abre com metade do fluxo fora da borda faz a
+  // pessoa achar que o rito está quebrado antes de olhar para ele.
+  useEffect(() => {
+    const t = setTimeout(() => enquadrarTudo(inicial.nos), 60)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /**
+   * Zoom pela roda, em listener nativo.
+   *
+   * O React registra `wheel` no documento como passivo, e listener passivo não
+   * pode chamar `preventDefault` — o `onWheel` do JSX funcionava, mas cuspia um
+   * erro no console a cada giro da roda e ainda deixava a página rolar junto.
+   * Registrado aqui com `{ passive: false }`, o palco fica com a roda para si.
+   */
+  useEffect(() => {
+    const el = palco.current
+    if (!el) return
+    const aoGirar = (e: WheelEvent) => {
+      e.preventDefault()
+      const r = el.getBoundingClientRect()
+      const mx = e.clientX - r.left
+      const my = e.clientY - r.top
+      const fator = e.deltaY < 0 ? 1.12 : 1 / 1.12
+      setCam((c) => {
+        const z = Math.min(Math.max(c.z * fator, 0.3), 2.4)
+        // Zoom ancorado no ponteiro: o ponto sob o cursor não escapa
+        return { z, x: mx - ((mx - c.x) / c.z) * z, y: my - ((my - c.y) / c.z) * z }
+      })
+    }
+    el.addEventListener('wheel', aoGirar, { passive: false })
+    return () => el.removeEventListener('wheel', aoGirar)
+  }, [])
+
+  /** Rearranja o grafo e reenquadra — a saída para qualquer desenho embolado. */
+  function rearranjar() {
+    const arranjados = arranjar(nos, ligacoes)
+    setNos(arranjados)
+    setTimeout(() => enquadrarTudo(arranjados), 30)
   }
 
   /* ---------- Variáveis disponíveis no nó selecionado ---------- */
@@ -246,12 +429,15 @@ export function Estudio() {
   /* ---------- Interação ---------- */
 
   function aoMover(e: React.PointerEvent) {
-    if (panRef.current) {
-      setCam((c) => ({
-        ...c,
-        x: panRef.current!.camX + (e.clientX - panRef.current!.x),
-        y: panRef.current!.camY + (e.clientY - panRef.current!.y),
-      }))
+    // A origem do arrasto é lida agora, fora do atualizador. React pode chamar
+    // a função de atualização depois — inclusive num segundo render — e a essa
+    // altura o ponteiro já foi solto e `panRef.current` voltou a ser nulo.
+    // Ler a ref lá dentro derruba a tela com "Cannot read properties of null".
+    const pan = panRef.current
+    if (pan) {
+      const dx = e.clientX - pan.x
+      const dy = e.clientY - pan.y
+      setCam((c) => ({ ...c, x: pan.camX + dx, y: pan.camY + dy }))
       return
     }
     if (arrastando.current) {
@@ -401,12 +587,33 @@ export function Estudio() {
   const portaEntrada = (n: NoFluxo) => ({ x: n.x, y: n.y + ALTURA_NO / 2 })
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr_290px] items-start gap-4">
-      {/* Paleta */}
-      <Panel className="overflow-hidden">
-        <div className="border-b border-line px-4 py-3">
-          <div className="eyebrow">Paleta</div>
-        </div>
+    // O palco é a página. Em telas grandes a paleta e o inspetor flutuam sobre
+    // o canvas em vez de roubar coluna: três colunas fixas reduziam o palco a
+    // um terço da largura, e um rito com plano B não cabe num terço — a
+    // "correção" seria o zoom em 30%, que é o mesmo que não mostrar.
+    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[240px_1fr_290px] xl:block xl:relative">
+      {/* Paleta — recolhida por padrão nas telas largas: ela só é necessária
+          na hora de inserir um passo, e aberta rouba um terço do palco. */}
+      <Panel
+        className={cn(
+          'overflow-hidden xl:absolute xl:top-16 xl:left-4 xl:z-20 xl:w-[236px] xl:bg-surface/95 xl:shadow-2xl xl:backdrop-blur-xl',
+          !paletaAberta && 'xl:w-auto',
+        )}
+      >
+        <button
+          onClick={() => setPaletaAberta((v) => !v)}
+          className="flex w-full items-center gap-2 border-b border-line px-4 py-3 text-left transition-colors hover:bg-white/[0.03]"
+        >
+          <Plus
+            size={11}
+            className={cn('shrink-0 text-cleo transition-transform', paletaAberta && 'rotate-45')}
+          />
+          <span className="eyebrow">Paleta</span>
+          <span className="num ml-auto hidden text-[10px] text-faint xl:inline">
+            {paletaAberta ? 'recolher' : `${PASSOS_DISPONIVEIS.length + NOS_ESPECIAIS.length}`}
+          </span>
+        </button>
+        <div className={cn(!paletaAberta && 'xl:hidden')}>
         <ul className="max-h-[300px] divide-y divide-line-soft overflow-y-auto">
           {PASSOS_DISPONIVEIS.map((p) => (
             <li key={p.tipo}>
@@ -443,6 +650,7 @@ export function Estudio() {
           <span className="text-teal">verde</span> (sucesso) ou{' '}
           <span className="text-alert">vermelha</span> (falha) até o próximo passo.
         </p>
+        </div>
       </Panel>
 
       {/* Palco */}
@@ -483,20 +691,10 @@ export function Estudio() {
           onPointerLeave={() => {
             panRef.current = null
           }}
-          onWheel={(e) => {
-            e.preventDefault()
-            const r = palco.current!.getBoundingClientRect()
-            const mx = e.clientX - r.left
-            const my = e.clientY - r.top
-            const fator = e.deltaY < 0 ? 1.12 : 1 / 1.12
-            setCam((c) => {
-              const z = Math.min(Math.max(c.z * fator, 0.3), 2.4)
-              // Zoom ancorado no ponteiro: o ponto sob o cursor não escapa
-              return { z, x: mx - ((mx - c.x) / c.z) * z, y: my - ((my - c.y) / c.z) * z }
-            })
-          }}
           className={cn(
-            'relative h-[520px] overflow-hidden',
+            // Palco alto: rito de produção tem caminho de falha, e caminho de
+            // falha ocupa linha. Espremer em 520px empurra o plano B para fora.
+            'relative h-[520px] overflow-hidden xl:h-[64vh] xl:min-h-[520px]',
             panRef.current ? 'cursor-grabbing' : 'cursor-grab',
           )}
           style={{
@@ -507,7 +705,9 @@ export function Estudio() {
           data-fundo="1"
         >
           {/* Controles da câmera */}
-          <div className="absolute right-3 bottom-3 z-20 flex items-center gap-1 rounded-lg border border-line bg-surface/95 px-1.5 py-1 backdrop-blur">
+          {/* Canto esquerdo nas telas largas: o inspetor flutua à direita e
+              cobriria os controles justamente quando há um nó selecionado. */}
+          <div className="absolute right-3 bottom-3 z-20 flex items-center gap-1 rounded-lg border border-line bg-surface/95 px-1.5 py-1 backdrop-blur xl:right-auto xl:left-3">
             <button
               onClick={() => setCam((c) => ({ ...c, z: Math.max(c.z / 1.2, 0.3) }))}
               className="px-2 py-0.5 text-[13px] text-muted hover:text-ink"
@@ -526,11 +726,18 @@ export function Estudio() {
               +
             </button>
             <button
-              onClick={enquadrarTudo}
+              onClick={() => enquadrarTudo()}
               className="ml-1 border-l border-line px-2 py-0.5 text-[10.5px] text-muted hover:text-ink"
               title="Enquadrar o fluxo inteiro"
             >
               ajustar
+            </button>
+            <button
+              onClick={rearranjar}
+              className="flex items-center gap-1 border-l border-line px-2 py-0.5 text-[10.5px] text-muted hover:text-gold"
+              title="Reorganizar os passos em camadas, sem cruzar fios"
+            >
+              <Wand2 size={10} /> arrumar
             </button>
           </div>
 
@@ -692,9 +899,9 @@ export function Estudio() {
         )}
       </Panel>
 
-      {/* Inspetor */}
-      <div className="flex flex-col gap-4">
-        <Panel className="overflow-hidden">
+      {/* Inspetor — flutua à direita do palco nas telas largas */}
+      <div className="flex flex-col gap-4 xl:absolute xl:top-16 xl:right-4 xl:z-20 xl:max-h-[calc(64vh-24px)] xl:w-[298px] xl:overflow-y-auto">
+        <Panel className="overflow-hidden xl:bg-surface/95 xl:shadow-2xl xl:backdrop-blur-xl">
           <div className="border-b border-line px-4 py-3">
             <div className="eyebrow">{noSelecionado ? noSelecionado.rotulo : 'Inspetor'}</div>
           </div>
@@ -756,7 +963,7 @@ export function Estudio() {
           )}
         </Panel>
 
-        <Panel className="overflow-hidden">
+        <Panel className="overflow-hidden xl:bg-surface/95 xl:shadow-2xl xl:backdrop-blur-xl">
           <div className="border-b border-line px-4 py-3">
             <div className="eyebrow">Leitura da Cleo</div>
           </div>

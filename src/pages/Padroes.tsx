@@ -81,7 +81,7 @@ export function Padroes() {
         </div>
       </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <Panel className="px-5 py-4">
           <Numero rotulo="Padrões encontrados" valor={numero(achados.length)} tom="cleo" />
         </Panel>
@@ -155,17 +155,21 @@ export function Padroes() {
                     {achado.propostas.map((p) => {
                       const proponente = getProponente(p.proponenteId)
                       return (
-                        <li key={p.id} className="flex items-center gap-4 px-5 py-2.5">
+                        <li
+                          key={p.id}
+                          className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5 sm:flex-nowrap sm:px-5"
+                        >
                           <button
                             onClick={() => navegar(`/propostas/${p.id}`)}
                             className="num shrink-0 text-[12px] text-ink hover:text-gold"
                           >
                             {p.numero}
                           </button>
-                          <span className="w-[220px] shrink-0 truncate text-[12px] text-muted">
+                          <span className="min-w-0 flex-1 truncate text-[12px] text-muted sm:w-[220px] sm:flex-none">
                             {proponente?.nome}
                           </span>
-                          <span className="min-w-0 flex-1 truncate text-[11.5px] text-faint">
+                          {/* No celular o objeto não cabe sem espremer o resto da linha */}
+                          <span className="hidden min-w-0 flex-1 truncate text-[11.5px] text-faint sm:block">
                             {p.objeto}
                           </span>
                           <SituacaoBadge situacao={p.situacao} />

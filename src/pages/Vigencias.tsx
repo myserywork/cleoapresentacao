@@ -190,7 +190,7 @@ export function Vigencias() {
         </div>
       </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <Panel className={cn('px-5 py-4', vencidas.length > 0 && 'border-alert/30 bg-alert/[0.04]')}>
           <Numero
             rotulo="Vigência encerrada"

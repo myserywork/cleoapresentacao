@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Cleopatra — copiloto do SEI e do TransfereGov",
-  "version": "1.1.0",
+  "version": "1.3.0",
   "description": "A Cleo opera o SEI e o TransfereGov na sua própria sessão e pode levar a sessão autenticada para a Cleopatra continuar sozinha. Nenhuma senha sai do seu navegador.",
   "icons": {
     "16": "icons/icon16.png",
@@ -25,17 +25,40 @@
       "matches": [
         "http://127.0.0.1/*",
         "http://localhost/*",
-        "https://*.trycloudflare.com/*"
+        "https://*.trycloudflare.com/*",
+        "https://*.pages.dev/*"
       ],
-      "js": ["content.js"],
-      "css": ["painel.css"],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "painel.css"
+      ],
       "run_at": "document_idle"
     }
   ],
-  "permissions": ["storage", "cookies", "scripting"],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/*.png"
+      ],
+      "matches": [
+        "http://127.0.0.1/*",
+        "http://localhost/*",
+        "https://*.trycloudflare.com/*",
+        "https://*.pages.dev/*"
+      ]
+    }
+  ],
+  "permissions": [
+    "storage",
+    "cookies",
+    "scripting"
+  ],
   "host_permissions": [
     "http://127.0.0.1/*",
     "http://localhost/*",
-    "https://*.trycloudflare.com/*"
+    "https://*.trycloudflare.com/*",
+    "https://*.pages.dev/*"
   ]
 }

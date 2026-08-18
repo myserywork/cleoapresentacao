@@ -10,6 +10,7 @@ import {
   Play,
   Rows3,
   Search,
+  Table2,
   Send,
   X,
 } from 'lucide-react'
@@ -29,6 +30,7 @@ import {
   Vazio,
 } from '@/components/ui'
 import { Autorizado } from '@/components/Autorizacao'
+import { Planilha } from '@/components/Planilha'
 
 const SITUACOES: SituacaoProposta[] = [
   'Cadastrada',
@@ -71,7 +73,9 @@ export function Propostas() {
   const [termo, setTermo] = useState('')
   const [limite, setLimite] = useState(PAGINA)
   const [selecao, setSelecao] = useState<Set<string>>(new Set())
-  const [visao, setVisao] = useState<'tabela' | 'tramite'>('tabela')
+  // Três leituras da mesma carteira: a lista enxuta, o quadro por fase e a
+  // planilha — que é como o órgão realmente opera hoje.
+  const [visao, setVisao] = useState<'simples' | 'grade' | 'planilha'>('simples')
   const [ordem, setOrdem] = useState<{ coluna: Coluna; desc: boolean }>({
     coluna: 'valor',
     desc: true,
@@ -178,7 +182,7 @@ export function Propostas() {
 
   return (
     <div className="mx-auto flex max-w-[1240px] flex-col gap-5 pb-24">
-      <header className="flex items-end justify-between gap-6">
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
           <div className="eyebrow mb-2">Carteira</div>
           <h1 className="text-[26px] leading-tight">Propostas</h1>
@@ -186,8 +190,9 @@ export function Propostas() {
         <div className="flex items-center gap-1 rounded-lg border border-line bg-raised p-0.5">
           {(
             [
-              ['tabela', Rows3, 'Tabela'],
-              ['tramite', LayoutGrid, 'Trâmite'],
+              ['simples', Rows3, 'Simples'],
+              ['grade', LayoutGrid, 'Grade'],
+              ['planilha', Table2, 'Tabela'],
             ] as const
           ).map(([id, Icone, rotulo]) => (
             <button
@@ -205,7 +210,7 @@ export function Propostas() {
       </header>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative w-[320px]">
+        <div className="relative w-full min-w-[200px] flex-1 sm:w-[320px] sm:flex-none">
           <Search
             size={15}
             className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-faint"
@@ -317,7 +322,9 @@ export function Propostas() {
         </div>
       )}
 
-      {visao === 'tramite' ? (
+      {visao === 'planilha' ? (
+        <Planilha propostas={resultado} />
+      ) : visao === 'grade' ? (
         <VisaoTramite propostas={resultado} />
       ) : (
         <Panel className="overflow-hidden">
@@ -336,7 +343,61 @@ export function Propostas() {
               }
             />
           ) : (
-            <table className="w-full">
+            <>
+              {/* Tabela de sete colunas num celular só existe rolando de lado,
+                  e ninguém rola de lado para ler uma carteira. Abaixo de md a
+                  mesma linha vira cartão, com o que decide em cima. */}
+              <ul className="divide-y divide-line-soft md:hidden">
+                {resultado.slice(0, limite).map((p) => {
+                  const prop = getProponente(p.proponenteId)
+                  const parada = diasParada(p)
+                  const escolhida = selecao.has(p.id)
+                  return (
+                    <li
+                      key={p.id}
+                      className={cn('flex gap-3 px-4 py-3', escolhida && 'bg-gold/[0.045]')}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={escolhida}
+                        onChange={() => alternarSelecao(p.id)}
+                        className="mt-1 size-3.5 shrink-0 accent-[#dfb552]"
+                        aria-label={`Selecionar ${p.numero}`}
+                      />
+                      <Link to={`/propostas/${p.id}`} className="min-w-0 flex-1">
+                        <div className="flex items-baseline justify-between gap-3">
+                          <span className="num text-[12.5px] text-ink">{p.numero}</span>
+                          <span className="num shrink-0 text-[12.5px] whitespace-nowrap text-gold">
+                            {moedaCompacta(p.valorGlobal)}
+                          </span>
+                        </div>
+                        <div className="mt-1 truncate text-[12.5px] text-ink">{prop?.nome}</div>
+                        <div className="mt-0.5 text-[10.5px] text-faint">
+                          {prop?.municipio} · {prop?.uf}
+                          {p.numProcessoSei && <span className="num"> · SEI {p.numProcessoSei}</span>}
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                          <SituacaoBadge situacao={p.situacao} />
+                          <span
+                            className={cn(
+                              'num text-[11px]',
+                              parada > 60
+                                ? 'text-alert'
+                                : parada > 30
+                                  ? 'text-gold'
+                                  : 'text-faint',
+                            )}
+                          >
+                            parada há {parada} dias
+                          </span>
+                        </div>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+
+              <table className="hidden w-full md:table">
               <thead>
                 <tr className="border-b border-line">
                   <th className="w-9 px-4 py-3">
@@ -468,12 +529,13 @@ export function Propostas() {
                   )
                 })}
               </tbody>
-            </table>
+              </table>
+            </>
           )}
         </Panel>
       )}
 
-      {visao === 'tabela' && limite < resultado.length && (
+      {visao === 'simples' && limite < resultado.length && (
         <div className="flex justify-center">
           <Botao onClick={() => setLimite((l) => l + PAGINA)}>
             Mostrar mais {Math.min(PAGINA, resultado.length - limite)} de{' '}

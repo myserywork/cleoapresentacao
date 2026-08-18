@@ -309,20 +309,22 @@ export function Cleo() {
   )
 
   return (
-    <div className="relative flex h-screen w-full flex-col items-center overflow-hidden">
+    <div className="relative flex h-[calc(100dvh-56px)] w-full flex-col items-center overflow-hidden md:h-screen">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_540px_at_50%_28%,#141033_0%,transparent_65%)]" />
 
-      <header className="z-10 flex w-full items-start justify-between px-8 pt-6">
-        <div>
+      {/* No celular a barra empilha e os controles viram uma régua que rola:
+          espremer sete controles numa linha de 390px não deixa nenhum legível. */}
+      <header className="z-10 flex w-full flex-col gap-3 px-4 pt-4 sm:flex-row sm:items-start sm:justify-between sm:px-8 sm:pt-6">
+        <div className="min-w-0">
           <div className="eyebrow">A presença · {orgao.sigla}</div>
           {perfil && (
-            <div className="mt-1 text-[11px] text-faint">
+            <div className="mt-1 truncate text-[11px] text-faint">
               operando pela alçada de {eu?.nome?.split(' ')[0]} · {perfil.nome}
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-lg border border-line bg-surface/80 p-0.5 backdrop-blur-xl">
+        <div className="rolagem-discreta -mx-4 flex items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:justify-end sm:overflow-visible sm:px-0">
+          <div className="flex shrink-0 items-center gap-1 rounded-lg border border-line bg-surface/80 p-0.5 backdrop-blur-xl">
             {TONS.map((t) => (
               <button
                 key={t.id}
@@ -343,7 +345,7 @@ export function Cleo() {
               setVozLigada((v) => !v)
             }}
             className={cn(
-              'flex items-center gap-2 rounded-lg border border-line bg-surface/80 px-3 py-2 text-[12px] backdrop-blur-xl transition-colors',
+              'flex shrink-0 items-center gap-2 rounded-lg border border-line bg-surface/80 px-3 py-2 text-[12px] whitespace-nowrap backdrop-blur-xl transition-colors',
               vozLigada ? 'border-cleo/50 text-cleo' : 'text-muted hover:text-ink',
             )}
             title="A Cleo lê as respostas em voz alta"
@@ -353,18 +355,20 @@ export function Cleo() {
           </button>
           <button
             onClick={() => setMostrarPerfil((v) => !v)}
+            title="Quem é a Cleo"
             className={cn(
-              'flex items-center gap-2 rounded-lg border border-line bg-surface/80 px-3 py-2 text-[12px] backdrop-blur-xl transition-colors',
+              'flex shrink-0 items-center gap-2 rounded-lg border border-line bg-surface/80 px-3 py-2 text-[12px] whitespace-nowrap backdrop-blur-xl transition-colors',
               mostrarPerfil ? 'border-gold/50 text-gold' : 'text-muted hover:text-ink',
             )}
           >
-            <Info size={13} /> Quem é a Cleo
+            <Info size={13} /> <span className="hidden sm:inline">Quem é a Cleo</span>
           </button>
           <Link
             to="/assistente"
-            className="flex items-center gap-2 rounded-lg border border-line bg-surface/80 px-3 py-2 text-[12px] text-muted backdrop-blur-xl transition-colors hover:text-ink"
+            title="Conversa completa"
+            className="flex shrink-0 items-center gap-2 rounded-lg border border-line bg-surface/80 px-3 py-2 text-[12px] whitespace-nowrap text-muted backdrop-blur-xl transition-colors hover:text-ink"
           >
-            <MessagesSquare size={13} /> Conversa completa
+            <MessagesSquare size={13} /> <span className="hidden sm:inline">Conversa completa</span>
           </Link>
         </div>
       </header>

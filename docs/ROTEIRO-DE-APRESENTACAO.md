@@ -31,6 +31,7 @@ O módulo Prefeitura é o epílogo: a mesma inteligência do outro lado do balc�
 | 1 | Painel | "Toda a carteira numa tela." | Os quatro cartões de sinal — é o que muda a semana |
 | 2 | Meu dia | "Por onde começar hoje." | A fila já traz a próxima ação pronta |
 | 3 | Propostas (filtro) | "A Cleo sabe o que não anda." | O filtro se aplica sozinho na frente deles |
+| 3b | **Propostas → Tabela** | "É a planilha de vocês, com alguém dentro." | **Desça a coluna e veja as células se preencherem** |
 | 4 | Proposta | "Dossiê, não formulário." | Ciclo de vida + previsão de celebração |
 | 5 | **Rito executando** | "Um clique instrui o processo inteiro." | **O momento-chave.** Deixe o modal rodar |
 | 6 | Aprovações | "A decisão continua sua." | Recomendação com fatos e confiança |
@@ -45,7 +46,7 @@ O módulo Prefeitura é o epílogo: a mesma inteligência do outro lado do balc�
 | 15 | Auditoria | "Tudo auditável." | Quem fez, com qual perfil, sob qual alçada |
 | 16 | Cleo | "Pergunte em português." | Ligue o microfone e fale com ela |
 | 17 | Cérebro | "Tudo que a Cleo sabe." | Modo cinema ou linha do tempo |
-| 18 | Prefeitura | "O outro lado do balcão." | O ofício saindo pronto |
+| 18 | Prefeitura | "O outro lado do balcão." | Quem ainda tem saldo, e o ofício saindo pronto |
 | 19 | O ganho | "O que isso devolve." | A corrida em escala real |
 
 **Piloto automático:** botão *Auto* na barra. As cenas avançam sozinhas, com 40
@@ -61,6 +62,16 @@ Se você tiver só 10 minutos, use estes:
 **1. O rito executando (cena 5)** — a janela reconstrói o SEI e o TransfereGov
 ao vivo: cursor voando, campos se preenchendo, processo sendo autuado. É o que
 transforma "automação" de conceito em coisa vista.
+
+**1b. A planilha viva (cena 3b)** — em Propostas, o terceiro modo: **Tabela**.
+É a planilha do MIDR reproduzida — cabeçalho verde de gatilho, vermelho de
+resultado, azul de consulta, letra da coluna, linha numerada, primeiras colunas
+congeladas. Clique numa célula verde e marque *Sim*: a célula ao lado mostra os
+passos correndo e devolve o número do processo autuado. Depois use **Executar na
+coluna → Descer a coluna**: doze linhas se preenchem em sequência, que é o gesto
+que o servidor faz hoje à mão, um script por vez. A frase: *"não pedimos que
+vocês mudem o método — pedimos que ele pare de depender de alguém lembrar de
+rodar o script."*
 
 **2. O bloqueio por alçada (cena 13)** — vá em Usuários, troque para *Analista
 técnico*, volte em Aprovações e passe o mouse no botão Aprovar. O tooltip diz:
@@ -79,6 +90,76 @@ painel dourado aparece sozinho.
 **5. A corrida (cena 19)** — duas barras largando juntas em escala real. A Cleo
 cruza a linha em 3% do percurso. Nenhum número diz "29× mais rápido" tão bem
 quanto ver.
+
+---
+
+## O módulo cliente — como conduzir
+
+É o epílogo, e a conversa mais fácil de vender: aqui a Cleo trabalha para quem
+**pede** o recurso. As abas estão na ordem das perguntas de quem precisa de
+dinheiro.
+
+**Quem pede** — a primeira coisa a mostrar, no alto da tela: Município,
+Consórcio público, Governo estadual, OSC e Estatal. Não é um rótulo — trocar
+muda a norma citada, o instrumento celebrável, os anexos exigidos e quem
+assina. Troque para *Organização da sociedade civil* na frente da sala: a Lei
+13.019 substitui a Portaria 424, convênio vira termo de fomento, e **a aba da
+bancada desaparece da navegação** porque OSC não acessa emenda parlamentar —
+entra por chamamento. É o momento que responde "isso serve só para prefeitura?".
+
+**A quem eu peço** — a pergunta que trava a prefeitura antes de qualquer ofício.
+Digite a necessidade como se contaria no telefone: *"a encosta do Alto da Serra
+cedeu de novo na última chuva"*. A Cleo devolve, com a conta aberta:
+
+- **o que ela entendeu** — as palavras que reconheceu e a natureza do objeto,
+  ditos antes da resposta, para o servidor poder discordar;
+- **o ministério, o programa e a ação orçamentária** — MIDR, Contenção de
+  Encostas, ação 2D6R, na Secretaria Nacional de Proteção e Defesa Civil;
+- **o instrumento e por quê** — contrato de repasse, porque obra de ente
+  público nessa faixa tem mandatária acompanhando a execução física;
+- **a via de acesso** — emenda parlamentar, e daí um botão que leva direto a
+  quem ainda tem saldo livre para indicar;
+- **o que pesa contra** — dito antes que alguém descubra sozinho;
+- **como se pede, passo a passo, com quem faz cada um**: crachá roxo "a Cleo
+  faz", crachá dourado "depende de você". O passo 6 é sempre a assinatura.
+
+Troque o texto para *"queremos comprar trator para a patrulha agrícola"* e a
+rota muda de ministério na frente deles: MAPA, ação 20ZV, convênio.
+
+> **O melhor momento é o beco sem saída.** Escolha OSC e mantenha o texto da
+> encosta: em vez de uma tela vazia, a Cleo lista a porta fechada e o motivo —
+> *"a via é emenda parlamentar, que se destina a ente público; a OSC entra por
+> chamamento"*. Saber que não há caminho evita meses de instrução perdida.
+
+**Radar** — depois disso. *"R$ 4,6 milhões que a prefeitura já conquistou e vai
+perder se ninguém mexer."* Restos a pagar prestes a cancelar, parcela travada
+por prestação de contas, emenda indicada sem proposta cadastrada. Cada item traz
+o prazo em dias e a ação exata. Ao lado, a comparação com pares do mesmo porte
+na mesma UF — *"a cidade vizinha captou 3× mais por habitante; a diferença não é
+de porte, é de quantas propostas entraram."*
+
+**Quem tem saldo** — o momento que prende o prefeito. Emenda autorizada menos
+empenhada é saldo que ainda pode ser destinado, e execução abaixo de 50%
+significa janela de decisão aberta. A bancada da UF vem primeiro, com quem já
+destinou recurso ao município marcado. Clique em *A Cleo escreve o pedido*.
+
+**Programas** — aderência calculada, não palpite: por que combina e o que ainda
+falta, com quantos municípios pares já captaram naquele programa.
+
+**Meus pedidos** — onde cada pleito está, posição na fila e a diligência com
+prazo correndo.
+
+**Ofícios** — quatro peças: apresentação de proposta, pedido de emenda, resposta
+a diligência e pedido de reconsideração. Ao lado do papel, **a base legal
+aplicada**: cada norma com a ementa e o parágrafo que ela sustenta — e a linha
+"sem a Cleo", que é o que a assessoria cobra para fazer. É aqui que se diz a
+frase: *"o escritório cobra por saber qual artigo citar, e esse saber envelhece
+a cada portaria nova."*
+
+> **Estatais:** já está no seletor. Escolhida a estatal, a Cleo diz o que é
+> verdade — que estatal não pleiteia transferência voluntária, contrata pelo
+> regulamento interno sob a Lei 13.303 — e a mesma máquina passa a operar essas
+> diretrizes no lugar da norma federal.
 
 ---
 
@@ -114,8 +195,12 @@ A pessoa que a acionou, com o perfil e a alçada dela — e está tudo na trilha
 auditoria. A Cleo nunca faz o que a pessoa não poderia fazer sozinha.
 
 **"Funciona no celular?"**
-Sim, as 23 telas. Mostre — abrir no telefone durante a reunião costuma valer
-mais que dizer.
+Sim, e não é a tela do desktop encolhida. Onde o formato do desktop não cabe, a
+leitura muda: a carteira vira lista de cartões em vez de tabela rolando de lado,
+o cartograma de 27 bolhas vira ranking por UF, a régua de fases mostra a fase
+atual em vez de seis rótulos truncados, e a janela de execução põe a tela do SEI
+em cima com o roteiro de passos embaixo. Mostre — abrir no telefone durante a
+reunião costuma valer mais que dizer.
 
 **"Quanto tempo para implantar?"**
 O que existe aqui é a camada de apresentação e domínio completos. O que falta é

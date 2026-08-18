@@ -101,7 +101,13 @@ function FitaDeTramite({
             <button
               key={d.situacao}
               onMouseEnter={() => setAtivo(d.situacao)}
-              className="group relative min-w-0 overflow-hidden rounded-[5px] text-left transition-[flex-grow] duration-500"
+              // Celular não tem ponteiro: o toque precisa fazer o mesmo que o
+              // passar do mouse, senão a faixa vira decoração sem leitura.
+              onClick={() => setAtivo((a) => (a === d.situacao ? null : d.situacao))}
+              onFocus={() => setAtivo(d.situacao)}
+              // Piso de largura: a faixa mais fina da carteira ainda precisa
+              // caber um número de dois dígitos, senão vira risco colorido.
+              className="group relative min-w-[26px] overflow-hidden rounded-[5px] text-left transition-[flex-grow] duration-500"
               style={{ flex: `${pct} 1 0%` }}
               aria-label={`${d.situacao}: ${d.qtd} propostas`}
             >
@@ -112,10 +118,14 @@ function FitaDeTramite({
                   opacity: ativo && !destacado ? 0.32 : 0.85,
                 }}
               />
-              <span className="relative flex h-full flex-col justify-between p-2.5">
-                <span className="num text-[15px] font-medium text-[#0b1220]">{d.qtd}</span>
+              <span className="relative flex h-full flex-col justify-between p-1.5 sm:p-2.5">
+                <span className="num text-[13px] font-medium text-[#0b1220] sm:text-[15px]">
+                  {d.qtd}
+                </span>
+                {/* No celular a faixa tem uns 40px: o rótulo só caberia
+                    truncado em duas letras, e "Em compl…" não informa nada. */}
                 {pct > 9 && (
-                  <span className="truncate text-[10.5px] leading-tight font-medium text-[#0b1220]/75">
+                  <span className="hidden truncate text-[10.5px] leading-tight font-medium text-[#0b1220]/75 sm:block">
                     {d.situacao}
                   </span>
                 )}
@@ -125,7 +135,7 @@ function FitaDeTramite({
         })}
       </div>
 
-      <div className="mt-3 flex min-h-[18px] items-center gap-4 text-[12px]">
+      <div className="mt-3 flex min-h-[18px] flex-wrap items-center gap-x-4 gap-y-1 text-[12px]">
         {ativo ? (
           <>
             <span className="flex items-center gap-2">
@@ -144,7 +154,7 @@ function FitaDeTramite({
           </>
         ) : (
           <span className="text-faint">
-            Passe o mouse por uma faixa para ver o volume e o valor parado nela.
+            Escolha uma faixa para ver o volume e o valor parado nela.
           </span>
         )}
       </div>
@@ -172,7 +182,7 @@ export function Painel() {
 
   return (
     <div className="mx-auto flex max-w-[1240px] flex-col gap-5">
-      <header className="flex items-end justify-between gap-6">
+      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div>
           <div className="eyebrow mb-2">Painel do órgão</div>
           <h1 className="text-[26px] leading-tight">{orgao.nome}</h1>
@@ -198,14 +208,10 @@ export function Painel() {
             <span className="num text-ink">{emTramite}</span> aguardando decisão
           </div>
         </div>
-        <div className="-mx-1 overflow-x-auto px-1">
-          <div className="min-w-[560px] md:min-w-0">
-            <FitaDeTramite dados={resumo.porSituacao} total={resumo.totalPropostas} />
-          </div>
-        </div>
+        <FitaDeTramite dados={resumo.porSituacao} total={resumo.totalPropostas} />
       </Panel>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <Indicador
           rotulo="Valor global"
           valor={resumo.valorGlobal}

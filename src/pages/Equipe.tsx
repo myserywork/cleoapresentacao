@@ -140,7 +140,7 @@ export function Equipe() {
         <BotaoExportar nome={`equipe-${orgao.sigla}`} itens={carga} colunas={colunas} />
       </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <Panel className="px-5 py-4">
           <Numero
             rotulo="Ocupação média"
@@ -184,13 +184,16 @@ export function Equipe() {
           />
           <ul className="divide-y divide-line-soft">
             {sugestoes.map((s, i) => (
-              <li key={`${s.de.id}-${s.para.id}-${i}`} className="flex items-center gap-4 px-5 py-4">
-                <div className="flex items-center gap-2.5">
+              <li
+                key={`${s.de.id}-${s.para.id}-${i}`}
+                className="flex flex-wrap items-center gap-x-4 gap-y-3 px-4 py-4 sm:flex-nowrap sm:px-5"
+              >
+                <div className="flex shrink-0 items-center gap-2.5">
                   <Avatar iniciais={s.de.iniciais} tom="alert" />
                   <ArrowRightLeft size={13} className="text-faint" />
                   <Avatar iniciais={s.para.iniciais} tom="teal" />
                 </div>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-[180px] flex-1">
                   <div className="text-[12.5px] text-ink">
                     Mover {s.propostas.length}{' '}
                     {s.propostas.length === 1 ? 'proposta' : 'propostas'} de{' '}
@@ -199,7 +202,7 @@ export function Equipe() {
                   </div>
                   <p className="mt-0.5 text-[11.5px] text-muted">{s.motivo}</p>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
                   {s.propostas.slice(0, 3).map((p) => (
                     <button
                       key={p.id}

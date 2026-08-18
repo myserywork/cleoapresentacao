@@ -36,7 +36,7 @@ export function Autorizado({
       <div className="pointer-events-none opacity-40 select-none">{children}</div>
       <div className="absolute inset-0 z-10 cursor-not-allowed rounded-lg" />
       {/* Ancorado à direita: perto da borda da tela, centralizar cortaria o texto */}
-      <div className="pointer-events-none absolute right-0 bottom-full z-30 mb-2 hidden w-[280px] rounded-xl border border-gold/30 bg-surface px-3.5 py-3 shadow-2xl group-hover:block">
+      <div className="pointer-events-none absolute right-0 bottom-full z-30 mb-2 hidden w-[min(280px,calc(100vw-2rem))] rounded-xl border border-gold/30 bg-surface px-3.5 py-3 shadow-2xl group-hover:block">
         <div className="mb-1.5 flex items-center gap-2">
           <Lock size={12} className="text-gold" />
           <span className="text-[12px] text-gold">Fora da sua alçada</span>

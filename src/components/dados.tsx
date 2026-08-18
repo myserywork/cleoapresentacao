@@ -229,14 +229,16 @@ export function Abas<T extends string>({
   ativa: T
   aoTrocar: (id: T) => void
 }) {
+  // A régua rola de lado quando não cabe. Quebrar em duas linhas parece painel
+  // quebrado; sumir atrás da borda do painel esconde aba que ninguém acha.
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-line">
+    <div className="rolagem-discreta flex items-center gap-1 overflow-x-auto border-b border-line">
       {abas.map((a) => (
         <button
           key={a.id}
           onClick={() => aoTrocar(a.id)}
           className={cn(
-            'relative -mb-px border-b-2 px-3.5 py-2.5 text-[13px] transition-colors',
+            'relative -mb-px shrink-0 border-b-2 px-3.5 py-2.5 text-[13px] whitespace-nowrap transition-colors',
             ativa === a.id
               ? 'border-gold text-gold'
               : 'border-transparent text-muted hover:text-ink',
@@ -322,7 +324,16 @@ export function Numero({
   return (
     <div>
       <div className="eyebrow mb-1.5">{rotulo}</div>
-      <div className={cn('num text-[22px] leading-none font-medium', cores[tom])}>{valor}</div>
+      {/* Valor não quebra linha: "R$ 1,0" numa linha e "bi" na outra deixa de
+          ser número e vira erro de leitura. Encolhe a fonte antes disso. */}
+      <div
+        className={cn(
+          'num text-[19px] leading-none font-medium whitespace-nowrap sm:text-[22px]',
+          cores[tom],
+        )}
+      >
+        {valor}
+      </div>
       {detalhe && <div className="mt-1.5 text-[11.5px] text-muted">{detalhe}</div>}
     </div>
   )

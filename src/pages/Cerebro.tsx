@@ -762,7 +762,7 @@ export function Cerebro() {
   const explicacao = HISTORIAS.find((h) => h.id === historia)!
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="relative h-[calc(100dvh-56px)] w-full overflow-hidden md:h-screen">
       <canvas
         ref={canvasRef}
         className={cn('h-full w-full', arraste.current ? 'cursor-grabbing' : 'cursor-grab')}
@@ -806,18 +806,21 @@ export function Cerebro() {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[130px] bg-linear-to-t from-abyss via-abyss/70 to-transparent" />
 
       {/* Cabeçalho e histórias */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 p-7">
-        <div className="pointer-events-auto flex items-start justify-between gap-6">
+      <div className="pointer-events-none absolute inset-x-0 top-0 p-4 sm:p-7">
+        <div className="pointer-events-auto flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="max-w-[560px]">
-            <div className="eyebrow mb-2">Cérebro da Cleopatra</div>
+            <div className="eyebrow mb-1.5 sm:mb-2">Cérebro da Cleopatra</div>
             <h1 className="text-[24px] leading-tight">
               Tudo que a Cleo sabe sobre o {orgao.sigla}
             </h1>
-            <p className="mt-2 text-[13px] leading-relaxed text-muted">{explicacao.explica}</p>
+            {/* No celular o grafo é o assunto: a explicação cede espaço a ele */}
+            <p className="mt-2 line-clamp-2 text-[13px] leading-relaxed text-muted sm:line-clamp-none">
+              {explicacao.explica}
+            </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="relative w-[250px]">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full min-w-[150px] flex-1 sm:w-[250px] sm:flex-none">
               <Search
                 size={14}
                 className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-faint"
@@ -879,13 +882,13 @@ export function Cerebro() {
 
         {/* As histórias substituem o "explore por conta própria" — numa
             apresentação, ninguém tem tempo de descobrir o que o grafo quer dizer */}
-        <div className="pointer-events-auto mt-5 flex flex-wrap gap-2">
+        <div className="rolagem-discreta pointer-events-auto -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mt-5 sm:flex-wrap sm:overflow-visible sm:px-0">
           {HISTORIAS.map((h) => (
             <button
               key={h.id}
               onClick={() => contarHistoria(h.id)}
               className={cn(
-                'rounded-full border px-3.5 py-1.5 text-[12.5px] backdrop-blur-xl transition-colors',
+                'shrink-0 rounded-full border px-3.5 py-1.5 text-[12.5px] backdrop-blur-xl transition-colors',
                 historia === h.id
                   ? 'border-gold/50 bg-gold/12 text-gold'
                   : 'border-line bg-surface/80 text-muted hover:border-[#2c3c58] hover:text-ink',
@@ -905,7 +908,7 @@ export function Cerebro() {
 
       {/* Linha do tempo: o conhecimento crescendo na ordem em que foi aprendido */}
       {modoTempo && !cinema && (
-        <div className="absolute bottom-7 left-1/2 w-[560px] -translate-x-1/2 rounded-xl border border-teal/30 bg-surface/92 px-5 py-4 backdrop-blur-xl">
+        <div className="absolute inset-x-3 bottom-3 rounded-xl border border-teal/30 bg-surface/92 px-4 py-4 backdrop-blur-xl sm:inset-x-auto sm:bottom-7 sm:left-1/2 sm:w-[560px] sm:-translate-x-1/2 sm:px-5">
           <div className="mb-2.5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <History size={13} className="text-teal" />
@@ -968,7 +971,7 @@ export function Cerebro() {
 
       {/* Letreiro do modo cinema */}
       {cinema && (
-        <div className="absolute bottom-7 left-1/2 w-[620px] -translate-x-1/2 rounded-xl border border-gold/30 bg-surface/94 px-6 py-4 backdrop-blur-xl">
+        <div className="absolute inset-x-3 bottom-3 rounded-xl border border-gold/30 bg-surface/94 px-4 py-4 backdrop-blur-xl sm:inset-x-auto sm:bottom-7 sm:left-1/2 sm:w-[620px] sm:-translate-x-1/2 sm:px-6">
           <div className="mb-1.5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Clapperboard size={13} className="text-gold" />
@@ -1015,9 +1018,17 @@ export function Cerebro() {
         </div>
       )}
 
-      {/* Legenda */}
-      <div className="absolute bottom-7 left-7 flex flex-col gap-1 rounded-xl border border-line bg-surface/85 p-3 backdrop-blur-xl">
-        <div className="eyebrow mb-1 px-1">Tipos de registro</div>
+      {/* Legenda — e filtro por tipo.
+          Em coluna ela come metade da tela do celular, então vira uma régua
+          de fichas rolando no rodapé. Some quando outro painel ocupa o rodapé:
+          dois painéis empilhados ali embaixo tapariam o grafo inteiro. */}
+      <div
+        className={cn(
+          'rolagem-discreta absolute inset-x-3 bottom-3 flex gap-1 overflow-x-auto rounded-xl border border-line bg-surface/85 p-2 backdrop-blur-xl sm:inset-x-auto sm:bottom-7 sm:left-7 sm:flex-col sm:overflow-visible sm:p-3',
+          (detalhe || modoTempo || cinema) && 'hidden sm:flex',
+        )}
+      >
+        <div className="eyebrow mb-1 hidden px-1 sm:block">Tipos de registro</div>
         {TIPOS.map((t) => {
           const oculto = ocultos.has(t)
           return (
@@ -1032,7 +1043,7 @@ export function Cerebro() {
                 })
               }
               className={cn(
-                'flex items-center gap-2.5 rounded-md px-1.5 py-1 text-left transition-opacity hover:bg-white/5',
+                'flex shrink-0 items-center gap-2 rounded-md px-1.5 py-1 text-left whitespace-nowrap transition-opacity hover:bg-white/5 sm:gap-2.5',
                 oculto && 'opacity-35',
               )}
             >
@@ -1040,7 +1051,7 @@ export function Cerebro() {
                 className="size-2.5 shrink-0 rounded-full"
                 style={{ background: CORES_TIPO[t] }}
               />
-              <span className="flex-1 text-[12px] text-ink">{ROTULO_TIPO[t]}</span>
+              <span className="text-[12px] text-ink sm:flex-1">{ROTULO_TIPO[t]}</span>
               <span className="num text-[11px] text-faint">{numero(grafo.porTipo[t])}</span>
             </button>
           )
@@ -1049,7 +1060,7 @@ export function Cerebro() {
 
       {/* Cadeia legível do registro selecionado */}
       {detalhe && (
-        <aside className="absolute top-[200px] right-7 flex w-[344px] flex-col rounded-xl border border-line bg-surface/95 p-5 backdrop-blur-xl">
+        <aside className="absolute inset-x-3 bottom-3 flex max-h-[52vh] flex-col overflow-y-auto rounded-xl border border-line bg-surface/95 p-4 backdrop-blur-xl sm:inset-x-auto sm:top-[200px] sm:right-7 sm:bottom-auto sm:max-h-none sm:w-[344px] sm:overflow-visible sm:p-5">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div className="flex items-center gap-2">
               <span

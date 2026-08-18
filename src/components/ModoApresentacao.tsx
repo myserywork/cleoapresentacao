@@ -159,7 +159,7 @@ export function ModoApresentacao() {
         {
           titulo: 'O município do outro lado',
           narracao:
-            'O módulo Prefeitura mostra como o pedido nasce: a Cleo acha o programa certo e escreve o ofício na linguagem que o ministério exige — menos devolução, mais obra.',
+            'O módulo cliente responde a pergunta que trava a prefeitura: a quem eu peço. Descreva a necessidade em português e a Cleo devolve o ministério, o programa, a ação orçamentária, o instrumento e o passo a passo — dizendo em cada passo se ela faz sozinha ou se depende de você.',
           acoes: [{ tipo: 'navegar', para: '/prefeitura' }],
         },
         {
@@ -291,7 +291,7 @@ export function ModoApresentacao() {
       {
         titulo: 'O outro lado do balcão',
         narracao:
-          'O módulo Prefeitura: a Cleo trabalhando para quem pede o recurso. Acha o programa que aceita o projeto e escreve o ofício na linguagem que o ministério exige.',
+          'O módulo cliente: a Cleo trabalhando para quem pede o recurso. Diz a quem pedir e como, mostra o dinheiro já conquistado que vai vencer e quem na bancada ainda tem saldo livre. E não serve só a prefeituras: consórcio, estado, OSC e estatal pedem sob normas diferentes, e a plataforma inteira acompanha a troca.',
         acoes: [{ tipo: 'navegar', para: '/prefeitura' }],
       },
       {

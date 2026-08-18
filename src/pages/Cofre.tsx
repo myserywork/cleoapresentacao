@@ -148,7 +148,7 @@ export function Cofre() {
         </div>
       </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <Panel className="px-5 py-4">
           <Numero rotulo="Sessões ativas" valor={String(ativas.length)} tom="teal" detalhe="Operáveis agora pela Cleo" />
         </Panel>

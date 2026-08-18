@@ -218,21 +218,23 @@ export function Orcamento() {
               <div className="eyebrow mb-2.5">Empenhos acima de 180 dias sem liquidar</div>
               <ul className="flex flex-col gap-2">
                 {restos.criticos.slice(0, 5).map((c) => (
-                  <li key={c.proposta.id} className="flex items-center gap-3">
+                  <li key={c.proposta.id} className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
                     <button
                       onClick={() => navegar(`/propostas/${c.proposta.id}`)}
                       className="num shrink-0 text-[12px] text-ink hover:text-gold"
                     >
                       {c.proposta.numero}
                     </button>
-                    <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted">
-                      {getProponente(c.proposta.proponenteId)?.nome}
-                    </span>
-                    <span className="num shrink-0 text-[11.5px] text-alert">
+                    <span className="num ml-auto shrink-0 text-[11.5px] text-alert sm:order-2">
                       {moedaCompacta(c.valor)}
                     </span>
-                    <span className="num w-12 shrink-0 text-right text-[11px] text-faint">
+                    <span className="num w-12 shrink-0 text-right text-[11px] text-faint sm:order-3">
                       {c.dias}d
+                    </span>
+                    {/* O nome do ente desce no celular: espremido entre número e
+                        valor ele sobrava com 50px, o que não é nome nenhum. */}
+                    <span className="w-full min-w-0 truncate text-[11.5px] text-muted sm:order-1 sm:w-auto sm:flex-1">
+                      {getProponente(c.proposta.proponenteId)?.nome}
                     </span>
                   </li>
                 ))}
@@ -318,7 +320,10 @@ export function Orcamento() {
           <div className="max-h-[340px] overflow-y-auto rounded-lg border border-line">
             <ul className="divide-y divide-line-soft">
               {simulacao.selecionadas.map((c, i) => (
-                <li key={c.proposta.id} className="flex items-center gap-3 px-4 py-2.5">
+                <li
+                  key={c.proposta.id}
+                  className="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-4 py-2.5"
+                >
                   <span className="num w-5 shrink-0 text-[11px] text-faint">{i + 1}</span>
                   <button
                     onClick={() => navegar(`/propostas/${c.proposta.id}`)}
@@ -326,11 +331,11 @@ export function Orcamento() {
                   >
                     {c.proposta.numero}
                   </button>
-                  <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted">
-                    {getProponente(c.proposta.proponenteId)?.nome}
-                  </span>
-                  <span className="num shrink-0 text-[12px] text-gold">
+                  <span className="num ml-auto shrink-0 text-[12px] text-gold sm:order-2">
                     {moedaCompacta(c.valor)}
+                  </span>
+                  <span className="w-full min-w-0 truncate pl-8 text-[11.5px] text-muted sm:order-1 sm:w-auto sm:flex-1 sm:pl-0">
+                    {getProponente(c.proposta.proponenteId)?.nome}
                   </span>
                 </li>
               ))}

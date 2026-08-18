@@ -231,11 +231,11 @@ export function PaletaComando() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-start justify-center bg-abyss/80 p-6 pt-[14vh] backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-start justify-center bg-abyss/80 p-4 pt-[10vh] backdrop-blur-sm sm:p-6 sm:pt-[14vh]"
       onClick={() => setAberta(false)}
     >
       <div
-        className="panel w-[620px] overflow-hidden bg-surface shadow-2xl"
+        className="panel w-full max-w-[620px] overflow-hidden bg-surface shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 border-b border-line px-4">

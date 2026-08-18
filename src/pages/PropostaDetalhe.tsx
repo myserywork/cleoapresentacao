@@ -195,9 +195,9 @@ export function PropostaDetalhe() {
       </div>
 
       {/* Capa do convênio */}
-      <header className="flex items-start justify-between gap-8">
+      <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
         <div className="min-w-0">
-          <div className="mb-2 flex items-center gap-3">
+          <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <span className="eyebrow">Proposta</span>
             <SituacaoBadge situacao={proposta.situacao} />
             {saude.diasParada > 30 && (
@@ -244,10 +244,14 @@ export function PropostaDetalhe() {
           </div>
         </div>
 
-        <div className="flex shrink-0 items-start gap-6">
-          <div className="text-right">
+        {/* No celular a capa empilha: o valor e o anel de saúde ficam lado a
+            lado numa faixa própria, alinhados à esquerda como o resto. */}
+        <div className="flex shrink-0 items-start justify-between gap-6 lg:justify-start">
+          <div className="lg:text-right">
             <div className="eyebrow mb-1">Valor global</div>
-            <div className="num text-[24px] text-gold">{moeda(proposta.valorGlobal)}</div>
+            <div className="num text-[21px] whitespace-nowrap text-gold lg:text-[24px]">
+              {moeda(proposta.valorGlobal)}
+            </div>
             <div className="num mt-1 text-[12px] text-muted">
               repasse {moedaCompacta(proposta.valorRepasse)} · contrapartida{' '}
               {moedaCompacta(proposta.valorContrapartida)}
@@ -343,13 +347,15 @@ export function PropostaDetalhe() {
         </Panel>
       )}
 
-      <nav className="flex gap-1 border-b border-line">
+      {/* Oito abas não cabem em 390px: no celular a régua rola de lado em vez
+          de sumir atrás da borda do painel. */}
+      <nav className="rolagem-discreta -mx-4 flex gap-1 overflow-x-auto border-b border-line px-4 md:mx-0 md:px-0">
         {ABAS.map((a) => (
           <button
             key={a}
             onClick={() => trocarAba(a)}
             className={cn(
-              'relative px-3.5 py-2.5 text-[13px] transition-colors',
+              'relative shrink-0 px-3.5 py-2.5 text-[13px] whitespace-nowrap transition-colors',
               aba === a ? 'text-ink' : 'text-muted hover:text-ink',
             )}
           >
@@ -844,18 +850,30 @@ export function PropostaDetalhe() {
             ) : (
               <ul className="divide-y divide-line-soft">
                 {todas.slice(0, 12).map((a) => (
-                  <li key={a.id} className="flex items-center gap-4 px-5 py-3">
+                  <li
+                    key={a.id}
+                    className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 sm:flex-nowrap sm:px-5"
+                  >
                     <span
                       className={cn(
                         'size-1.5 shrink-0 rounded-full',
                         a.status === 'SUCESSO' ? 'bg-teal' : 'bg-alert',
                       )}
                     />
-                    <span className="flex-1 text-[12.5px] text-ink">{ROTULO_GATILHO[a.gatilho]}</span>
-                    <span className="num text-[11.5px] text-muted">{duracao(a.duracaoMs)}</span>
-                    <span className="w-[150px] text-right text-[11.5px] text-faint">{a.usuario}</span>
-                    <span className="num w-[110px] text-right text-[11.5px] text-faint">
-                      {dataHora(a.criadoEm)}
+                    <span className="min-w-0 flex-1 text-[12.5px] text-ink">
+                      {ROTULO_GATILHO[a.gatilho]}
+                    </span>
+                    <span className="num shrink-0 text-[11.5px] text-muted">
+                      {duracao(a.duracaoMs)}
+                    </span>
+                    {/* Quem executou e quando: segunda linha no celular */}
+                    <span className="flex w-full items-center gap-4 pl-4 sm:contents">
+                      <span className="min-w-0 flex-1 truncate text-[11.5px] text-faint sm:w-[150px] sm:flex-none sm:text-right">
+                        {a.usuario}
+                      </span>
+                      <span className="num shrink-0 text-right text-[11.5px] text-faint sm:w-[110px]">
+                        {dataHora(a.criadoEm)}
+                      </span>
                     </span>
                   </li>
                 ))}
@@ -900,19 +918,25 @@ export function PropostaDetalhe() {
           <PanelHeader eyebrow="Plano de trabalho" titulo="Cronograma físico-financeiro" />
           <ul className="divide-y divide-line-soft">
             {proposta.cronograma.map((p) => (
-              <li key={p.id} className="flex items-center gap-4 px-5 py-3.5">
-                <span className="num w-6 text-[11.5px] text-faint">{p.ordem}</span>
-                <span className="flex-1 text-[12.5px] text-ink">{p.descricao}</span>
-                <span className="num w-[70px] text-[11.5px] text-muted">{p.mes}</span>
-                <span className="num w-[110px] text-right text-[12.5px] text-ink">
-                  {moedaCompacta(p.valor)}
-                </span>
-                <span className="w-[92px] text-right">
-                  {p.executado ? (
-                    <Badge tom="teal">executada</Badge>
-                  ) : (
-                    <Badge tom="inert">prevista</Badge>
-                  )}
+              <li
+                key={p.id}
+                className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-3.5 sm:flex-nowrap sm:px-5"
+              >
+                <span className="num w-6 shrink-0 text-[11.5px] text-faint">{p.ordem}</span>
+                <span className="min-w-0 flex-1 text-[12.5px] text-ink">{p.descricao}</span>
+                {/* Mês, valor e situação da etapa: segunda linha no celular */}
+                <span className="flex w-full items-center gap-4 pl-10 sm:contents">
+                  <span className="num shrink-0 text-[11.5px] text-muted sm:w-[70px]">{p.mes}</span>
+                  <span className="num flex-1 text-right text-[12.5px] whitespace-nowrap text-ink sm:w-[110px] sm:flex-none">
+                    {moedaCompacta(p.valor)}
+                  </span>
+                  <span className="w-[92px] shrink-0 text-right">
+                    {p.executado ? (
+                      <Badge tom="teal">executada</Badge>
+                    ) : (
+                      <Badge tom="inert">prevista</Badge>
+                    )}
+                  </span>
                 </span>
               </li>
             ))}

@@ -80,7 +80,7 @@ export function Usuarios() {
         />
       </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <Panel className="px-5 py-4">
           <Numero rotulo="Pessoas no órgão" valor={numero(doOrgao.length)} detalhe={`${doOrgao.filter((u) => u.ativo).length} ativas`} />
         </Panel>
@@ -133,7 +133,7 @@ export function Usuarios() {
                     <button
                       onClick={() => setSelecionado(u.id === selecionado ? null : u.id)}
                       className={cn(
-                        'flex w-full items-center gap-3.5 px-5 py-3 text-left transition-colors',
+                        'flex w-full flex-wrap items-center gap-x-3.5 gap-y-2 px-4 py-3 text-left transition-colors sm:flex-nowrap sm:px-5',
                         u.id === selecionado ? 'bg-gold/[0.06]' : 'hover:bg-white/[0.03]',
                         !u.ativo && 'opacity-50',
                       )}
@@ -147,12 +147,19 @@ export function Usuarios() {
                         </div>
                         <div className="truncate text-[11px] text-faint">{u.cargo}</div>
                       </div>
-                      <Badge tom={perfil.tom}>{perfil.nome}</Badge>
-                      <span className="num w-[92px] shrink-0 text-right text-[11.5px] text-muted">
-                        {perfil.alcada === Infinity ? 'sem teto' : moedaCompacta(perfil.alcada)}
-                      </span>
-                      <span className="w-[76px] shrink-0 text-right text-[10.5px] text-faint">
-                        {desde(u.ultimoAcesso)}
+                      {/* Perfil, alçada e último acesso descem para a segunda
+                          linha no celular — na primeira eles espremiam o nome
+                          da pessoa até sumir. */}
+                      <span className="flex w-full items-center gap-3 pl-[42px] sm:contents">
+                        <span className="shrink-0">
+                          <Badge tom={perfil.tom}>{perfil.nome}</Badge>
+                        </span>
+                        <span className="num flex-1 text-right text-[11.5px] whitespace-nowrap text-muted sm:w-[92px] sm:flex-none sm:shrink-0">
+                          {perfil.alcada === Infinity ? 'sem teto' : moedaCompacta(perfil.alcada)}
+                        </span>
+                        <span className="w-[76px] shrink-0 text-right text-[10.5px] text-faint">
+                          {desde(u.ultimoAcesso)}
+                        </span>
                       </span>
                     </button>
                   </li>

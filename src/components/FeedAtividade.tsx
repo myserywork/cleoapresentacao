@@ -62,18 +62,18 @@ export function FeedAtividade({ altura = 340 }: { altura?: number }) {
 
   return (
     <Panel className="flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line px-4 py-3 sm:px-5 sm:py-3.5">
         <div className="flex items-center gap-2">
           <Radio size={12} className="animate-pulse text-teal" />
           <span className="eyebrow">Atividade do órgão</span>
         </div>
-        <div className="flex gap-0.5">
+        <div className="rolagem-discreta -mx-1 flex gap-0.5 overflow-x-auto px-1">
           {FILTROS.map((f) => (
             <button
               key={f.id}
               onClick={() => setFiltro(f.id)}
               className={cn(
-                'rounded px-2 py-1 text-[11px] transition-colors',
+                'shrink-0 rounded px-2 py-1 text-[11px] transition-colors',
                 filtro === f.id ? 'bg-gold/15 text-gold' : 'text-faint hover:text-ink',
               )}
             >
@@ -91,7 +91,7 @@ export function FeedAtividade({ altura = 340 }: { altura?: number }) {
               key={e.id}
               onClick={() => e.propostaId && navegar(`/propostas/${e.propostaId}`)}
               className={cn(
-                'flex items-start gap-3 px-5 py-2.5 transition-colors',
+                'flex items-start gap-3 px-4 py-2.5 transition-colors sm:px-5',
                 e.propostaId && 'cursor-pointer hover:bg-white/[0.03]',
                 i === 0 && 'bg-white/[0.02]',
               )}

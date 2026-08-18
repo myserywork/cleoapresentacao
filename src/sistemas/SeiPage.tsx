@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useCopiloto, useBridgeExtensao, type EventoPasso, type Passo } from './useCopiloto'
 import { getProponente, propostasDoOrgao } from '@/data/repo'
 import { CursorFantasma, EtiquetaCleo, HintExtensao } from './pecas'
+import { MarcaSei } from './marcas'
 
 /**
  * Nosso SEI.
@@ -12,31 +13,115 @@ import { CursorFantasma, EtiquetaCleo, HintExtensao } from './pecas'
  * a extensão dirige com a sessão do próprio usuário.
  */
 
-const MENU = [
-  'Controle de Processos',
-  'Iniciar Processo',
-  'Retorno Programado',
-  'Pesquisa',
-  'Base de Conhecimento',
-  'Blocos de Assinatura',
-  'Blocos Internos',
-  'Contatos',
-  'Favoritos',
-  'Marcadores',
-  'Pontos de Controle',
-  'Estatísticas',
-  'Grupos',
+/**
+ * O menu do SEI 4.0, na ordem alfabética em que ele aparece — com os itens que
+ * abrem submenu marcados. A ordem importa: um servidor procura "Iniciar
+ * Processo" pela posição na lista, não pelo texto.
+ */
+const MENU: { rotulo: string; icone: string; submenu?: boolean; recuado?: boolean }[] = [
+  { rotulo: 'Acompanhamento Especial', icone: '◉' },
+  { rotulo: 'Administração', icone: '⚙', submenu: true },
+  { rotulo: 'Base de Conhecimento', icone: '≡' },
+  { rotulo: 'Blocos', icone: '▣', submenu: true },
+  { rotulo: 'Boletim de Serviço Eletrônico', icone: '', recuado: true },
+  { rotulo: 'Contatos', icone: '☷' },
+  { rotulo: 'Controle de Prazos', icone: '◷' },
+  { rotulo: 'Controle de Processos', icone: '☰' },
+  { rotulo: 'Estatísticas', icone: '◪', submenu: true },
+  { rotulo: 'Favoritos', icone: '★' },
+  { rotulo: 'Grupos', icone: '◍', submenu: true },
+  { rotulo: 'Iniciar Processo', icone: '▤' },
+  { rotulo: 'Manual do usuário SEI 4.0', icone: '', recuado: true },
+  { rotulo: 'Marcadores', icone: '⬗' },
+  { rotulo: 'PGD Petrvs (Programa de Gestão)', icone: '', recuado: true },
+  { rotulo: 'Painel de Controle', icone: '⊞' },
+  { rotulo: 'Pesquisa', icone: '⌕' },
+  { rotulo: 'Pontos de Controle', icone: '❙❙' },
+  { rotulo: 'Processos Sobrestados', icone: '❙❙' },
+  { rotulo: 'Reabertura Programada', icone: '↻' },
+  { rotulo: 'Relatórios', icone: '▤', submenu: true },
+]
+
+/** A barra de ferramentas do Controle de Processos — só as pastas coloridas. */
+const FERRAMENTAS: { cor: string; titulo: string }[] = [
+  { cor: '#f0ad2e', titulo: 'Reabrir processos' },
+  { cor: '#f0ad2e', titulo: 'Ver informações' },
+  { cor: '#f0ad2e', titulo: 'Atribuir processos' },
+  { cor: '#c0392b', titulo: 'Adicionar aos favoritos' },
+  { cor: '#f0ad2e', titulo: 'Sobrestar processos' },
+  { cor: '#c0392b', titulo: 'Excluir' },
+  { cor: '#e8b530', titulo: 'Gerar bloco' },
+  { cor: '#2f80c1', titulo: 'Acompanhamento especial' },
+  { cor: '#e8b530', titulo: 'Marcadores' },
+  { cor: '#2f80c1', titulo: 'Enviar processos' },
+  { cor: '#2f9e63', titulo: 'Controle de prazos' },
 ]
 
 interface Processo {
   numero: string
   tipo: string
   interessado: string
-  documentos: { nome: string; assinado: boolean }[]
+  documentos: { nome: string; assinado: boolean; novo?: boolean }[]
   novo?: boolean
+  /** Marcas que o SEI mostra na listagem, e que dão textura à caixa. */
+  atribuido?: string
+  aviso?: boolean
+  atrasado?: boolean
 }
 
 const TIPO_PROCESSO = 'Convênios e Congêneres: Formalização'
+
+/**
+ * A árvore de um convênio já formalizado.
+ *
+ * É a sequência que um processo real acumula: os extratos do TransfereGov, as
+ * declarações do proponente, a nota técnica, os despachos de cada unidade, o
+ * empenho, o termo assinado e a publicação no DOU. Um processo com um
+ * documento só não convence ninguém que já abriu o SEI.
+ */
+const DOCUMENTOS_DE_UM_CONVENIO = [
+  { nome: 'Extrato da Proposta', assinado: true },
+  { nome: 'Extrato da Proposta Aprovada', assinado: true },
+  { nome: 'Declaração de Capacidade Técnica', assinado: true },
+  { nome: 'Declaração de Contrapartida', assinado: true },
+  { nome: 'Nota Técnica 211', assinado: false },
+  { nome: 'Despacho 6590281', assinado: false },
+  { nome: 'Despacho 6590276', assinado: false },
+  { nome: 'Despacho 6720278', assinado: false },
+  { nome: 'Extrato Plano de Trabalho Atualizado', assinado: true },
+  { nome: 'Parecer 871', assinado: false },
+  { nome: 'NC - Nota de Crédito 2026NC001319', assinado: true },
+  { nome: 'Empenho 2026NE000851 2026RO002247', assinado: true },
+  { nome: 'Empenho 2026NE000851', assinado: true },
+  { nome: 'Despacho 6749363', assinado: false },
+  { nome: 'Declaração Atestado de Conformidade', assinado: false },
+  { nome: 'Documento Parecer Referencial', assinado: true },
+  { nome: 'Convênio 1284', assinado: false },
+  { nome: 'Termo de convênio assinado - 994546', assinado: true },
+  { nome: 'Publicação 994546 DOU', assinado: true },
+]
+
+/**
+ * A fila de fundo.
+ *
+ * Números derivados de uma sequência fixa — nada de sorteio, para a tela ser a
+ * mesma em toda apresentação. Alguns vêm marcados: atribuído a alguém, com
+ * aviso de prazo, ou em vermelho (sobrestado), que é o que dá textura à caixa
+ * de entrada de quem usa o SEI de verdade.
+ */
+const FILA_INICIAL: Processo[] = Array.from({ length: 22 }, (_, i) => {
+  const seq = 3993 + i * 617
+  const dv = 10 + ((i * 7) % 80)
+  return {
+    numero: `59000.${String(seq).padStart(6, '0')}/2026-${dv}`,
+    tipo: 'Convênios e Congêneres: Formalização',
+    interessado: 'Município',
+    documentos: [],
+    atribuido: i === 3 ? 'rita.santos' : i === 6 ? 'carlos.souza' : undefined,
+    aviso: i === 6 || i === 8 || i === 13,
+    atrasado: i === 7 || i === 8 || i === 13,
+  }
+})
 
 export function SeiPage() {
   const palco = useRef<HTMLDivElement>(null)
@@ -58,7 +143,7 @@ export function SeiPage() {
       numero: '59000.201144/2026-07',
       tipo: 'Convênios e Congêneres: Prestação de Contas',
       interessado: 'Município de Petrópolis',
-      documentos: [{ nome: 'Ofício 3021144', assinado: true }],
+      documentos: DOCUMENTOS_DE_UM_CONVENIO,
     },
     {
       numero: '59000.198233/2026-45',
@@ -66,6 +151,9 @@ export function SeiPage() {
       interessado: 'Consórcio Intermunicipal do Vale',
       documentos: [{ nome: 'Despacho 2984411', assinado: true }],
     },
+    // A caixa de um servidor do MIDR tem dezenas de linhas, não duas. Sem
+    // volume a tela não passa por SEI — passa por maquete de SEI.
+    ...FILA_INICIAL,
   ])
   const [processoAtivo, setProcessoAtivo] = useState<string | null>(null)
 
@@ -133,7 +221,7 @@ export function SeiPage() {
     return [
       { alvo: 'no-processo', acao: 'clicar', rotulo: 'Abrir o processo no SEI', duracao: 500 },
       { alvo: 'acao-incluir', acao: 'clicar', rotulo: 'Incluir documento a partir do modelo', duracao: 600, aoAplicar: () => {
-          setProcessos((prev) => prev.map((p) => p.numero === numeroNovo ? { ...p, documentos: [...p.documentos, { nome: 'Termo de Análise 44231907', assinado: false }] } : p))
+          setProcessos((prev) => prev.map((p) => p.numero === numeroNovo ? { ...p, documentos: [...p.documentos, { nome: 'Termo de Análise', assinado: false, novo: true }] } : p))
         } },
       { alvo: 'doc-novo', acao: 'aguardar', rotulo: 'Preencher os campos calculados da minuta', duracao: 900 },
       { alvo: 'acao-bloco', acao: 'clicar', rotulo: 'Incluir no bloco de assinatura', duracao: 600 },
@@ -161,33 +249,57 @@ export function SeiPage() {
   const procAtivo = processos.find((p) => p.numero === processoAtivo)
 
   return (
-    <div ref={palco} className="relative min-h-screen bg-[#eef1f4] font-sans text-[#333]">
-      {/* Barra superior azul do SEI */}
-      <div className="flex items-center justify-between bg-linear-to-r from-[#1c5a8c] to-[#134a76] px-4 py-2 text-white">
+    <div ref={palco} className="relative min-h-screen bg-white font-sans text-[#333]">
+      {/* Faixa do órgão: no SEI real ela é a primeira linha da página */}
+      <div className="bg-[#15497b] px-2 py-[3px] text-[9.5px] font-semibold tracking-wide text-white">
+        MINISTÉRIO DA INTEGRAÇÃO E DO DESENVOLVIMENTO REGIONAL
+      </div>
+
+      {/* Barra do SEI */}
+      <div className="flex items-center justify-between bg-[#2f80c1] px-4 py-1.5 text-white">
+        <MarcaSei altura={32} />
         <div className="flex items-center gap-3">
-          <span className="font-serif text-[26px] leading-none font-bold italic tracking-tight">sei!</span>
-          <span className="text-[11px] opacity-80">Sistema Eletrônico de Informações</span>
-        </div>
-        <div className="flex items-center gap-4 text-[11px]">
-          <span>MINISTÉRIO DA INTEGRAÇÃO E DO DESENVOLVIMENTO REGIONAL</span>
-          <span className="rounded bg-white/15 px-2 py-0.5">SNPDC · usuário de serviço</span>
+          <span className="text-[12.5px] font-semibold">Menu</span>
+          <div className="flex h-[22px] w-[180px] items-center gap-1 rounded-sm bg-white px-2">
+            <span className="flex-1 text-[11px] text-[#999]">Pesquisar...</span>
+            <span className="text-[11px] text-[#2f80c1]">⌕</span>
+          </div>
+          <span className="rounded-sm border border-white/60 px-2 py-[2px] text-[11px]">
+            CGAP DIRP
+          </span>
+          <div className="flex items-center gap-2 text-[13px] opacity-90">
+            {['☰', '⌸', '◑', 'A', '✕', '☻', '⏻'].map((i, n) => (
+              <span key={n}>{i}</span>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="flex">
         {/* Menu lateral */}
-        <nav className="w-[210px] shrink-0 border-r border-[#c9d2db] bg-white">
+        <nav className="w-[240px] shrink-0 border-r border-[#d5dde4] bg-white">
+          <div className="border-b border-[#e3e8ed] p-2">
+            <div className="h-[26px] w-full rounded-sm border border-[#c9d2db] px-2 text-[11.5px] leading-[24px] text-[#8a8a8a]">
+              Pesquisar no Menu
+            </div>
+          </div>
           {MENU.map((item) => {
-            const ativo = item === 'Iniciar Processo' && tela === 'form'
-            const alvo = item === 'Iniciar Processo' ? 'menu-iniciar' : undefined
+            const ativo = item.rotulo === 'Iniciar Processo' && tela === 'form'
+            const alvo = item.rotulo === 'Iniciar Processo' ? 'menu-iniciar' : undefined
             return (
               <button
-                key={item}
+                key={item.rotulo}
                 data-alvo={alvo}
-                onClick={() => item === 'Iniciar Processo' && setTela('form')}
-                className={`block w-full border-b border-[#eef1f4] px-4 py-[7px] text-left text-[12.5px] text-[#1b5a8c] hover:bg-[#f0f6fb] ${ativo ? 'bg-[#e3eff8] font-semibold' : ''} ${destaqueClasse('menu-iniciar') && alvo ? destaqueClasse('menu-iniciar') : ''}`}
+                onClick={() => item.rotulo === 'Iniciar Processo' && setTela('form')}
+                className={`flex w-full items-center gap-2.5 px-3 py-[6px] text-left text-[12.5px] text-[#1c1c1c] hover:bg-[#eaf2f8] ${ativo ? 'bg-[#e3eff8] font-semibold' : ''} ${item.recuado ? 'pl-[38px]' : ''} ${alvo ? destaqueClasse('menu-iniciar') : ''}`}
               >
-                {item}
+                {!item.recuado && (
+                  <span className="w-[14px] shrink-0 text-center text-[12px] text-[#2f80c1]">
+                    {item.icone}
+                  </span>
+                )}
+                <span className="min-w-0 flex-1 truncate">{item.rotulo}</span>
+                {item.submenu && <span className="text-[9px] text-[#777]">▾</span>}
               </button>
             )
           })}
@@ -197,38 +309,94 @@ export function SeiPage() {
         <main className="min-h-[calc(100vh-42px)] flex-1 p-6">
           {tela === 'inicio' && (
             <div>
-              <h1 className="mb-4 text-[19px] font-normal text-[#2b5c82]">Controle de Processos</h1>
-              <div className="overflow-hidden rounded border border-[#c9d2db] bg-white">
-                <div className="flex items-center justify-between border-b border-[#c9d2db] bg-[#f6f8fa] px-4 py-2 text-[12px] text-[#555]">
-                  <span>Processos recebidos e gerados</span>
-                  <span className="num">{processos.length} processos</span>
-                </div>
-                <table className="w-full text-left text-[12.5px]">
-                  <thead className="bg-[#fafbfc] text-[#777]">
-                    <tr>
-                      <th className="px-4 py-2 font-medium">Processo</th>
-                      <th className="px-4 py-2 font-medium">Tipo</th>
-                      <th className="px-4 py-2 font-medium">Interessado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {processos.map((p) => (
-                      <tr
-                        key={p.numero}
-                        data-alvo={p.numero === numeroNovo ? 'no-processo' : undefined}
-                        onClick={() => {
-                          setProcessoAtivo(p.numero)
-                          setTela('processo')
-                        }}
-                        className={`cursor-pointer border-t border-[#eef1f4] hover:bg-[#f0f6fb] ${p.novo ? 'bg-[#fff8e6]' : ''}`}
-                      >
-                        <td className="num px-4 py-2 text-[#1b5a8c] underline">{p.numero}</td>
-                        <td className="px-4 py-2 text-[#555]">{p.tipo}</td>
-                        <td className="px-4 py-2 text-[#555]">{p.interessado}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <h1 className="mb-3 text-[21px] font-semibold text-[#1c1c1c]">
+                Controle de Processos
+              </h1>
+
+              {/* A barra de pastas coloridas — a assinatura visual da tela */}
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-sm border border-[#d5dde4] bg-[#fafbfc] px-2 py-1.5">
+                {FERRAMENTAS.map((f, i) => (
+                  <span
+                    key={i}
+                    title={f.titulo}
+                    className="flex h-[26px] w-[26px] items-center justify-center rounded-[3px] text-[15px] leading-none"
+                    style={{ color: f.cor }}
+                  >
+                    ▉
+                  </span>
+                ))}
+              </div>
+              <div className="mb-4 flex gap-5 text-[12px] text-[#1c1c1c]">
+                {['Ver atribuídos a mim', 'Ver por marcadores', 'Ver por tipo', 'Ver por prioridade'].map(
+                  (t) => (
+                    <span key={t}>{t}</span>
+                  ),
+                )}
+              </div>
+
+              {/* Duas colunas: Recebidos e Gerados, como no SEI */}
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                {(['Recebidos', 'Gerados'] as const).map((coluna) => {
+                  const daColuna =
+                    coluna === 'Recebidos' ? processos : processos.slice().reverse()
+                  return (
+                    <div key={coluna}>
+                      <div className="mb-1 text-right text-[11px] text-[#555]">
+                        Processos {coluna === 'Recebidos' ? 'recebidos' : 'gerados'} (
+                        {daColuna.length} registros - 1 a {daColuna.length}):
+                      </div>
+                      <table className="w-full border-collapse text-left text-[12.5px]">
+                        <thead>
+                          <tr className="bg-[#2e5c8a] text-white">
+                            <th className="w-8 border border-[#1f4467] px-2 py-1.5 text-center">
+                              ☑
+                            </th>
+                            <th className="border border-[#1f4467] px-2 py-1.5 text-center font-normal">
+                              {coluna}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {daColuna.map((p, i) => (
+                            <tr
+                              key={p.numero}
+                              data-alvo={
+                                coluna === 'Recebidos' && p.numero === numeroNovo
+                                  ? 'no-processo'
+                                  : undefined
+                              }
+                              onClick={() => {
+                                setProcessoAtivo(p.numero)
+                                setTela('processo')
+                              }}
+                              className={`cursor-pointer ${p.novo ? 'bg-[#fff8e6]' : i % 2 ? 'bg-[#f0f0f0]' : 'bg-white'} hover:bg-[#e8f0f8]`}
+                            >
+                              <td className="border border-[#d5dde4] px-2 py-1 text-center text-[#999]">
+                                ☐
+                              </td>
+                              <td className="border border-[#d5dde4] px-2 py-1">
+                                <div className="grid grid-cols-[52px_1fr_86px] items-center">
+                                  <span className="text-left text-[12px] leading-none">
+                                    {p.aviso && <span className="text-[#e8b530]">⚠</span>}
+                                    {p.atrasado && <span className="ml-1 text-[#c0392b]">⚠</span>}
+                                  </span>
+                                  <span
+                                    className={`num text-center ${p.atrasado ? 'text-[#c0392b]' : 'text-[#1b5a8c]'}`}
+                                  >
+                                    {p.numero}
+                                  </span>
+                                  <span className="text-right text-[11.5px] text-[#555]">
+                                    {p.atribuido && `(${p.atribuido})`}
+                                  </span>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -280,41 +448,81 @@ export function SeiPage() {
             </div>
           )}
 
+          {/* A tela do processo aberto: árvore à esquerda, barra de ícones e o
+              quadro "Processo aberto nas unidades" à direita — que é
+              literalmente tudo o que o SEI mostra aqui. */}
           {tela === 'processo' && procAtivo && (
-            <div className="flex gap-5">
-              <div className="w-[260px] shrink-0 rounded border border-[#c9d2db] bg-white p-3">
-                <div className="mb-2 text-[11px] font-semibold text-[#555]">Árvore do processo</div>
-                <div className="num mb-2 flex items-center gap-1.5 text-[12px] text-[#1b5a8c]">
-                  <span className="inline-block size-3 rounded-[2px] bg-[#f5c518]" />
-                  {procAtivo.numero}
+            <div className="-mx-6 -mt-6 flex min-h-[calc(100vh-90px)]">
+              <div className="w-[430px] shrink-0 border-r border-[#c9d2db] bg-white p-3">
+                <div className="mb-2 flex items-center gap-2">
+                  <span className="text-[11px] text-[#555]">☰</span>
+                  <span className="num rounded-sm bg-[#2e5c8a] px-2 py-[3px] text-[12px] text-white">
+                    {procAtivo.numero}
+                  </span>
+                  <span className="text-[12px] text-[#2f80c1]">◉◉</span>
+                  <span className="text-[12px] text-[#e8b530]">👍</span>
                 </div>
-                <ul className="ml-4 flex flex-col gap-1">
-                  {procAtivo.documentos.map((d) => (
-                    <li key={d.nome} data-alvo="doc-novo" className="flex items-center gap-1.5 text-[11.5px] text-[#1b5a8c]">
-                      <span className="inline-block size-2.5 rounded-[1px] bg-[#8bb7dd]" />
-                      {d.nome}
-                      {!d.assinado && <span className="text-[9px] text-[#c0392b]">(sem assinatura)</span>}
-                    </li>
-                  ))}
+
+                <ul className="ml-3 flex flex-col">
                   {procAtivo.documentos.length === 0 && (
-                    <li className="text-[11px] text-[#999]">nenhum documento ainda</li>
+                    <li className="py-1 text-[11px] text-[#999]">nenhum documento ainda</li>
                   )}
+                  {procAtivo.documentos.map((d, i) => {
+                    const pdf = i % 3 !== 1
+                    return (
+                      <li
+                        key={d.nome}
+                        data-alvo={d.novo || (i === 0 && !procAtivo.documentos.some((x) => x.novo)) ? 'doc-novo' : undefined}
+                        className={`flex items-center gap-1.5 py-[3px] text-[11.5px] ${d.novo ? 'bg-[#fff8e6]' : ''}`}
+                      >
+                        <span
+                          className={`inline-flex h-[13px] w-[11px] shrink-0 items-center justify-center rounded-[1px] text-[7px] font-bold text-white ${pdf ? 'bg-[#c0392b]' : 'bg-[#5b9bd5]'}`}
+                        >
+                          {pdf ? 'P' : 'D'}
+                        </span>
+                        <span
+                          className={`truncate text-[#1b5a8c] ${d.assinado ? '' : 'underline'}`}
+                        >
+                          {d.nome} ({6590257 + i * 37})
+                        </span>
+                        <span className="shrink-0 rounded-[2px] border border-[#c9d2db] bg-[#f0f0f0] px-1 text-[8.5px] text-[#555]">
+                          CGAP DIRP
+                        </span>
+                        {!d.assinado && <span className="shrink-0 text-[10px]">✎</span>}
+                      </li>
+                    )
+                  })}
                 </ul>
+
+                <div className="mt-4 flex items-center gap-1.5 border-t border-[#e3e8ed] pt-3 text-[12px] text-[#1b5a8c]">
+                  <span>⌕</span> Consultar Andamento
+                </div>
               </div>
 
-              <div className="flex-1 rounded border border-[#c9d2db] bg-white p-5">
-                <div className="mb-4 flex items-center gap-2">
-                  <button data-alvo="acao-incluir" className={`rounded border border-[#b8c2cc] bg-[#f6f8fa] px-3 py-1.5 text-[11.5px] text-[#1b5a8c] ${destaqueClasse('acao-incluir')}`}>
-                    Incluir Documento
-                  </button>
-                  <button data-alvo="acao-bloco" className={`rounded border border-[#b8c2cc] bg-[#f6f8fa] px-3 py-1.5 text-[11.5px] text-[#1b5a8c] ${destaqueClasse('acao-bloco')}`}>
-                    Incluir em Bloco
-                  </button>
+              <div className="min-w-0 flex-1 p-3">
+                {/* A barra de ícones do processo */}
+                <div className="mb-3 flex flex-wrap items-center gap-1.5 rounded-sm border border-[#d5dde4] bg-white px-2 py-2">
+                  {[
+                    '#e8b530', '#f0ad2e', '#2f80c1', '#2f80c1', '#e8b530', '#2f80c1',
+                    '#f0ad2e', '#2f80c1', '#e8b530', '#c0392b', '#2f9e63', '#c0392b',
+                    '#2f80c1', '#e8b530', '#f0ad2e', '#c0392b', '#e8b530', '#2f9e63',
+                    '#2f80c1', '#e8b530',
+                  ].map((cor, i) => (
+                    <span
+                      key={i}
+                      data-alvo={i === 0 ? 'acao-incluir' : i === 8 ? 'acao-bloco' : undefined}
+                      className={`flex h-[26px] w-[26px] items-center justify-center rounded-[3px] text-[15px] leading-none ${i === 0 ? destaqueClasse('acao-incluir') : i === 8 ? destaqueClasse('acao-bloco') : ''}`}
+                      style={{ color: cor }}
+                    >
+                      ▉
+                    </span>
+                  ))}
                 </div>
-                <div className="rounded border border-dashed border-[#c9d2db] bg-[#fafbfc] px-4 py-8 text-center text-[12px] text-[#888]">
-                  {procAtivo.documentos.length === 0
-                    ? 'Processo autuado. Aguardando inclusão de documentos.'
-                    : `Processo com ${procAtivo.documentos.length} documento(s). Nos termos do Decreto nº 8.539/2015, os documentos são assinados eletronicamente.`}
+
+                <div className="border border-[#d5dde4] bg-white px-4 py-3 text-[12.5px]">
+                  <div className="mb-1.5">Processo aberto nas unidades:</div>
+                  <div>CGAP DIRP</div>
+                  <div>CGEO DORT (atribuído para leticia.marques)</div>
                 </div>
               </div>
             </div>

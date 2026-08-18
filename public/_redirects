@@ -1,0 +1,11 @@
+# Roteamento de aplicação de página única.
+#
+# O React Router resolve /prefeitura, /sistemas/sei e /propostas/pr1 no
+# navegador — no servidor esses caminhos não existem como arquivo. Sem esta
+# regra, abrir um link direto (ou dar F5 numa tela interna) devolve 404, que é
+# exatamente o que acontece no meio de uma apresentação.
+#
+# O Cloudflare Pages serve o arquivo estático quando ele existe, então
+# /cleo-extensao.zip e /marca/mark.png continuam sendo entregues normalmente;
+# só o que não casa com nenhum arquivo cai no index.html.
+/*    /index.html   200

@@ -115,14 +115,14 @@ function Conteudo() {
   const tempoTotal = tempoAcumulado + (sim.terminado ? 0 : sim.tempoDecorridoMs)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-abyss/85 p-6 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-abyss/85 p-2 backdrop-blur-sm sm:p-6">
       <div
         role="dialog"
         aria-modal="true"
         aria-label={titulo ?? roteiro.titulo}
-        className="panel flex h-[min(740px,93vh)] w-[min(1220px,96vw)] flex-col overflow-hidden bg-surface shadow-2xl"
+        className="panel flex h-[min(740px,96vh)] w-[min(1220px,98vw)] flex-col overflow-hidden bg-surface shadow-2xl"
       >
-        <header className="flex items-center justify-between gap-6 border-b border-line px-6 py-4">
+        <header className="flex items-center justify-between gap-4 border-b border-line px-4 py-3 sm:gap-6 sm:px-6 sm:py-4">
           <div className="min-w-0">
             <div className="mb-1 flex items-center gap-2.5">
               <span className="eyebrow">
@@ -196,8 +196,10 @@ function Conteudo() {
           </div>
         )}
 
-        <div className="flex min-h-0 flex-1">
-          <aside className="flex w-[310px] shrink-0 flex-col border-r border-line">
+        {/* No celular a tela simulada vem primeiro — é o que a sala veio ver.
+            O roteiro de passos desce para baixo dela, rolável. */}
+        <div className="flex min-h-0 flex-1 flex-col-reverse md:flex-row">
+          <aside className="flex max-h-[38%] shrink-0 flex-col border-t border-line md:max-h-none md:w-[310px] md:border-t-0 md:border-r">
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
               <ol className="flex flex-col">
                 {roteiro.passos.map((p, i) => {
@@ -275,7 +277,7 @@ function Conteudo() {
             )}
           </aside>
 
-          <div className="flex min-w-0 flex-1 flex-col p-5">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col p-3 md:p-5">
             <div className="mb-3 flex items-center justify-between">
               <span className="eyebrow">O que a Cleo está vendo</span>
               <span className="text-[11.5px] text-muted">
@@ -289,10 +291,10 @@ function Conteudo() {
           </div>
         </div>
 
-        <footer className="flex items-center justify-between gap-6 border-t border-line px-6 py-4">
+        <footer className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-line px-4 py-3 sm:flex-nowrap sm:px-6 sm:py-4">
           {tudoConcluido ? (
             <>
-              <div className="flex min-w-0 items-start gap-3">
+              <div className="flex min-w-0 flex-1 items-start gap-3">
                 <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-teal/15 text-teal">
                   <Check size={15} strokeWidth={3} />
                 </span>

@@ -105,7 +105,7 @@ export function Documentos() {
         )}
       </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <Panel className="px-5 py-4">
           <Numero rotulo="Documentos" valor={numero(todos.length)} detalhe="Nos processos do órgão" />
         </Panel>
@@ -150,7 +150,7 @@ export function Documentos() {
                 { id: 'cleo', rotulo: 'Da Cleo', contagem: daCleo.length },
               ]}
             />
-            <div className="relative ml-auto w-[220px]">
+            <div className="relative w-full min-w-[160px] flex-1 sm:ml-auto sm:w-[220px] sm:flex-none">
               <Search size={13} className="absolute top-1/2 left-3 -translate-y-1/2 text-faint" />
               <Campo
                 placeholder="Documento, proposta, proponente"
